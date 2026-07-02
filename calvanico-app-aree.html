@@ -1,0 +1,2902 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Cantiere Calvanico</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<style>
+  :root {
+    color-scheme: light;
+    --navy: #0f172a; --navy-2: #1e293b;
+    --teal: #0d9488; --teal-light: #ccfbf1;
+    --amber: #d97706; --amber-light: #fef3c7;
+    --red: #dc2626; --red-light: #fee2e2;
+    --blue: #2563eb; --blue-light: #dbeafe;
+    --gray: #64748b; --gray-light: #e2e8f0;
+    --bg: #f8fafc; --card: #ffffff; --border: #e2e8f0;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif; background: var(--bg); color: var(--navy); }
+  header.top {
+    background: linear-gradient(135deg, var(--navy) 0%, var(--navy-2) 100%);
+    color: white; padding: 22px 28px; display: flex; justify-content: space-between;
+    align-items: center; flex-wrap: wrap; gap: 12px;
+  }
+  header.top h1 { margin: 0; font-size: 20px; font-weight: 700; }
+  header.top p { margin: 2px 0 0; font-size: 12.5px; color: #cbd5e1; }
+  .drive-link {
+    font-size: 12.5px; color: white; background: rgba(255,255,255,0.12); padding: 7px 14px;
+    border-radius: 8px; text-decoration: none; display: inline-flex; align-items: center; gap: 6px;
+    transition: background .15s;
+  }
+  .drive-link:hover { background: rgba(255,255,255,0.22); }
+  nav.area-tabs {
+    display: flex; gap: 6px; padding: 14px 28px 0; background: var(--navy-2);
+  }
+  nav.area-tabs button {
+    border: none; background: transparent; padding: 10px 20px; font-size: 14px; font-weight: 700;
+    color: #94a3b8; cursor: pointer; border-radius: 10px 10px 0 0; transition: all .15s;
+  }
+  nav.area-tabs button:hover { color: white; background: rgba(255,255,255,0.06); }
+  nav.area-tabs button.active { color: var(--navy); background: var(--bg); }
+  nav.tabs {
+    display: flex; gap: 4px; padding: 10px 28px 0; background: var(--card); border-bottom: 1px solid var(--border);
+  }
+  nav.tabs button {
+    border: none; background: transparent; padding: 12px 16px; font-size: 13.5px; font-weight: 600;
+    color: var(--gray); cursor: pointer; border-bottom: 3px solid transparent; transition: color .15s, border-color .15s;
+  }
+  nav.tabs button:hover { color: var(--navy); }
+  nav.tabs button.active { color: var(--teal); border-bottom-color: var(--teal); }
+  main { max-width: 1120px; margin: 0 auto; padding: 26px 28px 60px; }
+  .grid-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 22px; }
+  .grid-stats.cols-3 { grid-template-columns: repeat(3, 1fr); }
+  .stat-card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 16px 18px; }
+  .stat-card .num { font-size: 24px; font-weight: 800; line-height: 1.1; }
+  .stat-card .label { font-size: 12px; color: var(--gray); margin-top: 6px; font-weight: 600; }
+  .stat-card.scaduto .num, .stat-card.red .num { color: var(--red); }
+  .stat-card.in_scadenza .num, .stat-card.amber .num { color: var(--amber); }
+  .stat-card.mancante .num, .stat-card.gray .num { color: var(--gray); }
+  .stat-card.valido .num, .stat-card.teal .num { color: var(--teal); }
+  .stat-card.blue .num { color: var(--blue); }
+  .panel { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 20px 22px; margin-bottom: 20px; }
+  .panel h2 { margin: 0 0 4px; font-size: 15.5px; }
+  .panel .sub { font-size: 12.5px; color: var(--gray); margin: 0 0 14px; }
+  .chart-wrap { display: flex; gap: 24px; align-items: center; flex-wrap: wrap; }
+  .chart-canvas-box { width: 200px; height: 200px; flex-shrink: 0; }
+  .doc-row {
+    display: grid; grid-template-columns: 1.6fr 1fr 1fr 1fr 1.3fr auto auto; gap: 8px; align-items: center;
+    padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 13px;
+  }
+  .doc-row:last-child { border-bottom: none; }
+  .doc-row .name { font-weight: 600; }
+  .doc-row input { font-size: 12.5px; padding: 6px 8px; }
+  .chip {
+    display: inline-flex; align-items: center; gap: 5px; padding: 3px 11px; border-radius: 999px;
+    font-size: 11px; font-weight: 700; white-space: nowrap; justify-self: start;
+  }
+  .chip::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+  .chip.scaduto, .chip.red { background: var(--red-light); color: var(--red); }
+  .chip.in_scadenza, .chip.amber { background: var(--amber-light); color: var(--amber); }
+  .chip.mancante, .chip.gray { background: var(--gray-light); color: var(--gray); }
+  .chip.valido, .chip.presente, .chip.teal { background: var(--teal-light); color: var(--teal); }
+  .empty-note { font-size: 13px; color: var(--gray); padding: 6px 0; }
+  .doc-list-head {
+    display: grid; grid-template-columns: 1.6fr 1fr 1fr 1fr 1.3fr auto auto; gap: 8px; font-size: 11px;
+    font-weight: 700; color: var(--gray); text-transform: uppercase; letter-spacing: .03em;
+    padding-bottom: 8px; border-bottom: 2px solid var(--border); margin-bottom: 2px;
+  }
+  .sub-card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 20px 22px; margin-bottom: 18px; }
+  .sub-card-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; flex-wrap: wrap; gap: 10px; }
+  .sub-card-head h3 { margin: 0; font-size: 16px; }
+  .sub-card-head .drive-mini { font-size: 11.5px; color: var(--teal); text-decoration: none; font-weight: 600; }
+  .sub-card-head .drive-mini:hover { text-decoration: underline; }
+  .progress-bar-track { width: 140px; height: 8px; background: var(--gray-light); border-radius: 999px; overflow: hidden; }
+  .progress-bar-fill { height: 100%; background: var(--teal); border-radius: 999px; transition: width .3s; }
+  .progress-bar-fill.over { background: var(--red); }
+  input, textarea, select {
+    border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; font-size: 13.5px;
+    width: 100%; font-family: inherit;
+  }
+  label { font-size: 12px; font-weight: 600; color: var(--gray); display: block; margin-bottom: 4px; }
+  .field { margin-bottom: 12px; }
+  .btn { border: none; border-radius: 8px; padding: 8px 16px; font-size: 13px; font-weight: 600; cursor: pointer; transition: opacity .15s; }
+  .btn:hover { opacity: .85; }
+  .btn-primary { background: var(--navy); color: white; }
+  .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--navy); }
+  .btn-sm { padding: 5px 10px; font-size: 11.5px; white-space: nowrap; }
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .save-msg { color: var(--teal); font-size: 12.5px; margin-left: 10px; opacity: 0; transition: opacity .3s; }
+  .save-msg.show { opacity: 1; }
+  a.file-link { color: var(--teal); text-decoration: none; font-size: 11.5px; font-weight: 700; white-space: nowrap; }
+  a.file-link:hover { text-decoration: underline; }
+  .no-link { color: var(--gray); font-size: 11px; }
+  footer.note { max-width: 1120px; margin: 0 auto; padding: 0 28px 30px; font-size: 11.5px; color: var(--gray); }
+  .row-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .row-table th { text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: .03em; color: var(--gray); padding: 0 6px 8px; border-bottom: 2px solid var(--border); }
+  .row-table td { padding: 6px 6px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+  .row-table input, .row-table select { font-size: 12.5px; padding: 6px 7px; }
+  .fasi-table { table-layout: fixed; min-width: 980px; }
+  .fasi-table td, .fasi-table th { overflow-wrap: break-word; }
+  .add-row-btn { margin-top: 10px; }
+  .gantt-track { position: relative; height: 30px; background: var(--gray-light); border-radius: 6px; margin-bottom: 6px; }
+  .gantt-bar { position: absolute; top: 3px; bottom: 3px; border-radius: 5px; font-size: 10.5px; color: white; display: flex; align-items: center; padding: 0 8px; white-space: nowrap; overflow: hidden; }
+  .gantt-row-label { font-size: 12.5px; font-weight: 600; margin-bottom: 4px; }
+  .gantt-dates { font-weight: 400; color: var(--gray); font-size: 11.5px; margin-left: 6px; }
+  .gantt-today { position: absolute; top: 20px; bottom: -4px; width: 2px; background: var(--red); z-index: 2; }
+  .gantt-today-label {
+    position: absolute; top: 0; transform: translateX(-50%); background: var(--red); color: white;
+    font-size: 10.5px; font-weight: 700; padding: 2px 8px; border-radius: 4px; white-space: nowrap; z-index: 3;
+  }
+  .gantt-wrap { position: relative; margin-top: 24px; }
+  .gantt-ruler { position: relative; height: 20px; border-bottom: 2px solid var(--border); margin-top: 10px; }
+  .gantt-ruler-tick { position: absolute; top: 0; font-size: 10.5px; font-weight: 700; color: var(--gray); white-space: nowrap; }
+  .ordine-card { border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px; margin-bottom: 14px; background: var(--bg); }
+  .ordine-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px; }
+  .stepper { display: flex; gap: 4px; margin-bottom: 16px; }
+  .stepper-seg { flex: 1; text-align: center; }
+  .stepper-bar { height: 6px; border-radius: 3px; }
+  .stepper-label { font-size: 9.5px; margin-top: 3px; font-weight: 700; }
+  .foto-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
+  .foto-item { border: 1px solid var(--border); border-radius: 10px; padding: 8px; background: var(--card); }
+  .foto-item img { width: 100%; height: 100px; object-fit: cover; border-radius: 6px; margin-bottom: 6px; }
+  .foto-caption { margin-bottom: 6px; }
+</style>
+</head>
+<body>
+
+<div id="loginGate" style="min-height:100vh; display:flex; align-items:center; justify-content:center; background:linear-gradient(135deg, #0f172a 0%, #1e293b 100%);">
+  <div style="background:white; border-radius:16px; padding:36px 34px; width:100%; max-width:360px; box-shadow:0 20px 50px rgba(0,0,0,.3);">
+    <h1 style="margin:0 0 4px; font-size:19px; color:#0f172a;">Studentato Calvanico</h1>
+    <p style="margin:0 0 22px; font-size:12.5px; color:#64748b;">Accesso riservato &middot; gestione cantiere</p>
+    <form id="loginForm">
+      <div class="field" style="margin-bottom:12px;"><label>Email</label><input type="email" id="loginEmail" required autocomplete="username" /></div>
+      <div class="field" style="margin-bottom:16px;"><label>Password</label><input type="password" id="loginPassword" required autocomplete="current-password" /></div>
+      <button type="submit" class="btn btn-primary" id="loginSubmitBtn" style="width:100%;">Accedi</button>
+      <p id="loginError" style="display:none; color:#dc2626; font-size:12.5px; margin:12px 0 0;"></p>
+    </form>
+  </div>
+</div>
+
+<div id="appRoot" style="display:none;">
+<header class="top">
+  <div>
+    <h1>Studentato Calvanico</h1>
+    <p>Gestione cantiere appalto pubblico &middot; scadenza lavori giu 2027</p>
+  </div>
+  <div style="display:flex; align-items:center; gap:10px;">
+    <span id="syncStatus" style="font-size:11.5px; color:#cbd5e1;"></span>
+    <a class="drive-link" href="https://drive.google.com/drive/folders/1zllqdchS_EpAYoiCV7fTJXqYE8_U947V" target="_blank" rel="noopener">Apri cartella Drive &#8599;</a>
+    <button class="drive-link" id="logoutBtn" style="border:none; cursor:pointer;">Esci</button>
+  </div>
+</header>
+<nav class="area-tabs" id="areaTabs">
+  <button data-area="anagrafica">Anagrafica</button>
+  <button data-area="documentazione" class="active">Documentazione</button>
+  <button data-area="acquisti">Ufficio acquisti</button>
+  <button data-area="finanziario">Finanziario</button>
+  <button data-area="cronoprogramma">Cronoprogramma</button>
+</nav>
+<nav class="tabs" id="subTabs"></nav>
+<main id="main"></main>
+<footer class="note">Dati salvati su Supabase (cloud) &middot; sincronizzazione automatica ad ogni "Salva".</footer>
+</div>
+
+<script>
+/* =========================================================================
+   Cantiere Calvanico - app a singolo file, organizzata per aree:
+   Documentazione (scadenzario, cantiere, subappaltatori),
+   Finanziario (panoramica, SAL, costi per subappalto, fatture),
+   Cronoprogramma (fasi lavori).
+   Dati salvati su Supabase (cloud), accesso protetto da login (Supabase Auth).
+   ========================================================================= */
+
+const SUBAPPALTI_DEF = [
+  { id: 'cemento-armato', lavorazione: 'Cemento armato', folderUrl: 'https://drive.google.com/drive/folders/1_K_PbZG01uuBua4x7Xej0sO3pogoAUuh' },
+  { id: 'ferro', lavorazione: 'Ferro (carpenteria metallica/armature)', folderUrl: 'https://drive.google.com/drive/folders/1zVQMSQlG4VkVofvVlHM0N3lSGermQqIq' },
+  { id: 'scavo', lavorazione: 'Scavo', folderUrl: 'https://drive.google.com/drive/folders/1QBq1e5ldt88OcxcH4SsEqUHc3MLGnC-i' },
+  { id: 'montaggio-gru', lavorazione: 'Montaggio gru', folderUrl: 'https://drive.google.com/drive/folders/1IiOzhcI0p_xf3Ew1Y3kfQmUpl8voUSZe' }
+];
+
+// Elenco documenti sicurezza D.Lgs 81/2008 fornito da Noemi (Chianese & Partners),
+// valido sia per l'appaltatore (cantiere) sia per ogni subappaltatore.
+const DOCUMENTI_SICUREZZA_81_2008 = [
+  { nome: 'Accettazione del PSC', validitaGiorni: null },
+  { nome: 'Certificato di Iscrizione alla Camera di Commercio', validitaGiorni: 180 },
+  { nome: 'DURC', validitaGiorni: 120 },
+  { nome: 'Dichiarazione Organico Medio Annuo e Tipologia di Contratto ai Dipendenti', validitaGiorni: null },
+  { nome: 'DVR - Documento di Valutazione dei Rischi (con rischi specifici)', validitaGiorni: null },
+  { nome: 'POS Cantiere', validitaGiorni: null },
+  { nome: 'Verbale Consegna DPI', validitaGiorni: null },
+  { nome: 'Elenco Lavoratori Cantiere, UNILAV e Verbale avvenuta informazione', validitaGiorni: null },
+  { nome: 'Dichiarazione di non Utilizzo di Sostanze Pericolose', validitaGiorni: null },
+  { nome: 'Organigramma Cantiere', validitaGiorni: null },
+  { nome: 'Nomina Capocantiere', validitaGiorni: null },
+  { nome: 'Nomina e Formazione Preposti', validitaGiorni: null },
+  { nome: 'Nomina e Formazione RSPP', validitaGiorni: null },
+  { nome: 'Documenti RLS', validitaGiorni: null },
+  { nome: 'Nomina Medico Competente', validitaGiorni: null },
+  { nome: 'Nomina e Formazione Addetti Antincendio', validitaGiorni: null },
+  { nome: 'Nomina e Formazione Addetti Primo Soccorso', validitaGiorni: null },
+  { nome: 'Elenco Macchine Cantiere', validitaGiorni: null },
+  { nome: 'Denuncia Nuovo Lavoro Temporaneo INAIL', validitaGiorni: null },
+  { nome: 'Ricevuta di rilascio della Patente a Crediti', validitaGiorni: null },
+  { nome: "Dichiarazione sostitutiva Atto di notorietà art. 14 c.1 D.Lgs. 81/2008", validitaGiorni: null },
+  { nome: 'Dichiarazione sostitutiva certificazione posizioni INPS, INAIL, CASSA EDILE', validitaGiorni: null },
+  { nome: 'Dichiarazione sostitutiva certificazione residenza', validitaGiorni: null }
+];
+
+// Checklist "sicurezza" - SOLO i 24 punti indicati da Noemi, per appaltatore e subappaltatori.
+const TIPI_CANTIERE = [ ...DOCUMENTI_SICUREZZA_81_2008 ];
+const TIPI_SUBAPPALTO = [
+  { nome: 'Contratto di subappalto', validitaGiorni: null },
+  ...DOCUMENTI_SICUREZZA_81_2008
+];
+
+// Documentazione amministrativa/economica - NON e' sicurezza, ma resta obbligatoria
+// per un appalto pubblico: spostata fuori dalla checklist sicurezza su richiesta di
+// Noemi, non cancellata. Vive in Anagrafica > Appalto (cantiere) e nella scheda di
+// dettaglio di ogni subappaltatore (Documentazione > Subappaltatori).
+const TIPI_AMMINISTRATIVO_CANTIERE = [
+  { nome: 'CIG/CUP e conto dedicato tracciabilità flussi', validitaGiorni: null },
+  { nome: 'Cauzione definitiva', validitaGiorni: null },
+  { nome: 'Polizza CAR', validitaGiorni: 365 },
+  { nome: 'Polizza RC opere/terzi', validitaGiorni: 365 },
+  { nome: "Contratto d'appalto principale", validitaGiorni: null },
+  { nome: 'Requisiti generali appaltatore (art. 94-98)', validitaGiorni: null },
+  { nome: 'Casellario ANAC', validitaGiorni: 180 },
+  { nome: 'Comunicazione avvio lavori', validitaGiorni: null }
+];
+const TIPI_AMMINISTRATIVO_SUBAPPALTO = [
+  { nome: 'Autorizzazione al subappalto', validitaGiorni: null },
+  { nome: 'Comunicazione subappalto', validitaGiorni: null },
+  { nome: 'SOA', validitaGiorni: 1825 },
+  { nome: 'Requisiti generali / casellario ANAC', validitaGiorni: 180 },
+  { nome: 'Tracciabilità flussi finanziari', validitaGiorni: null },
+  { nome: 'Polizza RC subappaltatore', validitaGiorni: 365 },
+  { nome: 'Congruità manodopera (INL)', validitaGiorni: null }
+];
+
+// Estratto dal file "Cronoprogramma_StudentHousing_Calvenico22.xlsx" caricato da Noemi:
+// date e durate ricavate dalle barre colorate del Gantt originale. 8 attivita' su 36
+// non avevano una barra colorata nel file sorgente: importate senza date (da pianificare).
+const FASI_REALI = [
+  { sezione: 'OPERE STRUTTURALI / PREPARAZIONE', nome: 'Montaggio della gru a torre', durataGiorni: 6, dataInizioPrevista: '2026-07-08', dataFinePrevista: '2026-07-10' },
+  { sezione: 'OPERE STRUTTURALI / PREPARAZIONE', nome: 'Montaggio del ponteggio metallico fisso', durataGiorni: 15, dataInizioPrevista: '2026-07-06', dataFinePrevista: '2026-07-25' },
+  { sezione: 'OPERE STRUTTURALI / PREPARAZIONE', nome: 'Scavo di sbancamento', durataGiorni: 30, dataInizioPrevista: '2026-07-13', dataFinePrevista: '2026-08-14' },
+  { sezione: 'OPERE STRUTTURALI / PREPARAZIONE', nome: 'Realizzazione della carpenteria per le strutture in fondazione', durataGiorni: 30, dataInizioPrevista: '2026-07-13', dataFinePrevista: '2026-08-14' },
+  { sezione: 'OPERE STRUTTURALI / PREPARAZIONE', nome: 'Lavorazione e posa ferri di carpenteria per le strutture in fondazione', durataGiorni: 30, dataInizioPrevista: '2026-07-13', dataFinePrevista: '2026-08-14' },
+  { sezione: 'OPERE STRUTTURALI / PREPARAZIONE', nome: 'Getto in calcestruzzo per le strutture in fondazione', durataGiorni: 5, dataInizioPrevista: '2026-07-13', dataFinePrevista: '2026-08-14' },
+  { sezione: 'OPERE STRUTTURALI / PREPARAZIONE', nome: 'Realizzazione della carpenteria per le strutture in elevazione', durataGiorni: 153, dataInizioPrevista: '2026-08-16', dataFinePrevista: '2027-01-16' },
+  { sezione: 'OPERE STRUTTURALI / PREPARAZIONE', nome: 'Lavorazione e posa ferri di armatura per le strutture in elevazione', durataGiorni: 153, dataInizioPrevista: '2026-08-16', dataFinePrevista: '2027-01-16' },
+  { sezione: 'OPERE STRUTTURALI / PREPARAZIONE', nome: 'Getto in calcestruzzo per le strutture in elevazione', durataGiorni: 153, dataInizioPrevista: '2026-08-16', dataFinePrevista: '2027-01-16' },
+  { sezione: 'OPERE STRUTTURALI / PREPARAZIONE', nome: 'Realizzazione di solaio a lastre prefabbricate (predalles)', durataGiorni: 153, dataInizioPrevista: '2026-08-16', dataFinePrevista: '2027-01-16' },
+  { sezione: 'OPERE STRUTTURALI / PREPARAZIONE', nome: 'Esecuzione del getto di calcestruzzo per scale in c.a.', durataGiorni: 153, dataInizioPrevista: '2026-08-16', dataFinePrevista: '2027-01-16' },
+  { sezione: 'OPERE STRUTTURALI / PREPARAZIONE', nome: 'Realizzazione della carpenteria per scale in c.a.', durataGiorni: 153, dataInizioPrevista: '2026-08-16', dataFinePrevista: '2027-01-16' },
+  { sezione: 'OPERE STRUTTURALI / PREPARAZIONE', nome: 'Sagomatura, taglio e posa dei ferri di armatura per scale in c.a.', durataGiorni: 153, dataInizioPrevista: '2026-08-16', dataFinePrevista: '2027-01-16' },
+  { sezione: 'OPERE STRUTTURALI / PREPARAZIONE', nome: 'Realizzazione di giunto strutturale', durataGiorni: 153, dataInizioPrevista: '2026-08-16', dataFinePrevista: '2027-01-16' },
+  { sezione: 'OPERE CIVILI', nome: 'Realizzazione di vespaio aerato in pietrame', durataGiorni: 8, dataInizioPrevista: '2026-08-16', dataFinePrevista: '2026-08-23' },
+  { sezione: 'OPERE CIVILI', nome: 'Realizzazione di pavimento controterra in cls impermeabile', durataGiorni: 25, dataInizioPrevista: '', dataFinePrevista: '' },
+  { sezione: 'OPERE CIVILI', nome: 'Realizzazione di murature in blocchi di calcestruzzo cellulare', durataGiorni: 25, dataInizioPrevista: '2026-10-30', dataFinePrevista: '2026-11-30' },
+  { sezione: 'OPERE CIVILI', nome: 'Posa di cassonetti per avvolgibili', durataGiorni: 19, dataInizioPrevista: '2026-10-30', dataFinePrevista: '2026-11-30' },
+  { sezione: 'OPERE CIVILI', nome: 'Montaggio di serramenti esterni', durataGiorni: 12, dataInizioPrevista: '', dataFinePrevista: '' },
+  { sezione: 'OPERE CIVILI', nome: 'Realizzazione di pareti divisorie interne in cartongesso', durataGiorni: 24, dataInizioPrevista: '2026-11-10', dataFinePrevista: '2026-12-30' },
+  { sezione: 'OPERE CIVILI', nome: 'Realizzazione di tramezzi con blocchi in calcestruzzo cellulare', durataGiorni: 10, dataInizioPrevista: '', dataFinePrevista: '' },
+  { sezione: 'OPERE CIVILI', nome: 'Posa di controtelai per serramenti interni', durataGiorni: 19, dataInizioPrevista: '2026-11-10', dataFinePrevista: '2026-12-30' },
+  { sezione: 'FINITURE INTERNE', nome: 'Formazione di massetto per pavimenti interni', durataGiorni: 16, dataInizioPrevista: '2027-01-02', dataFinePrevista: '2027-01-20' },
+  { sezione: 'FINITURE INTERNE', nome: 'Posa di pavimenti per interni in resina', durataGiorni: 18, dataInizioPrevista: '2027-03-01', dataFinePrevista: '2027-03-30' },
+  { sezione: 'FINITURE INTERNE', nome: 'Realizzazione di controsoffitti in cartongesso', durataGiorni: 20, dataInizioPrevista: '2027-01-02', dataFinePrevista: '2027-01-30' },
+  { sezione: 'FINITURE INTERNE', nome: 'Realizzazione di controsoffitti in pannelli di alluminio', durataGiorni: 7, dataInizioPrevista: '', dataFinePrevista: '' },
+  { sezione: 'FINITURE INTERNE', nome: 'Formazione intonaci interni (tradizionali)', durataGiorni: 16, dataInizioPrevista: '2026-11-30', dataFinePrevista: '2027-01-30' },
+  { sezione: 'FINITURE INTERNE', nome: 'Posa di battiscopa in ceramica', durataGiorni: 9, dataInizioPrevista: '', dataFinePrevista: '' },
+  { sezione: 'FINITURE INTERNE', nome: 'Posa di rivestimenti interni in ceramica', durataGiorni: 11, dataInizioPrevista: '2027-01-02', dataFinePrevista: '2027-01-20' },
+  { sezione: 'FINITURE INTERNE', nome: 'Posa in opera di soglie, pedate, alzate in marmo', durataGiorni: 19, dataInizioPrevista: '', dataFinePrevista: '' },
+  { sezione: 'FINITURE INTERNE', nome: 'Montaggio di porte interne', durataGiorni: 13, dataInizioPrevista: '2027-01-02', dataFinePrevista: '2027-01-10' },
+  { sezione: 'FINITURE INTERNE', nome: 'Montaggio di porte tagliafuoco', durataGiorni: 11, dataInizioPrevista: '2027-03-01', dataFinePrevista: '2027-03-15' },
+  { sezione: 'FINITURE INTERNE', nome: 'Montaggio di porta per bagno disabili', durataGiorni: 6, dataInizioPrevista: '', dataFinePrevista: '' },
+  { sezione: 'FINITURE INTERNE', nome: 'Montaggio di serrande avvolgibili', durataGiorni: 10, dataInizioPrevista: '2027-03-01', dataFinePrevista: '2027-03-15' },
+  { sezione: 'FINITURE INTERNE', nome: 'Tinteggiatura di superfici interne con vernici ecocompatibili', durataGiorni: 17, dataInizioPrevista: '2027-03-01', dataFinePrevista: '2027-03-15' },
+  { sezione: 'FINITURE INTERNE', nome: 'Posa di ringhiere e parapetti', durataGiorni: 14, dataInizioPrevista: '', dataFinePrevista: '' }
+];
+
+// Estratto dal file "pianificazione finanziaria.xlsx" caricato da Noemi.
+// L'importo dichiarato (6.000.000) e' stato riportato in Anagrafica > Appalto
+// come importo totale. Le rate coprono solo 4.000.000: mancano 2.000.000 da
+// pianificare (vedi Finanziario > Pianificazione).
+const PIANIFICAZIONE_INIZIALE = [
+  { numero: 1, data: '2026-07-30', importo: 500000 },
+  { numero: 2, data: '2026-09-30', importo: 300000 },
+  { numero: 3, data: '2026-11-30', importo: 700000 },
+  { numero: 4, data: '2027-01-30', importo: 300000 },
+  { numero: 5, data: '2027-03-30', importo: 400000 },
+  { numero: 6, data: '2027-05-30', importo: 800000 },
+  { numero: 7, data: '2027-07-30', importo: 500000 },
+  { numero: 8, data: '2027-09-30', importo: 500000 }
+];
+const IMPORTO_DICHIARATO_INIZIALE = 6000000;
+
+const RUOLI_INIZIALI = [
+  'RUP - Responsabile Unico del Procedimento',
+  'Direttore Lavori',
+  'CSE - Coordinatore Sicurezza in Esecuzione',
+  'CSP - Coordinatore Sicurezza in Progettazione',
+  'RSPP',
+  'Preposto',
+  'Addetto Primo Soccorso',
+  'Addetto Antincendio',
+  'RLS - Rappresentante Lavoratori per la Sicurezza'
+];
+
+const CATEGORIE_ACQUISTI_INIZIALI = ['Ferro/Acciaio', 'Cemento/Calcestruzzo', 'Laterizi e murature', 'Impianti', 'Serramenti', 'Finiture'];
+
+const LS_KEY = 'calvanico_data_v3'; // non piu' usato per i dati (ora su Supabase), tenuto per compatibilita'
+
+// ---------- Supabase ----------
+const SUPABASE_URL = 'https://xrqesmaebimgzgbkxftv.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhycWVzbWFlYmltZ3pnYmt4ZnR2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMwMDcxNDgsImV4cCI6MjA5ODU4MzE0OH0.Um9GbwCqoZdAQJnyynEkmuIgkH456HFzTReOm1K8Crw';
+const supa = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+function emptyDoc(tipo) {
+  return { tipoNome: tipo.nome, validitaGiorni: tipo.validitaGiorni, dataEmissione: '', dataScadenza: '', numeroProtocollo: '', linkDrive: '', bloccato: false };
+}
+
+function nuoviDatiVuoti() {
+  return {
+    _seq: { sal: 0, fatture: 0, fasi: 0, referenti: 0, pianificazione: 0, categorieAcquisto: 0, ordini: 0, foto: 0 },
+    cantiere: {
+      stazioneAppaltante: '', cig: '', cup: '', importoTotale: IMPORTO_DICHIARATO_INIZIALE, dataInizio: '', dataFinePrevista: '2027-06-30', note: '',
+      indirizzoCantiere: '', comuneCantiere: 'Calvanico (SA)', provinciaCantiere: 'SA',
+      superficieMq: '', numeroPiani: '', numeroPostiLetto: '', destinazioneUso: 'Studentato universitario',
+      numeroGara: '', determinaContrarreNumero: '', determinaContrarreData: '', procedura: '', bloccato: false
+    },
+    // Dati reali dell'appaltatore ricavati dalla fattura Genya.pdf che mi hai mandato
+    // (Aedifica compare come cliente/cessionario) - [Probabile] verificali tu.
+    appaltatore: { ragioneSociale: 'Aedifica S.r.l.', piva: '09814681210', sedeLegale: 'Via San Giacomo, 30 - 80133 Napoli (NA)', pec: '', telefono: '', referenteCommessa: '', bloccato: false },
+    enteAppaltante: { denominazione: '', indirizzo: '', comune: '', cap: '', pec: '', telefono: '', sitoWeb: '', referente: '', bloccato: false },
+    cantiereFoto: [],
+    referenti: [],
+    cantiereDocs: TIPI_CANTIERE.map(emptyDoc),
+    cantiereDocsAmministrativi: TIPI_AMMINISTRATIVO_CANTIERE.map(emptyDoc),
+    subappalti: {},
+    subappaltiDocs: {},
+    subappaltiDocsAmministrativi: {},
+    acquisti: { categorie: [] },
+    finanziario: { sal: [], fatture: [], pianificazione: [] },
+    cronoprogramma: []
+  };
+}
+
+function nuoviDatiConSeed() {
+  const data = nuoviDatiVuoti();
+  SUBAPPALTI_DEF.forEach((s) => {
+    data.subappalti[s.id] = { ragioneSociale: '', piva: '', nomeCognome: '', email: '', indirizzo: '', telefono: '', importo: '', speso: '', percentuale: '', dataAutorizzazione: '', note: '', bloccatoAnagrafica: false, bloccatoCosti: false, bloccatoContratto: false, visuraFile: null, docAmministratoreFile: null };
+    data.subappaltiDocs[s.id] = TIPI_SUBAPPALTO.map(emptyDoc);
+    data.subappaltiDocsAmministrativi[s.id] = TIPI_AMMINISTRATIVO_SUBAPPALTO.map(emptyDoc);
+  });
+  FASI_REALI.forEach((f) => {
+    data._seq.fasi += 1;
+    data.cronoprogramma.push({ id: data._seq.fasi, sezione: f.sezione, nome: f.nome, durataGiorni: f.durataGiorni, subappaltoId: '', dataInizioPrevista: f.dataInizioPrevista, dataFinePrevista: f.dataFinePrevista, dataFineEffettiva: '', note: '', bloccato: false });
+  });
+  RUOLI_INIZIALI.forEach((ruolo) => {
+    data._seq.referenti += 1;
+    data.referenti.push({ id: data._seq.referenti, ruolo, nomeCognome: '', telefono: '', email: '', note: '', bloccato: false });
+  });
+  PIANIFICAZIONE_INIZIALE.forEach((p) => {
+    data._seq.pianificazione += 1;
+    data.finanziario.pianificazione.push({ id: data._seq.pianificazione, numero: p.numero, data: p.data, importo: p.importo, bloccato: false });
+  });
+  CATEGORIE_ACQUISTI_INIZIALI.forEach((nome) => {
+    data._seq.categorieAcquisto += 1;
+    data.acquisti.categorie.push({ id: data._seq.categorieAcquisto, nome, ordini: [] });
+  });
+  return data;
+}
+
+// normalizzaData: stessa logica di migrazione di sempre (compatibilita' con dati
+// vecchi/parziali), ora applicata ai dati che arrivano da Supabase invece che da
+// localStorage. Nessuna riga qui sotto e' cambiata rispetto a prima.
+function normalizzaData(data) {
+  // Migrazione: aggiunge in modo non distruttivo le sezioni introdotte dopo la
+  // prima versione, cosi' chi ha gia' dati salvati non li perde.
+  const defCantiereEstesi = { indirizzoCantiere: '', comuneCantiere: 'Calvanico (SA)', provinciaCantiere: 'SA', superficieMq: '', numeroPiani: '', numeroPostiLetto: '', destinazioneUso: 'Studentato universitario', numeroGara: '', determinaContrarreNumero: '', determinaContrarreData: '', procedura: '' };
+  Object.keys(defCantiereEstesi).forEach((k) => { if (data.cantiere[k] === undefined) data.cantiere[k] = defCantiereEstesi[k]; });
+  if (!data.enteAppaltante) data.enteAppaltante = { denominazione: '', indirizzo: '', comune: '', cap: '', pec: '', telefono: '', sitoWeb: '', referente: '' };
+  if (!data.cantiereFoto) data.cantiereFoto = [];
+  if (data._seq.foto === undefined) data._seq.foto = data.cantiereFoto.length;
+  data.referenti.forEach((r) => { if (r.bloccato === undefined) r.bloccato = false; });
+  // migrazione: la sezione Contrattualistica e' stata rimossa su richiesta di Noemi
+  // (il contratto di subappalto si gestisce dentro Documentazione > Subappaltatori).
+  // Se aveva gia' incollato un link li', lo travaso nella voce "Contratto di
+  // subappalto" della checklist, cosi' non lo perde.
+  if (data.contratti) {
+    SUBAPPALTI_DEF.forEach((s) => {
+      const vecchio = data.contratti[s.id];
+      if (vecchio && vecchio.linkDrive && data.subappaltiDocs[s.id]) {
+        const doc = data.subappaltiDocs[s.id].find((d) => d.tipoNome === 'Contratto di subappalto');
+        if (doc && !doc.linkDrive) doc.linkDrive = vecchio.linkDrive;
+      }
+    });
+    delete data.contratti;
+  }
+  if (!data.acquisti) {
+    data._seq.categorieAcquisto = data._seq.categorieAcquisto || 0;
+    data._seq.ordini = data._seq.ordini || 0;
+    data.acquisti = { categorie: [] };
+    CATEGORIE_ACQUISTI_INIZIALI.forEach((nome) => {
+      data._seq.categorieAcquisto += 1;
+      data.acquisti.categorie.push({ id: data._seq.categorieAcquisto, nome, ordini: [] });
+    });
+  }
+  if (data._seq.categorieAcquisto === undefined) data._seq.categorieAcquisto = data.acquisti.categorie.length;
+  if (data._seq.ordini === undefined) data._seq.ordini = 0;
+  // migrazione: rimuove le voci superate/duplicate (accorpate nell'elenco sicurezza
+  // 81/2008 unico) - solo se ancora vuote, per non cancellare dati gia' compilati
+  const VOCI_SUPERATE = ['PSC - Piano Sicurezza e Coordinamento', 'Nomina CSE', 'Nomina RSPP', 'POS Cantiere (appaltatore)', 'Visura camerale', 'POS - Piano Operativo Sicurezza', 'Nomina referente sicurezza/preposto', 'Nomina e Formazione RSPP (subappaltatore)'];
+  function docVuoto(d) { return !d.dataEmissione && !d.dataScadenza && !d.numeroProtocollo && !d.linkDrive; }
+  data.cantiereDocs = data.cantiereDocs.filter((d) => !(VOCI_SUPERATE.includes(d.tipoNome) && docVuoto(d)));
+  Object.keys(data.subappaltiDocs).forEach((sid) => {
+    data.subappaltiDocs[sid] = data.subappaltiDocs[sid].filter((d) => !(VOCI_SUPERATE.includes(d.tipoNome) && docVuoto(d)));
+  });
+  // migrazione: la checklist "appalto" ora e' solo sicurezza (24 punti). I documenti
+  // amministrativi/economici (CIG/CUP, cauzioni, polizze, SOA, ecc.) si spostano,
+  // senza cancellarli, in cantiereDocsAmministrativi / subappaltiDocsAmministrativi.
+  if (!data.cantiereDocsAmministrativi) data.cantiereDocsAmministrativi = [];
+  if (!data.subappaltiDocsAmministrativi) data.subappaltiDocsAmministrativi = {};
+  {
+    const nomiAmmCantiere = new Set(TIPI_AMMINISTRATIVO_CANTIERE.map((t) => t.nome));
+    const spostati = data.cantiereDocs.filter((d) => nomiAmmCantiere.has(d.tipoNome));
+    data.cantiereDocs = data.cantiereDocs.filter((d) => !nomiAmmCantiere.has(d.tipoNome));
+    spostati.forEach((d) => {
+      if (!data.cantiereDocsAmministrativi.some((x) => x.tipoNome === d.tipoNome)) data.cantiereDocsAmministrativi.push(d);
+    });
+  }
+  {
+    const nomiAmmSub = new Set(TIPI_AMMINISTRATIVO_SUBAPPALTO.map((t) => t.nome));
+    Object.keys(data.subappaltiDocs).forEach((sid) => {
+      if (!data.subappaltiDocsAmministrativi[sid]) data.subappaltiDocsAmministrativi[sid] = [];
+      const spostati = data.subappaltiDocs[sid].filter((d) => nomiAmmSub.has(d.tipoNome));
+      data.subappaltiDocs[sid] = data.subappaltiDocs[sid].filter((d) => !nomiAmmSub.has(d.tipoNome));
+      spostati.forEach((d) => {
+        if (!data.subappaltiDocsAmministrativi[sid].some((x) => x.tipoNome === d.tipoNome)) data.subappaltiDocsAmministrativi[sid].push(d);
+      });
+    });
+  }
+  // migrazione: aggiunge i documenti sicurezza D.Lgs 81/2008 (e altri nuovi tipi) alla
+  // checklist di chi ha gia' dati salvati, senza toccare le voci gia' compilate
+  const nomiCantiereEsistenti = new Set(data.cantiereDocs.map((d) => d.tipoNome));
+  TIPI_CANTIERE.forEach((t) => {
+    if (!nomiCantiereEsistenti.has(t.nome)) data.cantiereDocs.push(emptyDoc(t));
+  });
+  SUBAPPALTI_DEF.forEach((s) => {
+    if (!data.subappaltiDocs[s.id]) data.subappaltiDocs[s.id] = TIPI_SUBAPPALTO.map(emptyDoc);
+    const nomiEsistenti = new Set(data.subappaltiDocs[s.id].map((d) => d.tipoNome));
+    TIPI_SUBAPPALTO.forEach((t) => {
+      if (!nomiEsistenti.has(t.nome)) data.subappaltiDocs[s.id].push(emptyDoc(t));
+    });
+  });
+  // migrazione: aggiunge eventuali documenti amministrativi mancanti
+  const nomiAmmCantiereEsistenti = new Set(data.cantiereDocsAmministrativi.map((d) => d.tipoNome));
+  TIPI_AMMINISTRATIVO_CANTIERE.forEach((t) => {
+    if (!nomiAmmCantiereEsistenti.has(t.nome)) data.cantiereDocsAmministrativi.push(emptyDoc(t));
+  });
+  SUBAPPALTI_DEF.forEach((s) => {
+    if (!data.subappaltiDocsAmministrativi[s.id]) data.subappaltiDocsAmministrativi[s.id] = TIPI_AMMINISTRATIVO_SUBAPPALTO.map(emptyDoc);
+    const nomiEsistenti = new Set(data.subappaltiDocsAmministrativi[s.id].map((d) => d.tipoNome));
+    TIPI_AMMINISTRATIVO_SUBAPPALTO.forEach((t) => {
+      if (!nomiEsistenti.has(t.nome)) data.subappaltiDocsAmministrativi[s.id].push(emptyDoc(t));
+    });
+  });
+  // migrazione: campo "bloccato" per il salva-e-blocca su tutti i documenti gia' esistenti
+  data.cantiereDocs.forEach((d) => { if (d.bloccato === undefined) d.bloccato = false; });
+  Object.values(data.subappaltiDocs).forEach((arr) => arr.forEach((d) => { if (d.bloccato === undefined) d.bloccato = false; }));
+  data.cantiereDocsAmministrativi.forEach((d) => { if (d.bloccato === undefined) d.bloccato = false; });
+  Object.values(data.subappaltiDocsAmministrativi).forEach((arr) => arr.forEach((d) => { if (d.bloccato === undefined) d.bloccato = false; }));
+  // migrazione: "bloccato" su tutte le altre sezioni con salva-e-blocca
+  if (data.cantiere.bloccato === undefined) data.cantiere.bloccato = false;
+  if (data.appaltatore.bloccato === undefined) data.appaltatore.bloccato = false;
+  if (data.enteAppaltante.bloccato === undefined) data.enteAppaltante.bloccato = false;
+  Object.values(data.subappalti).forEach((s) => {
+    if (s.bloccatoAnagrafica === undefined) s.bloccatoAnagrafica = false;
+    if (s.bloccatoCosti === undefined) s.bloccatoCosti = false;
+    if (s.bloccatoContratto === undefined) s.bloccatoContratto = false;
+    if (s.nomeCognome === undefined) s.nomeCognome = '';
+    if (s.email === undefined) s.email = '';
+    if (s.indirizzo === undefined) s.indirizzo = '';
+    if (s.telefono === undefined) s.telefono = '';
+    if (s.visuraFile === undefined) s.visuraFile = null;
+    if (s.docAmministratoreFile === undefined) s.docAmministratoreFile = null;
+  });
+  data.finanziario.sal.forEach((s) => { if (s.bloccato === undefined) s.bloccato = false; });
+  data.finanziario.pianificazione.forEach((p) => { if (p.bloccato === undefined) p.bloccato = false; });
+  data.finanziario.fatture.forEach((f) => {
+    if (f.bloccato === undefined) f.bloccato = false;
+    if (f.imponibile === undefined) f.imponibile = '';
+    if (f.iva === undefined) f.iva = '';
+  });
+  data.cronoprogramma.forEach((f) => { if (f.bloccato === undefined) f.bloccato = false; });
+  data.acquisti.categorie.forEach((cat) => { cat.ordini.forEach((o) => { if (o.bloccato === undefined) o.bloccato = false; }); });
+  // migrazione: ordini creati prima dei campi preventivo/DDT/verifica restano con default vuoti
+  data.acquisti.categorie.forEach((cat) => {
+    cat.ordini.forEach((o) => {
+      if (o.subappaltoId === undefined) o.subappaltoId = '';
+      if (o.dataRichiestaPreventivo === undefined) o.dataRichiestaPreventivo = '';
+      if (o.importoPreventivo === undefined) o.importoPreventivo = '';
+      if (o.numeroOrdine === undefined) o.numeroOrdine = '';
+      if (o.numeroDDT === undefined) o.numeroDDT = '';
+      if (o.fatturaVerificata === undefined) o.fatturaVerificata = false;
+      if (o.statoPreventivo === undefined) o.statoPreventivo = '';
+      if (o.descrizioneOrdine === undefined) o.descrizioneOrdine = '';
+      if (o.descrizioneArrivo === undefined) o.descrizioneArrivo = '';
+      if (o.quantitaConfermata === undefined) o.quantitaConfermata = false;
+      if (o.ferroTipo === undefined) o.ferroTipo = '';
+      if (o.ferroDiametro === undefined) o.ferroDiametro = '';
+      if (o.ferroLunghezzaM === undefined) o.ferroLunghezzaM = '12';
+      if (o.reteDiametroFilo === undefined) o.reteDiametroFilo = '';
+      if (o.reteMaglia === undefined) o.reteMaglia = '';
+      if (o.tonnellate === undefined) o.tonnellate = '';
+      if (o.prezzoTonnellata === undefined) o.prezzoTonnellata = '';
+      if (o.ferroTipoArrivato === undefined) o.ferroTipoArrivato = '';
+      if (o.ferroDiametroArrivato === undefined) o.ferroDiametroArrivato = '';
+      if (o.reteDiametroFiloArrivato === undefined) o.reteDiametroFiloArrivato = '';
+      if (o.reteMagliaArrivato === undefined) o.reteMagliaArrivato = '';
+      if (o.tonnellateArrivate === undefined) o.tonnellateArrivate = '';
+      // Un ordine puo' contenere piu' voci di ferro (tipi/diametri diversi): i vecchi
+      // campi singoli vengono migrati, senza perdita, nella prima voce dell'array.
+      if (o.righeFerro === undefined) {
+        o.righeFerro = o.ferroTipo ? [{
+          id: nextId('righeFerro'), tipo: o.ferroTipo, diametro: o.ferroDiametro || '',
+          reteDiametroFilo: o.reteDiametroFilo || '', reteMaglia: o.reteMaglia || '',
+          tonnellate: o.tonnellate || '', prezzoTonnellata: o.prezzoTonnellata || '',
+          tonnellateArrivate: o.tonnellateArrivate || ''
+        }] : [];
+      }
+    });
+  });
+  return data;
+}
+// ============================================================================
+// Sincronizzazione con Supabase. Strategia scelta per affidabilita' con questo
+// volume di dati (decine/centinaia di righe, non migliaia): ogni saveData()
+// manda l'intero stato in memoria (DATA) a Supabase, cancellando e reinserendo
+// le collezioni (mai le tabelle singole/anagrafiche, quelle si fa upsert; mai
+// la tabella "subappalti", sono 4 righe fisse). Non e' la soluzione piu'
+// efficiente per un DB con moltissime righe, ma evita di scrivere un motore di
+// diff per ciascuna delle ~15 collezioni - a questa scala il costo e' minimo e
+// il rischio di bug e' molto piu' basso.
+// ============================================================================
+function orNull(v) { return (v === '' || v === undefined) ? null : v; }
+function orNullNum(v) { return (v === '' || v === undefined || v === null) ? null : Number(v); }
+function orEmpty(v) { return (v === null || v === undefined) ? '' : v; }
+function maxId(arr, fallback) { return (arr || []).reduce((m, x) => Math.max(m, Number(x.id) || 0), fallback || 0); }
+
+function validitaGiorniPerNome(nome) {
+  const t = TIPI_CANTIERE.find((x) => x.nome === nome) || TIPI_SUBAPPALTO.find((x) => x.nome === nome)
+    || TIPI_AMMINISTRATIVO_CANTIERE.find((x) => x.nome === nome) || TIPI_AMMINISTRATIVO_SUBAPPALTO.find((x) => x.nome === nome);
+  return t ? t.validitaGiorni : null;
+}
+
+// ---- mapper: Anagrafica ----
+function cantiereToDb(c) {
+  return {
+    stazione_appaltante: orNull(c.stazioneAppaltante), cig: orNull(c.cig), cup: orNull(c.cup),
+    importo_totale: orNullNum(c.importoTotale), data_inizio: orNull(c.dataInizio), data_fine_prevista: orNull(c.dataFinePrevista),
+    note: orNull(c.note), indirizzo_cantiere: orNull(c.indirizzoCantiere), comune_cantiere: orNull(c.comuneCantiere),
+    provincia_cantiere: orNull(c.provinciaCantiere), superficie_mq: orNullNum(c.superficieMq), numero_piani: orNullNum(c.numeroPiani),
+    numero_posti_letto: orNullNum(c.numeroPostiLetto), destinazione_uso: orNull(c.destinazioneUso), numero_gara: orNull(c.numeroGara),
+    determina_contrarre_numero: orNull(c.determinaContrarreNumero), determina_contrarre_data: orNull(c.determinaContrarreData),
+    procedura: orNull(c.procedura), bloccato: !!c.bloccato
+  };
+}
+function dbToCantiere(r) {
+  return {
+    stazioneAppaltante: orEmpty(r.stazione_appaltante), cig: orEmpty(r.cig), cup: orEmpty(r.cup),
+    importoTotale: orEmpty(r.importo_totale), dataInizio: orEmpty(r.data_inizio), dataFinePrevista: orEmpty(r.data_fine_prevista),
+    note: orEmpty(r.note), indirizzoCantiere: orEmpty(r.indirizzo_cantiere), comuneCantiere: orEmpty(r.comune_cantiere),
+    provinciaCantiere: orEmpty(r.provincia_cantiere), superficieMq: orEmpty(r.superficie_mq), numeroPiani: orEmpty(r.numero_piani),
+    numeroPostiLetto: orEmpty(r.numero_posti_letto), destinazioneUso: orEmpty(r.destinazione_uso), numeroGara: orEmpty(r.numero_gara),
+    determinaContrarreNumero: orEmpty(r.determina_contrarre_numero), determinaContrarreData: orEmpty(r.determina_contrarre_data),
+    procedura: orEmpty(r.procedura), bloccato: !!r.bloccato
+  };
+}
+function appaltatoreToDb(a) {
+  return { ragione_sociale: orNull(a.ragioneSociale), piva: orNull(a.piva), sede_legale: orNull(a.sedeLegale), pec: orNull(a.pec), telefono: orNull(a.telefono), referente_commessa: orNull(a.referenteCommessa), bloccato: !!a.bloccato };
+}
+function dbToAppaltatore(r) {
+  return { ragioneSociale: orEmpty(r.ragione_sociale), piva: orEmpty(r.piva), sedeLegale: orEmpty(r.sede_legale), pec: orEmpty(r.pec), telefono: orEmpty(r.telefono), referenteCommessa: orEmpty(r.referente_commessa), bloccato: !!r.bloccato };
+}
+function enteToDb(e) {
+  return { denominazione: orNull(e.denominazione), indirizzo: orNull(e.indirizzo), comune: orNull(e.comune), cap: orNull(e.cap), pec: orNull(e.pec), telefono: orNull(e.telefono), sito_web: orNull(e.sitoWeb), referente: orNull(e.referente), bloccato: !!e.bloccato };
+}
+function dbToEnte(r) {
+  return { denominazione: orEmpty(r.denominazione), indirizzo: orEmpty(r.indirizzo), comune: orEmpty(r.comune), cap: orEmpty(r.cap), pec: orEmpty(r.pec), telefono: orEmpty(r.telefono), sitoWeb: orEmpty(r.sito_web), referente: orEmpty(r.referente), bloccato: !!r.bloccato };
+}
+function fotoToDb(f) { return { id: f.id, foto_data_url: orNull(f.dataUrl), didascalia: orNull(f.didascalia) }; }
+function dbToFoto(r) { return { id: r.id, dataUrl: orEmpty(r.foto_data_url), didascalia: orEmpty(r.didascalia) }; }
+function referenteToDb(r) { return { id: r.id, ruolo: orNull(r.ruolo), nome_cognome: orNull(r.nomeCognome), telefono: orNull(r.telefono), email: orNull(r.email), note: orNull(r.note), bloccato: !!r.bloccato }; }
+function dbToReferente(r) { return { id: r.id, ruolo: orEmpty(r.ruolo), nomeCognome: orEmpty(r.nome_cognome), telefono: orEmpty(r.telefono), email: orEmpty(r.email), note: orEmpty(r.note), bloccato: !!r.bloccato }; }
+
+// ---- mapper: documenti (checklist sicurezza + amministrativi, cantiere e subappalti) ----
+function docToDb(d, subappaltoId) {
+  const base = { id: d.id, nome: d.tipoNome, data_emissione: orNull(d.dataEmissione), data_scadenza: orNull(d.dataScadenza), numero_protocollo: orNull(d.numeroProtocollo), link_drive: orNull(d.linkDrive), bloccato: !!d.bloccato };
+  if (subappaltoId) base.subappalto_id = subappaltoId;
+  return base;
+}
+function dbToDoc(r) {
+  return { id: r.id, tipoNome: r.nome, validitaGiorni: validitaGiorniPerNome(r.nome), dataEmissione: orEmpty(r.data_emissione), dataScadenza: orEmpty(r.data_scadenza), numeroProtocollo: orEmpty(r.numero_protocollo), linkDrive: orEmpty(r.link_drive), bloccato: !!r.bloccato };
+}
+// Ricostruisce l'array checklist nell'ordine canonico di "tipi" (TIPI_CANTIERE ecc.),
+// usando il nome come chiave — vedi nota sopra caricaDatiDaSupabase().
+function ordinaDocsSecondoTipi(righeDb, tipi) {
+  const perNome = new Map(righeDb.map((r) => [r.nome, dbToDoc(r)]));
+  return tipi.map((t) => perNome.get(t.nome) || emptyDoc(t));
+}
+
+// ---- mapper: subappalti ----
+function subappaltoToDb(id, lavorazione, s) {
+  return {
+    id, lavorazione,
+    ragione_sociale: orNull(s.ragioneSociale), piva: orNull(s.piva), nome_cognome: orNull(s.nomeCognome),
+    email: orNull(s.email), indirizzo: orNull(s.indirizzo), telefono: orNull(s.telefono),
+    importo: orNullNum(s.importo), speso: orNullNum(s.speso), percentuale: orNullNum(s.percentuale),
+    data_autorizzazione: orNull(s.dataAutorizzazione), note: orNull(s.note),
+    visura_data_url: s.visuraFile ? orNull(s.visuraFile.dataUrl) : null,
+    visura_nome_file: s.visuraFile ? orNull(s.visuraFile.nome) : null,
+    doc_amministratore_data_url: s.docAmministratoreFile ? orNull(s.docAmministratoreFile.dataUrl) : null,
+    doc_amministratore_nome_file: s.docAmministratoreFile ? orNull(s.docAmministratoreFile.nome) : null,
+    bloccato_anagrafica: !!s.bloccatoAnagrafica, bloccato_costi: !!s.bloccatoCosti, bloccato_contratto: !!s.bloccatoContratto
+  };
+}
+function dbToSubappalto(r) {
+  return {
+    ragioneSociale: orEmpty(r.ragione_sociale), piva: orEmpty(r.piva), nomeCognome: orEmpty(r.nome_cognome),
+    email: orEmpty(r.email), indirizzo: orEmpty(r.indirizzo), telefono: orEmpty(r.telefono),
+    importo: orEmpty(r.importo), speso: orEmpty(r.speso), percentuale: orEmpty(r.percentuale),
+    dataAutorizzazione: orEmpty(r.data_autorizzazione), note: orEmpty(r.note),
+    visuraFile: r.visura_data_url ? { nome: r.visura_nome_file || 'visura', dataUrl: r.visura_data_url } : null,
+    docAmministratoreFile: r.doc_amministratore_data_url ? { nome: r.doc_amministratore_nome_file || 'documento', dataUrl: r.doc_amministratore_data_url } : null,
+    bloccatoAnagrafica: !!r.bloccato_anagrafica, bloccatoCosti: !!r.bloccato_costi, bloccatoContratto: !!r.bloccato_contratto
+  };
+}
+
+// ---- mapper: acquisti (categorie -> ordini -> righe ferro) ----
+function ordineToDb(o, categoriaId) {
+  return {
+    id: o.id, categoria_id: categoriaId, subappalto_id: orNull(o.subappaltoId), fornitore: orNull(o.fornitore),
+    data_richiesta_preventivo: orNull(o.dataRichiestaPreventivo), importo_preventivo: orNullNum(o.importoPreventivo),
+    stato_preventivo: o.statoPreventivo || '', numero_ordine: orNull(o.numeroOrdine), data_ordine: orNull(o.dataOrdine),
+    importo: orNullNum(o.importo), descrizione_ordine: orNull(o.descrizioneOrdine), data_consegna_prevista: orNull(o.dataConsegnaPrevista),
+    numero_ddt: orNull(o.numeroDDT), data_consegna_effettiva: orNull(o.dataConsegnaEffettiva), descrizione_arrivo: orNull(o.descrizioneArrivo),
+    quantita_confermata: !!o.quantitaConfermata, fattura_id: o.fatturaId ? Number(o.fatturaId) : null, fattura_verificata: !!o.fatturaVerificata,
+    bloccato: !!o.bloccato
+  };
+}
+function dbToOrdine(r) {
+  return {
+    id: r.id, subappaltoId: orEmpty(r.subappalto_id), fornitore: orEmpty(r.fornitore),
+    dataRichiestaPreventivo: orEmpty(r.data_richiesta_preventivo), importoPreventivo: orEmpty(r.importo_preventivo),
+    statoPreventivo: orEmpty(r.stato_preventivo), numeroOrdine: orEmpty(r.numero_ordine), dataOrdine: orEmpty(r.data_ordine),
+    importo: orEmpty(r.importo), descrizioneOrdine: orEmpty(r.descrizione_ordine), dataConsegnaPrevista: orEmpty(r.data_consegna_prevista),
+    numeroDDT: orEmpty(r.numero_ddt), dataConsegnaEffettiva: orEmpty(r.data_consegna_effettiva), descrizioneArrivo: orEmpty(r.descrizione_arrivo),
+    quantitaConfermata: !!r.quantita_confermata, fatturaId: orEmpty(r.fattura_id), fatturaVerificata: !!r.fattura_verificata,
+    bloccato: !!r.bloccato,
+    // campi legacy pre-righeFerro: non piu' persistiti, restano vuoti (normalizzaData li valorizza)
+    ferroTipo: '', ferroDiametro: '', ferroLunghezzaM: '12', reteDiametroFilo: '', reteMaglia: '', tonnellate: '', prezzoTonnellata: '',
+    ferroTipoArrivato: '', ferroDiametroArrivato: '', reteDiametroFiloArrivato: '', reteMagliaArrivato: '', tonnellateArrivate: ''
+  };
+}
+function rigaFerroToDb(riga, ordineId, indice) {
+  return {
+    id: riga.id, ordine_id: ordineId, tipo: riga.tipo || '', diametro: orNull(riga.diametro),
+    rete_diametro_filo: orNullNum(riga.reteDiametroFilo), rete_maglia: orNull(riga.reteMaglia),
+    tonnellate: orNullNum(riga.tonnellate), prezzo_tonnellata: orNullNum(riga.prezzoTonnellata),
+    tonnellate_arrivate: orNullNum(riga.tonnellateArrivate), ordine_riga: indice
+  };
+}
+function dbToRigaFerro(r) {
+  return {
+    id: r.id, tipo: r.tipo || '', diametro: orEmpty(r.diametro), reteDiametroFilo: orEmpty(r.rete_diametro_filo),
+    reteMaglia: orEmpty(r.rete_maglia), tonnellate: orEmpty(r.tonnellate), prezzoTonnellata: orEmpty(r.prezzo_tonnellata),
+    tonnellateArrivate: orEmpty(r.tonnellate_arrivate)
+  };
+}
+
+// ---- mapper: finanziario + cronoprogramma ----
+function salToDb(s) {
+  return { id: s.id, numero: orNull(s.numero), data: orNull(s.data), importo_lavori_eseguiti: orNullNum(s.importoLavoriEseguiti), importo_da_liquidare: orNullNum(s.importoDaLiquidare), ritenuta_garanzia: orNullNum(s.ritenutaGaranzia), note: orNull(s.note), bloccato: !!s.bloccato };
+}
+function dbToSal(r) {
+  return { id: r.id, numero: orEmpty(r.numero), data: orEmpty(r.data), importoLavoriEseguiti: orEmpty(r.importo_lavori_eseguiti), importoDaLiquidare: orEmpty(r.importo_da_liquidare), ritenutaGaranzia: orEmpty(r.ritenuta_garanzia), note: orEmpty(r.note), bloccato: !!r.bloccato };
+}
+function fatturaToDb(f) {
+  return { id: f.id, tipo: f.tipo || null, numero: orNull(f.numero), controparte: orNull(f.controparte), data: orNull(f.data), imponibile: orNullNum(f.imponibile), iva: orNullNum(f.iva), importo: orNullNum(f.importo), scadenza_pagamento: orNull(f.scadenzaPagamento), pagata: !!f.pagata, bloccato: !!f.bloccato };
+}
+function dbToFattura(r) {
+  return { id: r.id, tipo: orEmpty(r.tipo), numero: orEmpty(r.numero), controparte: orEmpty(r.controparte), data: orEmpty(r.data), imponibile: orEmpty(r.imponibile), iva: orEmpty(r.iva), importo: orEmpty(r.importo), scadenzaPagamento: orEmpty(r.scadenza_pagamento), pagata: !!r.pagata, bloccato: !!r.bloccato };
+}
+function pianToDb(p) { return { id: p.id, numero: orNull(p.numero), data: orNull(p.data), importo: orNullNum(p.importo), bloccato: !!p.bloccato }; }
+function dbToPian(r) { return { id: r.id, numero: orEmpty(r.numero), data: orEmpty(r.data), importo: orEmpty(r.importo), bloccato: !!r.bloccato }; }
+function cronoToDb(c) {
+  return { id: c.id, sezione: orNull(c.sezione), nome: orNull(c.nome), durata_giorni: orNullNum(c.durataGiorni), subappalto_id: orNull(c.subappaltoId), data_inizio_prevista: orNull(c.dataInizioPrevista), data_fine_prevista: orNull(c.dataFinePrevista), data_fine_effettiva: orNull(c.dataFineEffettiva), note: orNull(c.note), bloccato: !!c.bloccato };
+}
+function dbToCrono(r) {
+  return { id: r.id, sezione: orEmpty(r.sezione), nome: orEmpty(r.nome), durataGiorni: orEmpty(r.durata_giorni), subappaltoId: orEmpty(r.subappalto_id), dataInizioPrevista: orEmpty(r.data_inizio_prevista), dataFinePrevista: orEmpty(r.data_fine_prevista), dataFineEffettiva: orEmpty(r.data_fine_effettiva), note: orEmpty(r.note), bloccato: !!r.bloccato };
+}
+
+// ---- caricamento da Supabase ----
+async function caricaDatiDaSupabase() {
+  const risposte = await Promise.all([
+    supa.from('cantiere').select('*').eq('id', 1).maybeSingle(),
+    supa.from('appaltatore').select('*').eq('id', 1).maybeSingle(),
+    supa.from('ente_appaltante').select('*').eq('id', 1).maybeSingle(),
+    supa.from('cantiere_foto').select('*').order('id'),
+    supa.from('referenti').select('*').order('id'),
+    supa.from('cantiere_docs').select('*').order('id'),
+    supa.from('cantiere_docs_amministrativi').select('*').order('id'),
+    supa.from('subappalti').select('*'),
+    supa.from('subappalti_docs').select('*').order('id'),
+    supa.from('subappalti_docs_amministrativi').select('*').order('id'),
+    supa.from('acquisti_categorie').select('*').order('id'),
+    supa.from('acquisti_ordini').select('*').order('id'),
+    supa.from('acquisti_righe_ferro').select('*').order('ordine_riga'),
+    supa.from('finanziario_sal').select('*').order('id'),
+    supa.from('finanziario_fatture').select('*').order('id'),
+    supa.from('finanziario_pianificazione').select('*').order('id'),
+    supa.from('cronoprogramma').select('*').order('id')
+  ]);
+  const [cantiereR, appaltatoreR, enteR, fotoR, referentiR, docsR, docsAmmR, subR, subDocsR, subDocsAmmR, catR, ordiniR, righeR, salR, fattureR, pianR, cronoR] = risposte;
+  risposte.forEach((r) => { if (r.error) throw r.error; });
+
+  const primoAvvio = catR.data.length === 0 && cronoR.data.length === 0 && referentiR.data.length === 0;
+  if (primoAvvio) {
+    const seed = nuoviDatiConSeed();
+    await sincronizzaSuSupabase(seed);
+    return normalizzaData(seed);
+  }
+
+  const data = nuoviDatiVuoti();
+  if (cantiereR.data) Object.assign(data.cantiere, dbToCantiere(cantiereR.data));
+  if (appaltatoreR.data) Object.assign(data.appaltatore, dbToAppaltatore(appaltatoreR.data));
+  if (enteR.data) Object.assign(data.enteAppaltante, dbToEnte(enteR.data));
+  data.cantiereFoto = fotoR.data.map(dbToFoto);
+  data.referenti = referentiR.data.map(dbToReferente);
+  // I documenti checklist non hanno un id "di dominio" nell'app (sono referenziati per
+  // posizione nell'array, come nell'originale su localStorage). L'id assegnato da
+  // Postgres serve solo per la riga fisica: per ricostruire l'ordine giusto della
+  // checklist ci si affida al "nome" (univoco per checklist), non a .order('id').
+  data.cantiereDocs = ordinaDocsSecondoTipi(docsR.data, TIPI_CANTIERE);
+  data.cantiereDocsAmministrativi = ordinaDocsSecondoTipi(docsAmmR.data, TIPI_AMMINISTRATIVO_CANTIERE);
+  subR.data.forEach((s) => { data.subappalti[s.id] = dbToSubappalto(s); });
+  SUBAPPALTI_DEF.forEach((s) => {
+    data.subappaltiDocs[s.id] = ordinaDocsSecondoTipi(subDocsR.data.filter((d) => d.subappalto_id === s.id), TIPI_SUBAPPALTO);
+    data.subappaltiDocsAmministrativi[s.id] = ordinaDocsSecondoTipi(subDocsAmmR.data.filter((d) => d.subappalto_id === s.id), TIPI_AMMINISTRATIVO_SUBAPPALTO);
+  });
+  const righePerOrdine = {};
+  righeR.data.forEach((r) => { (righePerOrdine[r.ordine_id] = righePerOrdine[r.ordine_id] || []).push(dbToRigaFerro(r)); });
+  const ordiniPerCategoria = {};
+  ordiniR.data.forEach((o) => {
+    const jsO = dbToOrdine(o);
+    jsO.righeFerro = righePerOrdine[o.id] || [];
+    (ordiniPerCategoria[o.categoria_id] = ordiniPerCategoria[o.categoria_id] || []).push(jsO);
+  });
+  data.acquisti.categorie = catR.data.map((c) => ({ id: c.id, nome: c.nome, ordini: ordiniPerCategoria[c.id] || [] }));
+  data.finanziario.sal = salR.data.map(dbToSal);
+  data.finanziario.fatture = fattureR.data.map(dbToFattura);
+  data.finanziario.pianificazione = pianR.data.map(dbToPian);
+  data.cronoprogramma = cronoR.data.map(dbToCrono);
+
+  // ricostruisce i contatori _seq dal massimo id trovato, cosi' i prossimi nextId() non collidono
+  data._seq.sal = maxId(data.finanziario.sal);
+  data._seq.fatture = maxId(data.finanziario.fatture);
+  data._seq.fasi = maxId(data.cronoprogramma);
+  data._seq.referenti = maxId(data.referenti);
+  data._seq.pianificazione = maxId(data.finanziario.pianificazione);
+  data._seq.categorieAcquisto = maxId(data.acquisti.categorie);
+  data._seq.ordini = maxId(data.acquisti.categorie.flatMap((c) => c.ordini));
+  data._seq.foto = maxId(data.cantiereFoto);
+  data._seq.righeFerro = maxId(data.acquisti.categorie.flatMap((c) => c.ordini.flatMap((o) => o.righeFerro)));
+
+  return normalizzaData(data);
+}
+
+// ---- scrittura su Supabase ----
+async function eliminaEReinserisci(tabella, righe) {
+  const del = await supa.from(tabella).delete().gt('id', 0);
+  if (del.error) throw del.error;
+  if (righe.length) {
+    const ins = await supa.from(tabella).insert(righe);
+    if (ins.error) throw ins.error;
+  }
+}
+
+async function sincronizzaSuSupabase(data) {
+  let r = await supa.from('cantiere').upsert({ id: 1, ...cantiereToDb(data.cantiere) });
+  if (r.error) throw r.error;
+  r = await supa.from('appaltatore').upsert({ id: 1, ...appaltatoreToDb(data.appaltatore) });
+  if (r.error) throw r.error;
+  r = await supa.from('ente_appaltante').upsert({ id: 1, ...enteToDb(data.enteAppaltante) });
+  if (r.error) throw r.error;
+
+  r = await supa.from('subappalti').upsert(SUBAPPALTI_DEF.map((s) => subappaltoToDb(s.id, s.lavorazione, data.subappalti[s.id])));
+  if (r.error) throw r.error;
+
+  await eliminaEReinserisci('cantiere_foto', data.cantiereFoto.map(fotoToDb));
+  await eliminaEReinserisci('referenti', data.referenti.map(referenteToDb));
+  await eliminaEReinserisci('cantiere_docs', data.cantiereDocs.map((d) => docToDb(d, null)));
+  await eliminaEReinserisci('cantiere_docs_amministrativi', data.cantiereDocsAmministrativi.map((d) => docToDb(d, null)));
+
+  const tuttiSubDocs = [];
+  const tuttiSubDocsAmm = [];
+  SUBAPPALTI_DEF.forEach((s) => {
+    (data.subappaltiDocs[s.id] || []).forEach((d) => tuttiSubDocs.push(docToDb(d, s.id)));
+    (data.subappaltiDocsAmministrativi[s.id] || []).forEach((d) => tuttiSubDocsAmm.push(docToDb(d, s.id)));
+  });
+  await eliminaEReinserisci('subappalti_docs', tuttiSubDocs);
+  await eliminaEReinserisci('subappalti_docs_amministrativi', tuttiSubDocsAmm);
+
+  await eliminaEReinserisci('finanziario_sal', data.finanziario.sal.map(salToDb));
+  await eliminaEReinserisci('finanziario_pianificazione', data.finanziario.pianificazione.map(pianToDb));
+  await eliminaEReinserisci('cronoprogramma', data.cronoprogramma.map(cronoToDb));
+
+  // categorie -> ordini -> righe ferro, piu' fatture: cancellare le categorie fa
+  // cascata su ordini e righe ferro, quindi si reinserisce tutto in un ordine che
+  // rispetta le foreign key.
+  r = await supa.from('acquisti_categorie').delete().gt('id', 0);
+  if (r.error) throw r.error;
+  r = await supa.from('finanziario_fatture').delete().gt('id', 0);
+  if (r.error) throw r.error;
+  if (data.acquisti.categorie.length) {
+    r = await supa.from('acquisti_categorie').insert(data.acquisti.categorie.map((c) => ({ id: c.id, nome: c.nome })));
+    if (r.error) throw r.error;
+  }
+  if (data.finanziario.fatture.length) {
+    r = await supa.from('finanziario_fatture').insert(data.finanziario.fatture.map(fatturaToDb));
+    if (r.error) throw r.error;
+  }
+  const tuttiOrdini = [];
+  const tutteRighe = [];
+  data.acquisti.categorie.forEach((cat) => {
+    (cat.ordini || []).forEach((o) => {
+      tuttiOrdini.push(ordineToDb(o, cat.id));
+      (o.righeFerro || []).forEach((riga, i) => tutteRighe.push(rigaFerroToDb(riga, o.id, i)));
+    });
+  });
+  if (tuttiOrdini.length) {
+    r = await supa.from('acquisti_ordini').insert(tuttiOrdini);
+    if (r.error) throw r.error;
+  }
+  if (tutteRighe.length) {
+    r = await supa.from('acquisti_righe_ferro').insert(tutteRighe);
+    if (r.error) throw r.error;
+  }
+}
+
+function aggiornaStatoSync(testo) {
+  const el = document.getElementById('syncStatus');
+  if (el) el.textContent = testo;
+}
+
+// saveData() puo' essere chiamata piu' volte a distanza di pochi millisecondi
+// (es. "+ Aggiungi voce" seguito subito da "Salva"). Siccome ogni sincronizzazione
+// cancella-e-reinserisce le collezioni, due sincronizzazioni sovrapposte
+// causerebbero righe duplicate. Questo "mutex con richiesta in coda" garantisce che
+// giri una sola sincronizzazione alla volta, e che l'ultimo stato di DATA venga
+// comunque scritto se arrivano altre richieste mentre una e' in corso.
+let SYNC_IN_CORSO = false;
+let SYNC_RICHIESTA_PENDING = false;
+async function saveData() {
+  SYNC_RICHIESTA_PENDING = true;
+  if (SYNC_IN_CORSO) return;
+  SYNC_IN_CORSO = true;
+  aggiornaStatoSync('Salvataggio…');
+  while (SYNC_RICHIESTA_PENDING) {
+    SYNC_RICHIESTA_PENDING = false;
+    try {
+      await sincronizzaSuSupabase(DATA);
+    } catch (err) {
+      aggiornaStatoSync('Errore di salvataggio');
+      alert('Salvataggio su Supabase non riuscito: ' + err.message + '. Controlla la connessione e riprova (i dati modificati restano visibili in questa pagina finche\' non la ricarichi, ma NON sono ancora salvati).');
+      SYNC_IN_CORSO = false;
+      return;
+    }
+  }
+  SYNC_IN_CORSO = false;
+  aggiornaStatoSync('Salvato ' + new Date().toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' }));
+}
+window.addEventListener('beforeunload', (e) => {
+  if (SYNC_IN_CORSO) { e.preventDefault(); e.returnValue = ''; }
+});
+
+let DATA = null;
+function nextId(coll) { DATA._seq[coll] = (DATA._seq[coll] || 0) + 1; return DATA._seq[coll]; }
+
+// ---------- shared helpers ----------
+function statoDocumento(doc) {
+  if (!doc.dataEmissione && !doc.dataScadenza) return 'mancante';
+  if (!doc.dataScadenza) return 'presente';
+  const oggi = new Date();
+  const scadenza = new Date(doc.dataScadenza);
+  const giorni = Math.ceil((scadenza - oggi) / (1000 * 60 * 60 * 24));
+  if (giorni < 0) return 'scaduto';
+  if (giorni <= 30) return 'in_scadenza';
+  return 'valido';
+}
+const STATO_LABEL = { scaduto: 'Scaduto', in_scadenza: 'In scadenza', mancante: 'Mancante', valido: 'Valido', presente: 'Presente', pagata: 'Pagata', da_pagare: 'Da pagare' };
+function chip(stato, labelOverride) { return `<span class="chip ${stato}">${labelOverride || STATO_LABEL[stato] || stato}</span>`; }
+function euro(n) { const v = Number(n); return isNaN(v) || n === '' || n === null ? '-' : '€ ' + v.toLocaleString('it-IT', { maximumFractionDigits: 0 }); }
+const MESI_BREVI = ['gen', 'feb', 'mar', 'apr', 'mag', 'giu', 'lug', 'ago', 'set', 'ott', 'nov', 'dic'];
+function meseAnno(dateStr) { if (!dateStr) return '-'; const d = new Date(dateStr); return `${MESI_BREVI[d.getMonth()]} ${d.getFullYear()}`; }
+function dataBreve(dateStr) { if (!dateStr) return '-'; const d = new Date(dateStr); return `${d.getDate()} ${MESI_BREVI[d.getMonth()]} ${d.getFullYear()}`; }
+function oggiStr() { return dataBreve(new Date().toISOString().slice(0, 10)); }
+
+// ---------- lettura PDF fattura (best-effort, sperimentale) ----------
+// Funziona su PDF digitali (fatture elettroniche con testo selezionabile), non su
+// foto/scansioni. Cerca etichette comuni delle fatture italiane; se non trova un
+// campo lo lascia vuoto per la compilazione manuale. Da verificare sempre.
+if (window.pdfjsLib) {
+  pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+}
+
+function convertiDataIt(str) {
+  const m = str.match(/(\d{2})[\/\-](\d{2})[\/\-](\d{4})/);
+  if (!m) return '';
+  return `${m[3]}-${m[2]}-${m[1]}`;
+}
+
+function convertiImportoIt(str) {
+  const pulito = str.replace(/[^\d.,]/g, '').replace(/\./g, '').replace(',', '.');
+  const v = parseFloat(pulito);
+  return isNaN(v) ? '' : v;
+}
+
+async function estraiTestoPDF(file) {
+  const buf = await file.arrayBuffer();
+  const pdf = await pdfjsLib.getDocument({ data: buf }).promise;
+  let testo = '';
+  for (let p = 1; p <= pdf.numPages; p++) {
+    const page = await pdf.getPage(p);
+    const content = await page.getTextContent();
+    testo += content.items.map((it) => it.str).join(' ') + '\n';
+  }
+  return testo;
+}
+
+function estraiDatiFattura(testo) {
+  const dati = { numero: '', data: '', importo: '', imponibile: '', iva: '', scadenzaPagamento: '', controparte: '' };
+
+  let m = testo.match(/Numero\s+documento[\s\S]*?Codice\s+destinatario[\s\S]*?([A-Za-z0-9]{1,15})\s+(\d{2}[\/\-]\d{2}[\/\-]\d{4})\s+([A-Za-z0-9]{4,10})/i);
+  if (m) { dati.numero = m[1]; dati.data = convertiDataIt(m[2]); }
+  if (!dati.data) {
+    m = testo.match(/Data\s+documento[\s\S]*?Codice\s+destinatario[\s\S]*?(\d{2}[\/\-]\d{2}[\/\-]\d{4})/i);
+    if (m) dati.data = convertiDataIt(m[1]);
+  }
+
+  m = testo.match(/Totale\s+documento[\s\S]{0,60}?([\d.,]{4,})/i);
+  if (m) dati.importo = convertiImportoIt(m[1]);
+
+  // Scorporo imponibile/IVA: cerca la riga "Totale imponibile ... Totale imposta" e i tre
+  // valori numerici che seguono (%IVA, imponibile, imposta) prima di "Importo bollo".
+  m = testo.match(/Totale\s+imponibile\s+Totale\s+imposta[\s\S]*?([\d.,]+)\s+([\d.,]+)\s+([\d.,]+)\s+Importo\s+bollo/i);
+  if (m) { dati.imponibile = convertiImportoIt(m[2]); dati.iva = convertiImportoIt(m[3]); }
+  if (dati.imponibile === '') {
+    // fallback piu' permissivo se il layout non ha esattamente "Importo bollo" dopo
+    m = testo.match(/Totale\s+imponibile[\s\S]{0,25}Totale\s+imposta[\s\S]*?\n?\s*[\d.,]*\s*([\d.,]{4,})\s+([\d.,]{2,})(?=\s|$)/i);
+    if (m) { dati.imponibile = convertiImportoIt(m[1]); dati.iva = convertiImportoIt(m[2]); }
+  }
+
+  m = testo.match(/Data\s+scadenza\s*:?\s*(\d{2}[\/\-]\d{2}[\/\-]\d{4})/i);
+  if (m) dati.scadenzaPagamento = convertiDataIt(m[1]);
+
+  m = testo.match(/Cedente\/prestatore[\s\S]{0,150}?Denominazione:?\s*([^\n]+?)(?:\s+Regime|\s+Indirizzo|\s+Identificativo|$)/i);
+  if (m) dati.controparte = m[1].trim();
+
+  return dati;
+}
+
+function docListHead() {
+  return `<div class="doc-list-head"><div>Documento</div><div>Emissione</div><div>Scadenza</div><div>Protocollo</div><div>Link Drive</div><div>Stato</div><div></div></div>`;
+}
+function docRow(doc, section, subId, idx) {
+  const stato = statoDocumento(doc);
+  const key = `${section}-${subId || 'x'}-${idx}`;
+  const bl = !!doc.bloccato;
+  const dis = bl ? 'disabled' : '';
+  return `
+  <div class="doc-row" data-key="${key}">
+    <div class="name">${doc.tipoNome}</div>
+    <input type="date" class="f-emissione" value="${doc.dataEmissione || ''}" ${dis} />
+    <input type="date" class="f-scadenza" value="${doc.dataScadenza || ''}" ${dis} />
+    <input type="text" class="f-protocollo" placeholder="N. prot." value="${doc.numeroProtocollo || ''}" ${dis} />
+    <input type="text" class="f-link" placeholder="Incolla link Drive" value="${doc.linkDrive || ''}" ${dis} />
+    ${chip(stato)}
+    <div style="display:flex; gap:6px;">
+      ${doc.linkDrive ? `<a class="file-link" href="${doc.linkDrive}" target="_blank" rel="noopener">Apri &#8599;</a>` : '<span class="no-link">-</span>'}
+      ${bl
+        ? `<button class="btn btn-outline btn-sm unlock-btn" data-section="${section}" data-sub="${subId || ''}" data-idx="${idx}" data-key="${key}">&#128274; Sblocca</button>`
+        : `<button class="btn btn-primary btn-sm save-btn" data-section="${section}" data-sub="${subId || ''}" data-idx="${idx}" data-key="${key}">Salva</button>`}
+    </div>
+  </div>`;
+}
+function readDocRow(key) {
+  const row = document.querySelector(`[data-key="${key}"]`);
+  return {
+    dataEmissione: row.querySelector('.f-emissione').value,
+    dataScadenza: row.querySelector('.f-scadenza').value,
+    numeroProtocollo: row.querySelector('.f-protocollo').value,
+    linkDrive: row.querySelector('.f-link').value
+  };
+}
+function getDocArray(section, subId) {
+  if (section === 'cantiere') return DATA.cantiereDocs;
+  if (section === 'cantiere-amm') return DATA.cantiereDocsAmministrativi;
+  if (section === 'sub-amm') return DATA.subappaltiDocsAmministrativi[subId];
+  return DATA.subappaltiDocs[subId];
+}
+function attachDocRowHandlers(renderFn) {
+  document.querySelectorAll('.save-btn').forEach((btn) => {
+    btn.onclick = () => {
+      const { section, sub, idx, key } = btn.dataset;
+      const arr = getDocArray(section, sub);
+      const doc = arr[Number(idx)];
+      const patch = readDocRow(key);
+      if (patch.dataEmissione && !patch.dataScadenza && !doc.dataScadenza && doc.validitaGiorni) {
+        const d = new Date(patch.dataEmissione);
+        d.setDate(d.getDate() + doc.validitaGiorni);
+        patch.dataScadenza = d.toISOString().slice(0, 10);
+      }
+      patch.bloccato = true;
+      Object.assign(doc, patch);
+      saveData();
+      renderFn();
+    };
+  });
+  document.querySelectorAll('.unlock-btn').forEach((btn) => {
+    btn.onclick = () => {
+      const { section, sub, idx } = btn.dataset;
+      const arr = getDocArray(section, sub);
+      arr[Number(idx)].bloccato = false;
+      saveData();
+      renderFn();
+    };
+  });
+}
+function allDocsFlat() {
+  const arr = DATA.cantiereDocs.map((d) => Object.assign({}, d, { ctx: 'Cantiere (generale)' }));
+  arr.push(...DATA.cantiereDocsAmministrativi.map((d) => Object.assign({}, d, { ctx: 'Cantiere (amministrativo)' })));
+  SUBAPPALTI_DEF.forEach((s) => {
+    DATA.subappaltiDocs[s.id].forEach((d) => arr.push(Object.assign({}, d, { ctx: s.lavorazione })));
+    DATA.subappaltiDocsAmministrativi[s.id].forEach((d) => arr.push(Object.assign({}, d, { ctx: s.lavorazione + ' (amministrativo)' })));
+  });
+  return arr;
+}
+
+// ---------- AREA: DOCUMENTAZIONE ----------
+function renderScadenzario() {
+  const all = allDocsFlat().map((d) => Object.assign({}, d, { stato: statoDocumento(d) }));
+  const scaduti = all.filter((d) => d.stato === 'scaduto');
+  const inScadenza = all.filter((d) => d.stato === 'in_scadenza');
+  const mancanti = all.filter((d) => d.stato === 'mancante');
+  const valido = all.filter((d) => d.stato === 'valido' || d.stato === 'presente');
+  const lista = (l) => l.length ? `<div class="panel">${l.map((d) => `<div class="doc-row" style="grid-template-columns:2fr 1fr auto;"><div class="name">${d.tipoNome}</div><div class="empty-note">${d.ctx}</div>${chip(d.stato)}</div>`).join('')}</div>` : '<p class="empty-note">Nessuno.</p>';
+
+  document.getElementById('main').innerHTML = `
+    <div class="grid-stats">
+      <div class="stat-card scaduto"><div class="num">${scaduti.length}</div><div class="label">Scaduti</div></div>
+      <div class="stat-card in_scadenza"><div class="num">${inScadenza.length}</div><div class="label">In scadenza (30gg)</div></div>
+      <div class="stat-card mancante"><div class="num">${mancanti.length}</div><div class="label">Mancanti</div></div>
+      <div class="stat-card valido"><div class="num">${valido.length}</div><div class="label">In regola</div></div>
+    </div>
+    <div class="panel">
+      <h2>Panoramica documentale</h2>
+      <p class="sub">Distribuzione dei ${all.length} documenti previsti (cantiere + 4 subappalti).</p>
+      <div class="chart-wrap">
+        <div class="chart-canvas-box"><canvas id="statusChart"></canvas></div>
+        <div style="flex:1; min-width:220px;">
+          ${scaduti.length ? `<div class="empty-note" style="color:var(--red); font-weight:600;">${scaduti.length} documento/i scaduti da rinnovare con priorità.</div>` : ''}
+          ${inScadenza.length ? `<div class="empty-note" style="color:var(--amber); font-weight:600;">${inScadenza.length} documento/i in scadenza nei prossimi 30 giorni.</div>` : ''}
+          ${!scaduti.length && !inScadenza.length ? `<div class="empty-note" style="color:var(--teal); font-weight:600;">Nessuna scadenza critica al momento.</div>` : ''}
+        </div>
+      </div>
+    </div>
+    <h2 style="font-size:15px; margin: 18px 0 8px;">Scaduti</h2>${lista(scaduti)}
+    <h2 style="font-size:15px; margin: 18px 0 8px;">In scadenza (30 giorni)</h2>${lista(inScadenza)}
+    <h2 style="font-size:15px; margin: 18px 0 8px;">Mancanti</h2>${lista(mancanti)}
+  `;
+  try {
+    new Chart(document.getElementById('statusChart').getContext('2d'), {
+      type: 'doughnut',
+      data: { labels: ['Scaduti', 'In scadenza', 'Mancanti', 'In regola'], datasets: [{ data: [scaduti.length, inScadenza.length, mancanti.length, valido.length], backgroundColor: ['#dc2626', '#d97706', '#94a3b8', '#0d9488'], borderWidth: 0 }] },
+      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, cutout: '68%' }
+    });
+  } catch (err) { /* grafico non disponibile, il resto della pagina resta utilizzabile */ }
+}
+
+function renderCantiereDoc() {
+  document.getElementById('main').innerHTML = `
+    <div class="panel">
+      <h2>Checklist documenti generali di appalto</h2>
+      <p class="sub">Dati anagrafici (CIG, CUP, importi, appaltatore, referenti di ruolo) si trovano nell'area "Anagrafica".</p>
+      ${docListHead()}
+      ${DATA.cantiereDocs.map((d, i) => docRow(d, 'cantiere', null, i)).join('')}
+    </div>
+  `;
+  attachDocRowHandlers(renderCantiereDoc);
+}
+
+// ---------- AREA: ANAGRAFICA ----------
+async function comprimiImmagine(file) {
+  const dataUrl = await new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+  const img = await new Promise((resolve, reject) => {
+    const im = new Image();
+    im.onload = () => resolve(im);
+    im.onerror = reject;
+    im.src = dataUrl;
+  });
+  const maxW = 700;
+  const scale = Math.min(1, maxW / img.width);
+  const canvas = document.createElement('canvas');
+  canvas.width = Math.round(img.width * scale);
+  canvas.height = Math.round(img.height * scale);
+  const ctx = canvas.getContext('2d');
+  ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+  return canvas.toDataURL('image/jpeg', 0.6);
+}
+
+function spazioUsatoKB() {
+  try {
+    const bytes = new Blob([JSON.stringify(DATA)]).size;
+    return Math.round(bytes / 1024);
+  } catch (e) { return null; }
+}
+
+function disabilitaForm(formId) {
+  document.querySelectorAll('#' + formId + ' input, #' + formId + ' textarea, #' + formId + ' select').forEach((el) => { el.disabled = true; });
+}
+function pulsanteSalvaOSblocca(bloccato, unlockId) {
+  return bloccato
+    ? `<button class="btn btn-outline" type="button" id="${unlockId}">&#128274; Sblocca per modificare</button>`
+    : `<button class="btn btn-primary" type="submit">Salva</button><span class="save-msg" id="saveMsg">Salvato</span>`;
+}
+
+function renderAnagraficaAppalto() {
+  const c = DATA.cantiere;
+  const bl = !!c.bloccato;
+  document.getElementById('main').innerHTML = `
+    <div class="panel">
+      <h2>Dati appalto</h2>
+      <p class="sub">Riferimenti amministrativi. Importo e date sono usati anche in Finanziario e Cronoprogramma.</p>
+      <form id="appaltoForm">
+        <h3 style="font-size:13px; margin:0 0 10px; color:var(--gray); text-transform:uppercase; letter-spacing:.03em;">Riferimenti appalto pubblico</h3>
+        <div class="form-grid" style="margin-bottom:18px;">
+          <div class="field"><label>CIG</label><input name="cig" value="${c.cig || ''}" /></div>
+          <div class="field"><label>CUP</label><input name="cup" value="${c.cup || ''}" /></div>
+          <div class="field"><label>Numero gara</label><input name="numeroGara" value="${c.numeroGara || ''}" /></div>
+          <div class="field"><label>Procedura di aggiudicazione</label><input name="procedura" placeholder="es. procedura aperta" value="${c.procedura || ''}" /></div>
+          <div class="field"><label>Determina a contrarre - numero</label><input name="determinaContrarreNumero" value="${c.determinaContrarreNumero || ''}" /></div>
+          <div class="field"><label>Determina a contrarre - data</label><input name="determinaContrarreData" type="date" value="${c.determinaContrarreData || ''}" /></div>
+          <div class="field"><label>Importo totale (€)</label><input name="importoTotale" type="number" value="${c.importoTotale || ''}" /></div>
+          <div class="field"><label>Data inizio lavori</label><input name="dataInizio" type="date" value="${c.dataInizio || ''}" /></div>
+          <div class="field"><label>Data fine prevista</label><input name="dataFinePrevista" type="date" value="${c.dataFinePrevista || ''}" /></div>
+        </div>
+        <h3 style="font-size:13px; margin:0 0 10px; color:var(--gray); text-transform:uppercase; letter-spacing:.03em;">Localizzazione</h3>
+        <div class="form-grid" style="margin-bottom:18px;">
+          <div class="field" style="grid-column:1/-1;"><label>Indirizzo cantiere</label><input name="indirizzoCantiere" value="${c.indirizzoCantiere || ''}" /></div>
+          <div class="field"><label>Comune</label><input name="comuneCantiere" value="${c.comuneCantiere || ''}" /></div>
+          <div class="field"><label>Provincia</label><input name="provinciaCantiere" value="${c.provinciaCantiere || ''}" /></div>
+        </div>
+        <h3 style="font-size:13px; margin:0 0 10px; color:var(--gray); text-transform:uppercase; letter-spacing:.03em;">Dati tecnici</h3>
+        <div class="form-grid" style="margin-bottom:18px;">
+          <div class="field"><label>Destinazione d'uso</label><input name="destinazioneUso" value="${c.destinazioneUso || ''}" /></div>
+          <div class="field"><label>Superficie (mq)</label><input name="superficieMq" type="number" value="${c.superficieMq || ''}" /></div>
+          <div class="field"><label>Numero piani</label><input name="numeroPiani" type="number" value="${c.numeroPiani || ''}" /></div>
+          <div class="field"><label>Numero posti letto</label><input name="numeroPostiLetto" type="number" value="${c.numeroPostiLetto || ''}" /></div>
+        </div>
+        <div class="field" style="margin-bottom:14px;"><label>Note</label><textarea name="note" rows="2">${c.note || ''}</textarea></div>
+        ${pulsanteSalvaOSblocca(bl, 'appaltoUnlock')}
+      </form>
+    </div>
+    <div class="panel">
+      <h2>Documentazione amministrativa ed economica</h2>
+      <p class="sub">Non "sicurezza" in senso stretto, ma comunque obbligatoria per un appalto pubblico: CIG/CUP, cauzioni, polizze, contratto d'appalto, requisiti generali, casellario ANAC.</p>
+      ${docListHead()}
+      ${DATA.cantiereDocsAmministrativi.map((d, i) => docRow(d, 'cantiere-amm', null, i)).join('')}
+    </div>
+    <div class="panel">
+      <h2>Foto dello studentato</h2>
+      <p class="sub">Le foto sono compresse e salvate in questo browser (${spazioUsatoKB() !== null ? spazioUsatoKB() + ' KB usati su tutti i dati dell\'app' : 'spazio non calcolabile'}). Se il salvataggio inizia a fallire altrove nell'app, rimuovi qualche foto qui. Per un archivio fotografico grande, meglio la cartella Drive.</p>
+      <div class="foto-grid">
+        ${DATA.cantiereFoto.map((f) => `
+          <div class="foto-item" data-foto="${f.id}">
+            <img src="${f.dataUrl}" />
+            <input type="text" class="foto-caption" placeholder="Didascalia" value="${f.didascalia || ''}" />
+            <button class="btn btn-outline btn-sm foto-del">Elimina</button>
+          </div>`).join('')}
+      </div>
+      <label class="btn btn-outline btn-sm" style="cursor:pointer; margin-top:12px; display:inline-block;">
+        + Aggiungi foto
+        <input type="file" accept="image/*" multiple id="fotoInput" style="display:none;" />
+      </label>
+    </div>
+  `;
+  if (bl) {
+    disabilitaForm('appaltoForm');
+    document.getElementById('appaltoUnlock').onclick = () => { DATA.cantiere.bloccato = false; saveData(); renderAnagraficaAppalto(); };
+  } else {
+    document.getElementById('appaltoForm').onsubmit = (e) => {
+      e.preventDefault();
+      DATA.cantiere = Object.assign({}, DATA.cantiere, Object.fromEntries(new FormData(e.target).entries()), { bloccato: true });
+      saveData();
+      renderAnagraficaAppalto();
+    };
+  }
+  attachDocRowHandlers(renderAnagraficaAppalto);
+  document.getElementById('fotoInput').onchange = async (e) => {
+    for (const file of e.target.files) {
+      try {
+        const dataUrl = await comprimiImmagine(file);
+        DATA.cantiereFoto.push({ id: nextId('foto'), dataUrl, didascalia: '' });
+      } catch (err) { alert('Errore su ' + file.name + ': ' + err.message); }
+    }
+    saveData(); renderAnagraficaAppalto();
+  };
+  document.querySelectorAll('.foto-caption').forEach((input) => {
+    input.onchange = () => {
+      const id = input.closest('[data-foto]').getAttribute('data-foto');
+      const foto = DATA.cantiereFoto.find((f) => String(f.id) === id);
+      foto.didascalia = input.value; saveData();
+    };
+  });
+  document.querySelectorAll('.foto-del').forEach((btn) => {
+    btn.onclick = () => {
+      const id = btn.closest('[data-foto]').getAttribute('data-foto');
+      if (!confirm('Eliminare questa foto?')) return;
+      DATA.cantiereFoto = DATA.cantiereFoto.filter((f) => String(f.id) !== id);
+      saveData(); renderAnagraficaAppalto();
+    };
+  });
+}
+
+function renderAnagraficaAzienda() {
+  const a = DATA.appaltatore;
+  const bl = !!a.bloccato;
+  document.getElementById('main').innerHTML = `
+    <div class="panel">
+      <h2>Dati appaltatore</h2>
+      <p class="sub">La tua azienda, in qualità di appaltatore principale dell'opera. Ragione sociale, P.IVA e sede sono precompilati da una fattura che mi hai mandato: verifica che siano corretti.</p>
+      <form id="aziendaForm" class="form-grid">
+        <div class="field"><label>Ragione sociale</label><input name="ragioneSociale" value="${a.ragioneSociale || ''}" /></div>
+        <div class="field"><label>P.IVA</label><input name="piva" value="${a.piva || ''}" /></div>
+        <div class="field" style="grid-column:1/-1;"><label>Sede legale</label><input name="sedeLegale" value="${a.sedeLegale || ''}" /></div>
+        <div class="field"><label>PEC</label><input name="pec" value="${a.pec || ''}" /></div>
+        <div class="field"><label>Telefono</label><input name="telefono" value="${a.telefono || ''}" /></div>
+        <div class="field" style="grid-column:1/-1;"><label>Referente commessa (nome e cognome)</label><input name="referenteCommessa" value="${a.referenteCommessa || ''}" /></div>
+        <div style="grid-column:1/-1;">${pulsanteSalvaOSblocca(bl, 'aziendaUnlock')}</div>
+      </form>
+    </div>
+  `;
+  if (bl) {
+    disabilitaForm('aziendaForm');
+    document.getElementById('aziendaUnlock').onclick = () => { DATA.appaltatore.bloccato = false; saveData(); renderAnagraficaAzienda(); };
+  } else {
+    document.getElementById('aziendaForm').onsubmit = (e) => {
+      e.preventDefault();
+      DATA.appaltatore = Object.assign({}, Object.fromEntries(new FormData(e.target).entries()), { bloccato: true });
+      saveData();
+      renderAnagraficaAzienda();
+    };
+  }
+}
+
+function renderAnagraficaEnte() {
+  const e2 = DATA.enteAppaltante;
+  const bl = !!e2.bloccato;
+  document.getElementById('main').innerHTML = `
+    <div class="panel">
+      <h2>Stazione appaltante</h2>
+      <p class="sub">L'ente pubblico che ha bandito l'appalto.</p>
+      <form id="enteForm" class="form-grid">
+        <div class="field" style="grid-column:1/-1;"><label>Denominazione</label><input name="denominazione" value="${e2.denominazione || ''}" /></div>
+        <div class="field" style="grid-column:1/-1;"><label>Indirizzo</label><input name="indirizzo" value="${e2.indirizzo || ''}" /></div>
+        <div class="field"><label>Comune</label><input name="comune" value="${e2.comune || ''}" /></div>
+        <div class="field"><label>CAP</label><input name="cap" value="${e2.cap || ''}" /></div>
+        <div class="field"><label>PEC</label><input name="pec" value="${e2.pec || ''}" /></div>
+        <div class="field"><label>Telefono</label><input name="telefono" value="${e2.telefono || ''}" /></div>
+        <div class="field"><label>Sito web</label><input name="sitoWeb" value="${e2.sitoWeb || ''}" /></div>
+        <div class="field"><label>Referente ufficio</label><input name="referente" value="${e2.referente || ''}" /></div>
+        <div style="grid-column:1/-1;">${pulsanteSalvaOSblocca(bl, 'enteUnlock')}</div>
+      </form>
+    </div>
+  `;
+  if (bl) {
+    disabilitaForm('enteForm');
+    document.getElementById('enteUnlock').onclick = () => { DATA.enteAppaltante.bloccato = false; saveData(); renderAnagraficaEnte(); };
+  } else {
+    document.getElementById('enteForm').onsubmit = (ev) => {
+      ev.preventDefault();
+      DATA.enteAppaltante = Object.assign({}, Object.fromEntries(new FormData(ev.target).entries()), { bloccato: true });
+      saveData();
+      renderAnagraficaEnte();
+    };
+  }
+}
+
+let SUB_ANAG_ULTIMO_SALVATO = null;
+
+function leggiFileComeDataUrl(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+function fileSlotHtml(fileObj, fieldKey, label) {
+  if (fileObj && fileObj.dataUrl) {
+    return `
+    <div class="field">
+      <label>${label}</label>
+      <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+        <a class="file-link" href="${fileObj.dataUrl}" download="${fileObj.nome}">${fileObj.nome} &#8599;</a>
+        <label class="btn btn-outline btn-sm" style="cursor:pointer;">Sostituisci<input type="file" class="file-upload-input" data-field="${fieldKey}" style="display:none;" /></label>
+        <button type="button" class="btn btn-outline btn-sm file-remove-btn" data-field="${fieldKey}">Rimuovi</button>
+      </div>
+    </div>`;
+  }
+  return `
+    <div class="field">
+      <label>${label}</label>
+      <label class="btn btn-outline btn-sm" style="cursor:pointer; display:inline-block;">Carica ${label}<input type="file" class="file-upload-input" data-field="${fieldKey}" style="display:none;" /></label>
+    </div>`;
+}
+
+function renderAnagraficaSubappaltatori() {
+  const cards = SUBAPPALTI_DEF.map((s) => {
+    const a = DATA.subappalti[s.id];
+    const bl = !!a.bloccatoAnagrafica;
+    const conferma = s.id === SUB_ANAG_ULTIMO_SALVATO ? '<span style="color:var(--teal); font-size:11.5px; font-weight:700; margin-left:10px;">&#10003; Salvato</span>' : '';
+    return `
+    <div class="sub-card" data-sub="${s.id}">
+      <div class="sub-card-head"><h3>${s.lavorazione}</h3></div>
+      <form class="form-grid subanag-form" data-id="${s.id}">
+        <div class="field"><label>Ragione sociale</label><input name="ragioneSociale" value="${a.ragioneSociale || ''}" /></div>
+        <div class="field"><label>P.IVA</label><input name="piva" value="${a.piva || ''}" /></div>
+        <div class="field"><label>Nome e cognome referente</label><input name="nomeCognome" value="${a.nomeCognome || ''}" /></div>
+        <div class="field"><label>Telefono</label><input name="telefono" value="${a.telefono || ''}" /></div>
+        <div class="field"><label>Email</label><input name="email" type="email" value="${a.email || ''}" /></div>
+        <div class="field" style="grid-column:1/-1;"><label>Indirizzo</label><input name="indirizzo" value="${a.indirizzo || ''}" /></div>
+        <div style="grid-column:1/-1;">
+          ${bl ? '<button class="btn btn-outline btn-sm subanag-unlock" type="button">&#128274; Sblocca</button>' : '<button class="btn btn-primary btn-sm" type="submit">Salva</button>'}
+          ${conferma}
+        </div>
+      </form>
+      <div class="form-grid sub-file-slots" data-sub-files="${s.id}" style="margin-top:12px; border-top:1px solid var(--border); padding-top:12px;">
+        ${fileSlotHtml(a.visuraFile, 'visuraFile', 'Visura camerale')}
+        ${fileSlotHtml(a.docAmministratoreFile, 'docAmministratoreFile', 'Documento amministratore')}
+      </div>
+    </div>`;
+  }).join('');
+
+  document.getElementById('main').innerHTML = `
+    <div class="panel">
+      <h2>Subappaltatori</h2>
+      <p class="sub">Anagrafica di ogni subappaltatore. Importo e speso restano in Finanziario &rarr; Costi; documenti e checklist in Documentazione &rarr; Subappaltatori. I file caricati qui sono salvati in questo browser (${spazioUsatoKB() !== null ? spazioUsatoKB() + ' KB usati' : ''}) - file grandi possono riempire lo spazio disponibile.</p>
+    </div>
+    ${cards}
+  `;
+
+  document.querySelectorAll('.sub-card').forEach((card) => {
+    const id = card.getAttribute('data-sub');
+    const bl = !!DATA.subappalti[id].bloccatoAnagrafica;
+    if (bl) {
+      card.querySelectorAll('.subanag-form input').forEach((el) => { el.disabled = true; });
+      card.querySelector('.subanag-unlock').onclick = () => {
+        DATA.subappalti[id].bloccatoAnagrafica = false;
+        saveData(); renderAnagraficaSubappaltatori();
+      };
+    } else {
+      card.querySelector('.subanag-form').onsubmit = (e) => {
+        e.preventDefault();
+        DATA.subappalti[id] = Object.assign({}, DATA.subappalti[id], Object.fromEntries(new FormData(e.target).entries()), { bloccatoAnagrafica: true });
+        saveData();
+        SUB_ANAG_ULTIMO_SALVATO = id;
+        renderAnagraficaSubappaltatori();
+        setTimeout(() => { SUB_ANAG_ULTIMO_SALVATO = null; renderAnagraficaSubappaltatori(); }, 2000);
+      };
+    }
+  });
+
+  document.querySelectorAll('.file-upload-input').forEach((input) => {
+    input.onchange = async () => {
+      const file = input.files[0];
+      if (!file) return;
+      if (file.size > 3 * 1024 * 1024) {
+        if (!confirm(`"${file.name}" e' un file grande (${Math.round(file.size / 1024 / 1024 * 10) / 10} MB). Puo' riempire lo spazio disponibile nel browser. Caricarlo comunque?`)) return;
+      }
+      const subId = input.closest('[data-sub-files]').getAttribute('data-sub-files');
+      const field = input.getAttribute('data-field');
+      try {
+        const dataUrl = await leggiFileComeDataUrl(file);
+        DATA.subappalti[subId][field] = { nome: file.name, dataUrl };
+        saveData();
+        renderAnagraficaSubappaltatori();
+      } catch (err) {
+        alert('Errore nel caricamento: ' + err.message);
+      }
+    };
+  });
+  document.querySelectorAll('.file-remove-btn').forEach((btn) => {
+    btn.onclick = () => {
+      const subId = btn.closest('[data-sub-files]').getAttribute('data-sub-files');
+      const field = btn.getAttribute('data-field');
+      if (!confirm('Rimuovere questo file?')) return;
+      DATA.subappalti[subId][field] = null;
+      saveData();
+      renderAnagraficaSubappaltatori();
+    };
+  });
+}
+
+let REF_ULTIMO_SALVATO = null;
+
+function renderReferenti() {
+  const rows = DATA.referenti.map((r, i) => {
+    const conferma = i === REF_ULTIMO_SALVATO ? '<br><span style="color:var(--teal); font-size:11.5px; font-weight:700;">&#10003; Salvato</span>' : '';
+    if (r.bloccato) {
+      return `
+      <tr data-idx="${i}">
+        <td>${r.ruolo || ''}</td>
+        <td>${r.nomeCognome || '-'}</td>
+        <td>${r.telefono || '-'}</td>
+        <td>${r.email || '-'}</td>
+        <td>${r.note || ''}</td>
+        <td><button class="btn btn-outline btn-sm ref-unlock">&#128274; Sblocca</button>${conferma}</td>
+      </tr>`;
+    }
+    return `
+    <tr data-idx="${i}">
+      <td><input type="text" class="f-ruolo" value="${r.ruolo || ''}" /></td>
+      <td><input type="text" class="f-nome" value="${r.nomeCognome || ''}" placeholder="Nome e cognome" /></td>
+      <td><input type="text" class="f-telefono" value="${r.telefono || ''}" /></td>
+      <td><input type="text" class="f-email" value="${r.email || ''}" /></td>
+      <td><input type="text" class="f-note" value="${r.note || ''}" /></td>
+      <td><button class="btn btn-primary btn-sm ref-save">Salva</button> <button class="btn btn-outline btn-sm ref-del">Elimina</button>${conferma}</td>
+    </tr>`;
+  }).join('');
+  document.getElementById('main').innerHTML = `
+    <div class="panel">
+      <h2>Referenti e ruoli</h2>
+      <p class="sub">Nominativi delle figure di sicurezza e di progetto. "Salva" registra il dato e blocca subito la riga; "Sblocca" per correggerla di nuovo.</p>
+      <table class="row-table">
+        <thead><tr><th>Ruolo</th><th>Nome e cognome</th><th>Telefono</th><th>Email</th><th>Note</th><th></th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+      <button class="btn btn-outline add-row-btn" id="addReferente">+ Aggiungi referente</button>
+    </div>
+  `;
+  document.getElementById('addReferente').onclick = () => {
+    DATA.referenti.push({ id: nextId('referenti'), ruolo: '', nomeCognome: '', telefono: '', email: '', note: '', bloccato: false });
+    saveData(); renderReferenti();
+  };
+  document.querySelectorAll('.ref-save').forEach((btn) => {
+    btn.onclick = () => {
+      const tr = btn.closest('tr'); const idx = Number(tr.dataset.idx);
+      Object.assign(DATA.referenti[idx], {
+        ruolo: tr.querySelector('.f-ruolo').value,
+        nomeCognome: tr.querySelector('.f-nome').value,
+        telefono: tr.querySelector('.f-telefono').value,
+        email: tr.querySelector('.f-email').value,
+        note: tr.querySelector('.f-note').value,
+        bloccato: true
+      });
+      saveData();
+      REF_ULTIMO_SALVATO = idx;
+      renderReferenti();
+      setTimeout(() => { REF_ULTIMO_SALVATO = null; renderReferenti(); }, 2000);
+    };
+  });
+  document.querySelectorAll('.ref-unlock').forEach((btn) => {
+    btn.onclick = () => {
+      const tr = btn.closest('tr'); const idx = Number(tr.dataset.idx);
+      DATA.referenti[idx].bloccato = false;
+      saveData(); renderReferenti();
+    };
+  });
+  document.querySelectorAll('.ref-del').forEach((btn) => {
+    btn.onclick = () => {
+      const tr = btn.closest('tr'); const idx = Number(tr.dataset.idx);
+      if (!confirm('Eliminare questo referente?')) return;
+      DATA.referenti.splice(idx, 1); saveData(); renderReferenti();
+    };
+  });
+}
+
+let DOC_SUBAPPALTO_SELEZIONATO = null;
+
+function renderSubappaltiDoc() {
+  if (DOC_SUBAPPALTO_SELEZIONATO) { renderSubappaltoDocDettaglio(DOC_SUBAPPALTO_SELEZIONATO); return; }
+
+  const rows = SUBAPPALTI_DEF.map((s) => {
+    const a = DATA.subappalti[s.id];
+    const docs = DATA.subappaltiDocs[s.id];
+    const scaduti = docs.filter((d) => statoDocumento(d) === 'scaduto').length;
+    const inScadenza = docs.filter((d) => statoDocumento(d) === 'in_scadenza').length;
+    const mancanti = docs.filter((d) => statoDocumento(d) === 'mancante').length;
+    let statoHtml;
+    if (scaduti) statoHtml = chip('scaduto', scaduti + ' scaduti');
+    else if (inScadenza) statoHtml = chip('in_scadenza', inScadenza + ' in scadenza');
+    else if (mancanti) statoHtml = chip('mancante', mancanti + ' mancanti');
+    else statoHtml = chip('valido', 'In regola');
+    return `
+    <tr class="doc-sub-row" data-id="${s.id}" style="cursor:pointer;">
+      <td><strong>${s.lavorazione}</strong></td>
+      <td>${a.ragioneSociale || 'Da definire'}</td>
+      <td>${a.piva || '-'}</td>
+      <td>${statoHtml}</td>
+      <td><button class="btn btn-outline btn-sm doc-sub-view" data-id="${s.id}">Vedi documenti &rarr;</button></td>
+    </tr>`;
+  }).join('');
+
+  document.getElementById('main').innerHTML = `
+    <div class="panel">
+      <h2>Subappaltatori</h2>
+      <p class="sub">Clicca su un subappaltatore per vedere la checklist documenti completa.</p>
+      <table class="row-table">
+        <thead><tr><th>Oggetto appalto</th><th>Ragione sociale</th><th>P.IVA</th><th>Stato documenti</th><th></th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>
+  `;
+  const apri = (id) => { DOC_SUBAPPALTO_SELEZIONATO = id; renderSubappaltiDoc(); };
+  document.querySelectorAll('.doc-sub-row').forEach((tr) => {
+    tr.onclick = (e) => { if (e.target.closest('.doc-sub-view')) return; apri(tr.getAttribute('data-id')); };
+  });
+  document.querySelectorAll('.doc-sub-view').forEach((btn) => {
+    btn.onclick = () => apri(btn.getAttribute('data-id'));
+  });
+}
+
+function renderSubappaltoDocDettaglio(id) {
+  const s = SUBAPPALTI_DEF.find((x) => x.id === id);
+  const docs = DATA.subappaltiDocs[s.id];
+  const a = DATA.subappalti[s.id];
+  const bl = !!a.bloccatoContratto;
+  const ok = docs.filter((d) => { const st = statoDocumento(d); return st === 'valido' || st === 'presente'; }).length;
+  const pct = Math.round((ok / docs.length) * 100);
+
+  document.getElementById('main').innerHTML = `
+    <a href="#" id="backToList" style="font-size:13px; color:var(--teal); text-decoration:none; font-weight:600;">&larr; Torna all'elenco subappaltatori</a>
+    <div class="sub-card" style="margin-top:12px;">
+      <div class="sub-card-head">
+        <h3>${s.lavorazione} <span class="empty-note" style="font-weight:400;">&mdash; ${a.ragioneSociale || 'ragione sociale in Anagrafica'}</span></h3>
+        <div style="display:flex; align-items:center; gap:14px;">
+          <a class="drive-mini" href="${s.folderUrl}" target="_blank" rel="noopener">Cartella Drive &#8599;</a>
+          <div class="progress-bar-track"><div class="progress-bar-fill" style="width:${pct}%"></div></div>
+          <span style="font-size:12.5px; font-weight:700; color:var(--gray);">${pct}%</span>
+        </div>
+      </div>
+      <form class="form-grid sub-form" data-id="${s.id}" style="margin-bottom:14px;">
+        <div class="field"><label>Importo subappalto (€)</label><input name="importo" type="number" value="${a.importo || ''}" /></div>
+        <div class="field"><label>Data autorizzazione subappalto</label><input name="dataAutorizzazione" type="date" value="${a.dataAutorizzazione || ''}" /></div>
+        <div style="grid-column:1/-1;">${bl ? '<button class="btn btn-outline btn-sm" type="button" id="subAnagraficaUnlock">&#128274; Sblocca</button>' : '<button class="btn btn-outline btn-sm" type="submit">Salva dati</button><span class="save-msg" id="saveMsg-' + s.id + '">Salvato</span>'}</div>
+      </form>
+      ${docListHead()}
+      ${docs.map((d, i) => docRow(d, 'sub', s.id, i)).join('')}
+    </div>
+    <div class="sub-card">
+      <h3 style="margin:0 0 4px;">Documentazione amministrativa</h3>
+      <p class="sub">Autorizzazione/comunicazione subappalto, SOA, tracciabilità flussi, polizza RC, congruità manodopera: non "sicurezza" in senso stretto, ma comunque obbligatoria.</p>
+      ${docListHead()}
+      ${DATA.subappaltiDocsAmministrativi[s.id].map((d, i) => docRow(d, 'sub-amm', s.id, i)).join('')}
+    </div>`;
+  document.getElementById('backToList').onclick = (e) => { e.preventDefault(); DOC_SUBAPPALTO_SELEZIONATO = null; renderSubappaltiDoc(); };
+  if (bl) {
+    document.querySelectorAll('.sub-form input').forEach((el) => { el.disabled = true; });
+    document.getElementById('subAnagraficaUnlock').onclick = () => { DATA.subappalti[s.id].bloccatoContratto = false; saveData(); renderSubappaltoDocDettaglio(s.id); };
+  } else {
+    document.querySelectorAll('.sub-form').forEach((form) => {
+      form.onsubmit = (e) => {
+        e.preventDefault();
+        const fid = form.getAttribute('data-id');
+        DATA.subappalti[fid] = Object.assign({}, DATA.subappalti[fid], Object.fromEntries(new FormData(form).entries()), { bloccatoContratto: true });
+        saveData();
+        renderSubappaltoDocDettaglio(fid);
+      };
+    });
+  }
+  attachDocRowHandlers(() => renderSubappaltoDocDettaglio(s.id));
+}
+
+// ---------- AREA: UFFICIO ACQUISTI ----------
+// Iter: 1) Richiesta preventivo -> 2) Ordine -> 3) DDT (arrivo materiale) -> 4) Fattura ->
+// 5) Verifica (aggiunta da me: controllo che l'importo fatturato corrisponda a ordine/DDT
+// prima di autorizzare il pagamento - evita di pagare fatture sbagliate) -> 6) Pagamento.
+// La navigazione ricalca l'iter: sotto-schede Panoramica / Preventivi / Ordine / DDT / Fattura.
+const FASI_ACQUISTO = ['Preventivo', 'Ordine', 'DDT', 'Fattura', 'Verifica', 'Pagato'];
+
+function faseAcquisto(o) {
+  const fattura = DATA.finanziario.fatture.find((f) => String(f.id) === String(o.fatturaId));
+  if (fattura && fattura.pagata) return 5;
+  if (o.fatturaVerificata) return 4;
+  if (o.fatturaId) return 3;
+  if (o.dataConsegnaEffettiva) return 2;
+  if (o.dataOrdine) return 1;
+  if (o.dataRichiestaPreventivo) return 0;
+  return -1;
+}
+function faseChipOrdine(o) {
+  const idx = faseAcquisto(o);
+  const label = idx === -1 ? 'Da avviare' : FASI_ACQUISTO[idx];
+  let cls = 'mancante';
+  if (idx === 5) cls = 'valido';
+  else if (idx >= 3) cls = 'presente';
+  else if (idx >= 0) cls = 'in_scadenza';
+  return chip(cls, label);
+}
+
+function fattureRicevuteOptions(selectedId) {
+  const fatture = DATA.finanziario.fatture.filter((f) => f.tipo === 'ricevuta');
+  const opts = fatture.map((f) => `<option value="${f.id}" ${String(f.id) === String(selectedId) ? 'selected' : ''}>N. ${f.numero || '-'} &middot; ${f.controparte || '-'} &middot; ${euro(f.importo)}</option>`).join('');
+  return `<option value="">Nessuna fattura collegata</option>${opts}`;
+}
+
+function destinazioneOptions(selectedId) {
+  const opts = SUBAPPALTI_DEF.map((s) => `<option value="${s.id}" ${s.id === selectedId ? 'selected' : ''}>${s.lavorazione}</option>`).join('');
+  return `<option value="" ${!selectedId ? 'selected' : ''}>Cantiere (generale, nessun subappalto)</option>${opts}`;
+}
+
+function categorieOptions(selectedId) {
+  return DATA.acquisti.categorie.map((c) => `<option value="${c.id}" ${String(c.id) === String(selectedId) ? 'selected' : ''}>${c.nome}</option>`).join('');
+}
+
+function acquistiPerSubappalto() {
+  const totali = {};
+  SUBAPPALTI_DEF.forEach((s) => { totali[s.id] = 0; });
+  let generale = 0;
+  DATA.acquisti.categorie.forEach((cat) => {
+    cat.ordini.forEach((o) => {
+      const importo = Number(o.importo) || 0;
+      if (o.subappaltoId && totali[o.subappaltoId] !== undefined) totali[o.subappaltoId] += importo;
+      else generale += importo;
+    });
+  });
+  return { totali, generale };
+}
+
+function allOrdiniFlat() {
+  const flat = [];
+  DATA.acquisti.categorie.forEach((cat) => {
+    cat.ordini.forEach((o, idx) => flat.push({ catId: cat.id, catNome: cat.nome, idx, o }));
+  });
+  return flat;
+}
+
+function saveOrdineFromRow(row, fields) {
+  const catId = row.dataset.cat; const idx = Number(row.dataset.idx);
+  const cat = DATA.acquisti.categorie.find((c) => String(c.id) === catId);
+  const patch = {};
+  fields.forEach(([sel, key, type]) => {
+    const el = row.querySelector(sel);
+    if (!el) return;
+    patch[key] = type === 'checkbox' ? el.checked : el.value;
+  });
+  patch.bloccato = true;
+  Object.assign(cat.ordini[idx], patch);
+  saveData();
+}
+
+function attachOrdineRowHandlers(fields, renderFn) {
+  document.querySelectorAll('.ordine-save').forEach((btn) => {
+    btn.onclick = () => { saveOrdineFromRow(btn.closest('tr'), fields); renderFn(); };
+  });
+  document.querySelectorAll('.ordine-unlock').forEach((btn) => {
+    btn.onclick = () => {
+      const row = btn.closest('tr'); const catId = row.dataset.cat; const idx = Number(row.dataset.idx);
+      const cat = DATA.acquisti.categorie.find((c) => String(c.id) === catId);
+      cat.ordini[idx].bloccato = false;
+      saveData(); renderFn();
+    };
+  });
+  document.querySelectorAll('.ordine-del').forEach((btn) => {
+    btn.onclick = () => {
+      const row = btn.closest('tr'); const catId = row.dataset.cat; const idx = Number(row.dataset.idx);
+      if (!confirm('Eliminare questo ordine?')) return;
+      const cat = DATA.acquisti.categorie.find((c) => String(c.id) === catId);
+      cat.ordini.splice(idx, 1); saveData(); renderFn();
+    };
+  });
+}
+
+const ACQUISTI_SUBTABS = [ ['panoramica', 'Panoramica'], ['preventivi', 'Preventivi'], ['ordine', 'Ordine'], ['ddt', 'DDT'], ['fattura', 'Fattura collegata'] ];
+
+function acquistiSubNav(active) {
+  return `<div class="tabs" style="padding:0; border-bottom:2px solid var(--border); margin-bottom:16px;">${ACQUISTI_SUBTABS.map(([key, label]) => `<button class="acq-subtab ${key === active ? 'active' : ''}" data-acqsub="${key}" style="border:none; background:transparent; padding:10px 16px; font-size:13.5px; font-weight:600; color:${key === active ? 'var(--teal)' : 'var(--gray)'}; cursor:pointer; border-bottom:3px solid ${key === active ? 'var(--teal)' : 'transparent'};">${label}</button>`).join('')}</div>`;
+}
+
+function attachAcquistiSubNav() {
+  document.querySelectorAll('.acq-subtab').forEach((btn) => {
+    btn.onclick = () => { ACQUISTI_SUBTAB = btn.getAttribute('data-acqsub'); renderAcquisti(); };
+  });
+}
+
+let ACQUISTI_SUBTAB = 'panoramica';
+
+function renderAcquisti() {
+  if (ACQUISTI_SUBTAB === 'panoramica') renderAcquistiPanoramica();
+  else if (ACQUISTI_SUBTAB === 'preventivi') renderAcquistiPreventivi();
+  else if (ACQUISTI_SUBTAB === 'ordine') renderAcquistiOrdine();
+  else if (ACQUISTI_SUBTAB === 'ddt') renderAcquistiDDT();
+  else if (ACQUISTI_SUBTAB === 'fattura') renderAcquistiFattura();
+}
+
+function renderAcquistiPanoramica() {
+  const { totali, generale } = acquistiPerSubappalto();
+  const flatTutti = allOrdiniFlat();
+  const rifiutati = flatTutti.filter(({ o }) => o.statoPreventivo === 'rifiutato').length;
+  const flat = flatTutti.filter(({ o }) => o.statoPreventivo !== 'rifiutato');
+  const conteggi = [0, 0, 0, 0, 0, 0]; let daAvviare = 0;
+  flat.forEach(({ o }) => { const i = faseAcquisto(o); if (i === -1) daAvviare++; else conteggi[i]++; });
+
+  document.getElementById('main').innerHTML = `
+    <div class="panel">
+      <h2>Ufficio acquisti</h2>
+      <p class="sub">Materiali comprati direttamente dalla tua azienda (anche quando destinati a un subappaltatore). Segui l'iter con le schede qui sopra: Preventivi &rarr; Ordine &rarr; DDT &rarr; Fattura collegata.</p>
+      ${acquistiSubNav('panoramica')}
+      <h3 style="font-size:13.5px; margin:0 0 8px;">Ordini per fase</h3>
+      <div class="grid-stats" style="grid-template-columns: repeat(7, 1fr);">
+        <div class="stat-card gray"><div class="num">${daAvviare}</div><div class="label">Da avviare</div></div>
+        <div class="stat-card in_scadenza"><div class="num">${conteggi[0]}</div><div class="label">In preventivo</div></div>
+        <div class="stat-card in_scadenza"><div class="num">${conteggi[1]}</div><div class="label">Ordinati</div></div>
+        <div class="stat-card in_scadenza"><div class="num">${conteggi[2]}</div><div class="label">In consegna (DDT)</div></div>
+        <div class="stat-card presente"><div class="num">${conteggi[3] + conteggi[4]}</div><div class="label">Fatturati</div></div>
+        <div class="stat-card valido"><div class="num">${conteggi[5]}</div><div class="label">Pagati</div></div>
+        <div class="stat-card scaduto"><div class="num">${rifiutati}</div><div class="label">Preventivi rifiutati</div></div>
+      </div>
+      <h3 style="font-size:13.5px; margin:18px 0 8px;">Materiali forniti per lavorazione</h3>
+      <table class="row-table">
+        <thead><tr><th>Lavorazione</th><th>Materiali forniti</th></tr></thead>
+        <tbody>
+          ${SUBAPPALTI_DEF.map((s) => `<tr><td>${s.lavorazione}</td><td>${euro(totali[s.id])}</td></tr>`).join('')}
+          <tr><td>Cantiere (generale)</td><td>${euro(generale)}</td></tr>
+        </tbody>
+      </table>
+      <p class="sub" style="margin-top:8px;">Non incluso automaticamente nell'importo contrattuale del subappalto: lo vedi come voce separata in Finanziario &rarr; Costi.</p>
+      <h3 style="font-size:13.5px; margin:18px 0 8px;">Categorie fornitura</h3>
+      <table class="row-table">
+        <thead><tr><th>Categoria</th><th>Totale ordinato</th><th></th></tr></thead>
+        <tbody>
+          ${DATA.acquisti.categorie.map((cat) => `<tr data-cat-card="${cat.id}"><td>${cat.nome}</td><td>${euro(cat.ordini.reduce((s, o) => s + (Number(o.importo) || 0), 0))}</td><td><button class="btn btn-outline btn-sm cat-rename">Rinomina</button> <button class="btn btn-outline btn-sm cat-del">Elimina</button></td></tr>`).join('')}
+        </tbody>
+      </table>
+      <button class="btn btn-outline btn-sm" id="addCategoria" style="margin-top:10px;">+ Nuova categoria fornitura</button>
+    </div>
+  `;
+  attachAcquistiSubNav();
+  document.getElementById('addCategoria').onclick = () => {
+    const nome = prompt('Nome categoria fornitura (es. Impianti elettrici):');
+    if (!nome) return;
+    DATA.acquisti.categorie.push({ id: nextId('categorieAcquisto'), nome, ordini: [] });
+    saveData(); renderAcquisti();
+  };
+  document.querySelectorAll('.cat-rename').forEach((btn) => {
+    btn.onclick = () => {
+      const catId = btn.closest('[data-cat-card]').getAttribute('data-cat-card');
+      const cat = DATA.acquisti.categorie.find((c) => String(c.id) === catId);
+      const nuovo = prompt('Nuovo nome categoria:', cat.nome);
+      if (!nuovo) return;
+      cat.nome = nuovo; saveData(); renderAcquisti();
+    };
+  });
+  document.querySelectorAll('.cat-del').forEach((btn) => {
+    btn.onclick = () => {
+      const catId = btn.closest('[data-cat-card]').getAttribute('data-cat-card');
+      if (!confirm('Eliminare questa categoria e tutti i suoi ordini?')) return;
+      DATA.acquisti.categorie = DATA.acquisti.categorie.filter((c) => String(c.id) !== catId);
+      saveData(); renderAcquisti();
+    };
+  });
+}
+
+function pulsantiOrdineRiga(bl) {
+  return bl
+    ? '<button class="btn btn-outline btn-sm ordine-unlock">&#128274; Sblocca</button>'
+    : '<button class="btn btn-primary btn-sm ordine-save">Salva</button> <button class="btn btn-outline btn-sm ordine-del">Elimina</button>';
+}
+
+function esitoPreventivoOptions(selected) {
+  const opts = [['', 'In attesa'], ['accettato', 'Accettato'], ['rifiutato', 'Rifiutato']];
+  return opts.map(([v, l]) => `<option value="${v}" ${selected === v ? 'selected' : ''}>${l}</option>`).join('');
+}
+function esitoPreventivoChip(o) {
+  if (o.statoPreventivo === 'accettato') return chip('valido', 'Accettato');
+  if (o.statoPreventivo === 'rifiutato') return chip('scaduto', 'Rifiutato');
+  return chip('mancante', 'In attesa');
+}
+
+// Campi tecnici richiesti da Noemi solo per la categoria "ferro". Tondo nervato:
+// diametro tra 22/16/8/14 mm, barre da 12 m. Rete elettrosaldata: diametro filo +
+// dimensione maglia. Un carico tipico e' ~30 tonnellate (nota, non un vincolo rigido).
+// Un ordine allo stesso fornitore puo' contenere piu' voci di ferro diverse (es. tondo
+// Ø16 + rete elettrosaldata nello stesso ordine): per questo o.righeFerro e' un array,
+// non un singolo set di campi.
+const FERRO_DIAMETRI_TONDO = ['8', '14', '16', '22'];
+
+function isFerroCategoria(nome) { return /ferro/i.test(nome || ''); }
+
+function nuovaRigaFerro() {
+  return { id: nextId('righeFerro'), tipo: '', diametro: '', reteDiametroFilo: '', reteMaglia: '', tonnellate: '', prezzoTonnellata: '', tonnellateArrivate: '' };
+}
+
+function rigaFerroLabel(r) {
+  if (r.tipo === 'tondo_nervato') return `Tondo nervato &Oslash;${r.diametro || '?'} mm &middot; barre 12 m`;
+  if (r.tipo === 'rete_elettrosaldata') return `Rete elettrosaldata filo ${r.reteDiametroFilo || '?'} mm &middot; maglia ${r.reteMaglia || '?'} cm`;
+  return 'Voce non ancora specificata';
+}
+
+function rigaFerroHtml(r, ri, dis) {
+  const campiSpecifici = r.tipo === 'tondo_nervato' ? `
+      <div class="field"><label>Diametro (mm)</label>
+        <select class="rf-diametro" ${dis}>
+          <option value="">Seleziona</option>
+          ${FERRO_DIAMETRI_TONDO.map((d) => `<option value="${d}" ${r.diametro === d ? 'selected' : ''}>&Oslash;${d} mm</option>`).join('')}
+        </select>
+      </div>
+      <div class="field"><label>Lunghezza barre</label><input type="text" value="12 m" disabled /></div>`
+    : r.tipo === 'rete_elettrosaldata' ? `
+      <div class="field"><label>Diametro filo (mm)</label><input type="number" class="rf-reteFilo" value="${r.reteDiametroFilo || ''}" placeholder="es. 6" ${dis} /></div>
+      <div class="field"><label>Maglia (cm)</label><input type="text" class="rf-reteMaglia" value="${r.reteMaglia || '20x20'}" placeholder="es. 20x20" ${dis} /></div>`
+    : '';
+  return `
+  <div class="riga-ferro" data-riga-idx="${ri}" style="display:grid; grid-template-columns: repeat(auto-fit,minmax(140px,1fr)); gap:8px; align-items:end; padding:8px; border:1px solid var(--border); border-radius:8px; margin-bottom:8px; background:var(--card);">
+    <div class="field"><label>Tipo (voce ${ri + 1})</label>
+      <select class="rf-tipo" ${dis}>
+        <option value="">Seleziona tipo</option>
+        <option value="tondo_nervato" ${r.tipo === 'tondo_nervato' ? 'selected' : ''}>Tondo nervato</option>
+        <option value="rete_elettrosaldata" ${r.tipo === 'rete_elettrosaldata' ? 'selected' : ''}>Rete elettrosaldata</option>
+      </select>
+    </div>
+    ${campiSpecifici}
+    <div class="field"><label>Tonnellate</label><input type="number" step="0.1" class="rf-tonnellate" value="${r.tonnellate || ''}" placeholder="1 carico &asymp; 30 t" ${dis} /></div>
+    <div class="field"><label>Prezzo &euro;/tonnellata</label><input type="number" class="rf-prezzo" value="${r.prezzoTonnellata || ''}" ${dis} /></div>
+    ${dis ? '' : '<button type="button" class="btn btn-outline btn-sm rf-del">Rimuovi voce</button>'}
+  </div>`;
+}
+
+function ferroExtraRowHtml(o, catId, idx, dis) {
+  const righe = o.righeFerro && o.righeFerro.length ? o.righeFerro : [nuovaRigaFerro()];
+  return `
+  <tr class="prevent-ferro-row" data-cat="${catId}" data-idx="${idx}">
+    <td colspan="8" style="background:var(--bg); border-bottom:1px solid var(--border);">
+      <div style="padding:6px 4px 10px;">
+        <div style="font-size:12px; font-weight:700; margin-bottom:8px;">Voci di ferro in questo ordine <span style="font-weight:400; color:var(--gray);">(un fornitore puo' consegnare piu' tipi/diametri nello stesso ordine)</span></div>
+        <div class="righe-ferro-list">${righe.map((r, ri) => rigaFerroHtml(r, ri, dis)).join('')}</div>
+        ${dis ? '' : '<button type="button" class="btn btn-outline btn-sm rf-add">+ Aggiungi voce (altro tipo/diametro)</button>'}
+      </div>
+    </td>
+  </tr>`;
+}
+
+function leggiRigheFerroDalDom(ferroTr, righeEsistenti) {
+  // Nota: quando il "tipo" cambia via change-event, il DOM non e' ancora stato
+  // ri-renderizzato con i campi giusti (diametro/rete) nell'istante in cui questa
+  // funzione legge i valori: per questo i campi specifici mancanti nel DOM cadono
+  // sul valore gia' salvato invece di andare in errore.
+  const divs = [...ferroTr.querySelectorAll('.riga-ferro')];
+  return divs.map((div, i) => {
+    const tipo = div.querySelector('.rf-tipo').value;
+    const esistente = righeEsistenti && righeEsistenti[i];
+    const diametroEl = div.querySelector('.rf-diametro');
+    const reteFiloEl = div.querySelector('.rf-reteFilo');
+    const reteMagliaEl = div.querySelector('.rf-reteMaglia');
+    const riga = { tipo };
+    riga.diametro = diametroEl ? diametroEl.value : (esistente ? esistente.diametro || '' : '');
+    riga.reteDiametroFilo = reteFiloEl ? reteFiloEl.value : (esistente ? esistente.reteDiametroFilo || '' : '');
+    riga.reteMaglia = reteMagliaEl ? reteMagliaEl.value : (esistente ? esistente.reteMaglia || '' : '');
+    if (tipo === 'tondo_nervato') { riga.reteDiametroFilo = ''; riga.reteMaglia = ''; }
+    else if (tipo === 'rete_elettrosaldata') { riga.diametro = ''; }
+    else { riga.diametro = ''; riga.reteDiametroFilo = ''; riga.reteMaglia = ''; }
+    riga.tonnellate = div.querySelector('.rf-tonnellate').value;
+    riga.prezzoTonnellata = div.querySelector('.rf-prezzo').value;
+    riga.id = esistente ? esistente.id : nextId('righeFerro');
+    riga.tonnellateArrivate = esistente ? esistente.tonnellateArrivate : '';
+    return riga;
+  });
+}
+
+function attachRigheFerroHandlers(catId, idx, renderFn) {
+  const cat = DATA.acquisti.categorie.find((c) => String(c.id) === String(catId));
+  const o = cat.ordini[idx];
+  document.querySelectorAll(`.prevent-ferro-row[data-cat="${catId}"][data-idx="${idx}"] .rf-add`).forEach((btn) => {
+    btn.onclick = () => {
+      const ferroTr = btn.closest('tr');
+      o.righeFerro = leggiRigheFerroDalDom(ferroTr, o.righeFerro);
+      o.righeFerro.push(nuovaRigaFerro());
+      saveData(); renderFn();
+    };
+  });
+  document.querySelectorAll(`.prevent-ferro-row[data-cat="${catId}"][data-idx="${idx}"] .rf-del`).forEach((btn) => {
+    btn.onclick = () => {
+      const ferroTr = btn.closest('tr');
+      const rigaDiv = btn.closest('.riga-ferro');
+      const ri = Number(rigaDiv.dataset.rigaIdx);
+      o.righeFerro = leggiRigheFerroDalDom(ferroTr, o.righeFerro);
+      o.righeFerro.splice(ri, 1);
+      saveData(); renderFn();
+    };
+  });
+  document.querySelectorAll(`.prevent-ferro-row[data-cat="${catId}"][data-idx="${idx}"] .rf-tipo`).forEach((sel) => {
+    sel.onchange = () => {
+      const ferroTr = sel.closest('tr');
+      o.righeFerro = leggiRigheFerroDalDom(ferroTr, o.righeFerro);
+      saveData(); renderFn();
+    };
+  });
+}
+
+function renderAcquistiPreventivi() {
+  const flat = allOrdiniFlat();
+  const rows = flat.map(({ catId, catNome, idx, o }) => {
+    const dis = o.bloccato ? 'disabled' : '';
+    const mainRow = `
+    <tr class="prevent-main-row" data-cat="${catId}" data-idx="${idx}">
+      <td class="empty-note">${catNome}</td>
+      <td><input type="text" class="f-fornitore" value="${o.fornitore || ''}" placeholder="Fornitore" ${dis} /></td>
+      <td><select class="f-sub" ${dis}>${destinazioneOptions(o.subappaltoId)}</select></td>
+      <td><input type="date" class="f-dataPreventivo" value="${o.dataRichiestaPreventivo || ''}" ${dis} /></td>
+      <td><input type="number" class="f-importoPreventivo" value="${o.importoPreventivo || ''}" placeholder="€" ${dis} /></td>
+      <td><select class="f-esito" ${dis}>${esitoPreventivoOptions(o.statoPreventivo || '')}</select> ${esitoPreventivoChip(o)}</td>
+      <td>${faseChipOrdine(o)}</td>
+      <td>${pulsantiOrdineRiga(o.bloccato)}</td>
+    </tr>`;
+    const ferroRow = isFerroCategoria(catNome) ? ferroExtraRowHtml(o, catId, idx, dis) : '';
+    return mainRow + ferroRow;
+  }).join('');
+  const catExists = DATA.acquisti.categorie.length > 0;
+
+  document.getElementById('main').innerHTML = `
+    <div class="panel">
+      <h2>1. Richiesta di preventivo</h2>
+      <p class="sub">Chiedi 2-3 preventivi ai fornitori prima di ordinare. Se rifiuti un preventivo, quell'ordine non compare piu' nelle schede Ordine/DDT/Fattura. Per la categoria "ferro" trovi anche i campi tecnici (tondo nervato o rete elettrosaldata) &mdash; puoi aggiungere piu' voci se lo stesso ordine include piu' tipi/diametri.</p>
+      ${acquistiSubNav('preventivi')}
+      ${catExists ? `
+      <div style="display:flex; gap:8px; align-items:center; margin-bottom:14px;">
+        <select id="newOrdineCat" style="max-width:260px;">${categorieOptions()}</select>
+        <button class="btn btn-primary btn-sm" id="addOrdine">+ Nuova richiesta preventivo</button>
+      </div>` : `<p class="empty-note">Crea prima una categoria fornitura in Panoramica.</p>`}
+      <table class="row-table">
+        <thead><tr><th>Categoria</th><th>Fornitore</th><th>Destinato a</th><th>Data richiesta</th><th>Importo preventivato</th><th>Esito</th><th>Fase</th><th></th></tr></thead>
+        <tbody>${rows || '<tr><td colspan="8" class="empty-note">Nessuna richiesta ancora.</td></tr>'}</tbody>
+      </table>
+    </div>
+  `;
+  attachAcquistiSubNav();
+  const addBtn = document.getElementById('addOrdine');
+  if (addBtn) addBtn.onclick = () => {
+    const catId = document.getElementById('newOrdineCat').value;
+    const cat = DATA.acquisti.categorie.find((c) => String(c.id) === catId);
+    cat.ordini.push({ id: nextId('ordini'), fornitore: '', subappaltoId: '', dataRichiestaPreventivo: '', importoPreventivo: '', statoPreventivo: '', numeroOrdine: '', dataOrdine: '', importo: '', descrizioneOrdine: '', dataConsegnaPrevista: '', numeroDDT: '', dataConsegnaEffettiva: '', descrizioneArrivo: '', quantitaConfermata: false, fatturaId: '', fatturaVerificata: false, righeFerro: [] });
+    saveData(); renderAcquisti();
+  };
+  attachOrdineRowHandlers([['.f-fornitore', 'fornitore'], ['.f-sub', 'subappaltoId'], ['.f-dataPreventivo', 'dataRichiestaPreventivo'], ['.f-importoPreventivo', 'importoPreventivo'], ['.f-esito', 'statoPreventivo']], renderAcquistiPreventivi);
+  // Sovrascrive "Salva" sulle sole righe con dettaglio ferro, per includere anche
+  // le voci (che vivono nella riga aggiuntiva subito sotto).
+  document.querySelectorAll('.prevent-main-row .ordine-save').forEach((btn) => {
+    const mainTr = btn.closest('tr');
+    const ferroTr = mainTr.nextElementSibling;
+    if (!ferroTr || !ferroTr.classList.contains('prevent-ferro-row')) return;
+    btn.onclick = () => {
+      const catId = mainTr.dataset.cat; const idx = Number(mainTr.dataset.idx);
+      const cat = DATA.acquisti.categorie.find((c) => String(c.id) === catId);
+      const patch = {
+        fornitore: mainTr.querySelector('.f-fornitore').value,
+        subappaltoId: mainTr.querySelector('.f-sub').value,
+        dataRichiestaPreventivo: mainTr.querySelector('.f-dataPreventivo').value,
+        importoPreventivo: mainTr.querySelector('.f-importoPreventivo').value,
+        statoPreventivo: mainTr.querySelector('.f-esito').value,
+        righeFerro: leggiRigheFerroDalDom(ferroTr, cat.ordini[idx].righeFerro)
+      };
+      if (!patch.importoPreventivo) {
+        const totalePrevisionale = patch.righeFerro.reduce((s, r) => s + (Number(r.tonnellate) || 0) * (Number(r.prezzoTonnellata) || 0), 0);
+        if (totalePrevisionale > 0) patch.importoPreventivo = totalePrevisionale.toFixed(2);
+      }
+      patch.bloccato = true;
+      Object.assign(cat.ordini[idx], patch);
+      saveData();
+      renderAcquistiPreventivi();
+    };
+  });
+  flat.filter(({ catNome }) => isFerroCategoria(catNome)).forEach(({ catId, idx }) => attachRigheFerroHandlers(catId, idx, renderAcquistiPreventivi));
+}
+
+function renderAcquistiOrdine() {
+  const flat = allOrdiniFlat().filter(({ o }) => o.statoPreventivo !== 'rifiutato');
+  const rows = flat.map(({ catId, catNome, idx, o }) => { const dis = o.bloccato ? 'disabled' : ''; return `
+    <tr data-cat="${catId}" data-idx="${idx}">
+      <td class="empty-note">${catNome}<br><strong>${o.fornitore || '-'}</strong></td>
+      <td><input type="text" class="f-numeroOrdine" value="${o.numeroOrdine || ''}" placeholder="N. ordine" ${dis} /></td>
+      <td><input type="date" class="f-dataOrdine" value="${o.dataOrdine || ''}" ${dis} /></td>
+      <td><input type="number" class="f-importo" value="${o.importo || ''}" placeholder="€" ${dis} /></td>
+      <td><input type="text" class="f-descrizioneOrdine" value="${o.descrizioneOrdine || ''}" placeholder="es. 3 quintali ferro &Oslash;10mm B450C" ${dis} /></td>
+      <td><input type="date" class="f-consegnaPrevista" value="${o.dataConsegnaPrevista || ''}" ${dis} /></td>
+      <td>${faseChipOrdine(o)}</td>
+      <td>${pulsantiOrdineRiga(o.bloccato)}</td>
+    </tr>`; }).join('');
+
+  document.getElementById('main').innerHTML = `
+    <div class="panel">
+      <h2>2. Ordine</h2>
+      <p class="sub">Confermato il fornitore, registra l'ordine formale con importo, quantit&agrave;/specifiche e consegna richiesta. La descrizione la ritrovi affiancata a quella del DDT nella scheda successiva, per il confronto.</p>
+      ${acquistiSubNav('ordine')}
+      <table class="row-table">
+        <thead><tr><th>Categoria / Fornitore</th><th>N. ordine</th><th>Data ordine</th><th>Importo ordinato</th><th>Quantit&agrave;/specifiche ordinate</th><th>Consegna prevista</th><th>Fase</th><th></th></tr></thead>
+        <tbody>${rows || '<tr><td colspan="8" class="empty-note">Nessun ordine ancora. Vai su Preventivi per crearne uno.</td></tr>'}</tbody>
+      </table>
+    </div>
+  `;
+  attachAcquistiSubNav();
+  attachOrdineRowHandlers([['.f-numeroOrdine', 'numeroOrdine'], ['.f-dataOrdine', 'dataOrdine'], ['.f-importo', 'importo'], ['.f-descrizioneOrdine', 'descrizioneOrdine'], ['.f-consegnaPrevista', 'dataConsegnaPrevista']], renderAcquistiOrdine);
+}
+
+// Somma, su tutte le voci di ferro dell'ordine, quantita' arrivata (o ordinata se non
+// ancora arrivata) x prezzo/tonnellata pattuito. E' il valore atteso da confrontare
+// con la fattura.
+function prezzoPrevisionale(o) {
+  const righe = o.righeFerro || [];
+  return righe.reduce((sum, r) => {
+    const tonnArrivate = Number(r.tonnellateArrivate) || 0;
+    const tonnOrdinate = Number(r.tonnellate) || 0;
+    const prezzoTon = Number(r.prezzoTonnellata) || 0;
+    const tonnRif = tonnArrivate > 0 ? tonnArrivate : tonnOrdinate;
+    return sum + tonnRif * prezzoTon;
+  }, 0);
+}
+
+function rigaFerroDdtHtml(r, ri, dis) {
+  const tonnOrdinate = Number(r.tonnellate) || 0;
+  const tonnArrivate = Number(r.tonnellateArrivate) || 0;
+  const delta = tonnArrivate - tonnOrdinate;
+  const previsionaleRiga = (tonnArrivate > 0 ? tonnArrivate : tonnOrdinate) * (Number(r.prezzoTonnellata) || 0);
+  return `
+  <div class="riga-ferro" data-riga-idx="${ri}" style="display:flex; gap:16px; align-items:center; flex-wrap:wrap; padding:8px; border:1px solid var(--border); border-radius:8px; margin-bottom:8px; background:var(--card); font-size:12.5px;">
+    <strong style="min-width:240px;">${rigaFerroLabel(r)}</strong>
+    <span>Ordinate: ${tonnOrdinate || '-'} t</span>
+    <div class="field" style="margin:0; min-width:150px;"><label style="font-size:10.5px;">Tonnellate arrivate</label><input type="number" step="0.1" class="rf-tonnArrivate" value="${r.tonnellateArrivate || ''}" placeholder="1 carico &asymp; 30 t" ${dis} /></div>
+    <span>${r.tonnellateArrivate ? (delta >= 0 ? chip('valido', `${delta >= 0 ? '+' : ''}${delta.toFixed(1)} t`) : chip('scaduto', `${delta.toFixed(1)} t`)) : chip('mancante', 'Da confermare')}</span>
+    <span>Previsionale voce: <strong>${euro(previsionaleRiga)}</strong></span>
+  </div>`;
+}
+
+function ferroDdtExtraRowHtml(o, catId, idx, dis) {
+  const righe = o.righeFerro || [];
+  const corpo = righe.length
+    ? righe.map((r, ri) => rigaFerroDdtHtml(r, ri, dis)).join('')
+    : `<p class="empty-note">Nessuna voce di ferro definita nella scheda Preventivi per questo ordine.</p>`;
+  return `
+  <tr class="prevent-ferro-row" data-cat="${catId}" data-idx="${idx}">
+    <td colspan="9" style="background:var(--bg); border-bottom:1px solid var(--border);">
+      <div style="padding:6px 4px 10px;">
+        <div style="font-size:12px; font-weight:700; margin-bottom:8px;">Confronto per voce e prezzo previsionale</div>
+        ${corpo}
+        ${righe.length ? `<div style="font-size:12.5px; margin-top:4px;"><strong>Prezzo previsionale totale ordine:</strong> ${euro(prezzoPrevisionale(o))}</div>` : ''}
+      </div>
+    </td>
+  </tr>`;
+}
+
+function renderAcquistiDDT() {
+  const flat = allOrdiniFlat().filter(({ o }) => o.statoPreventivo !== 'rifiutato');
+  const rows = flat.map(({ catId, catNome, idx, o }) => { const dis = o.bloccato ? 'disabled' : '';
+    const mismatchWarn = o.numeroDDT && !o.quantitaConfermata ? `<br><span style="color:var(--amber); font-size:11px; font-weight:700;">&#9888; da verificare</span>` : '';
+    const mainRow = `
+    <tr class="prevent-main-row" data-cat="${catId}" data-idx="${idx}">
+      <td class="empty-note">${catNome}<br><strong>${o.fornitore || '-'}</strong></td>
+      <td class="empty-note"><strong>${o.numeroOrdine || '-'}</strong><br>${o.dataOrdine ? dataBreve(o.dataOrdine) : ''}</td>
+      <td class="empty-note" style="max-width:140px; white-space:normal;">${o.descrizioneOrdine || '<span class="no-link">nessuna descrizione</span>'}</td>
+      <td><input type="text" class="f-numeroDDT" value="${o.numeroDDT || ''}" placeholder="N. DDT/bolla" ${dis} /></td>
+      <td><input type="date" class="f-consegnaEffettiva" value="${o.dataConsegnaEffettiva || ''}" ${dis} /></td>
+      <td><input type="text" class="f-descrizioneArrivo" value="${o.descrizioneArrivo || ''}" placeholder="es. 4 quintali" ${dis} /></td>
+      <td><label style="display:flex; align-items:center; gap:6px; font-weight:400;"><input type="checkbox" class="f-quantitaConfermata" style="width:auto;" ${o.quantitaConfermata ? 'checked' : ''} ${dis} /> corrisponde</label>${mismatchWarn}</td>
+      <td>${faseChipOrdine(o)}</td>
+      <td>${pulsantiOrdineRiga(o.bloccato)}</td>
+    </tr>`;
+    const ferroRow = isFerroCategoria(catNome) ? ferroDdtExtraRowHtml(o, catId, idx, dis) : '';
+    return mainRow + ferroRow;
+  }).join('');
+
+  document.getElementById('main').innerHTML = `
+    <div class="panel">
+      <h2>3. DDT &mdash; arrivo materiale in cantiere</h2>
+      <p class="sub">Confronta "Quantit&agrave;/specifiche ordinate" (da Ordine) con quanto arrivato, poi spunta "corrisponde". Per il ferro trovi il confronto voce per voce e il prezzo previsionale (quantit&agrave; arrivata &times; prezzo pattuito).</p>
+      ${acquistiSubNav('ddt')}
+      <table class="row-table">
+        <thead><tr><th>Categoria / Fornitore</th><th>N. ordine</th><th>Ordinato</th><th>N. DDT</th><th>Data arrivo</th><th>Arrivato</th><th>Verifica</th><th>Fase</th><th></th></tr></thead>
+        <tbody>${rows || '<tr><td colspan="9" class="empty-note">Nessun ordine ancora.</td></tr>'}</tbody>
+      </table>
+    </div>
+  `;
+  attachAcquistiSubNav();
+  attachOrdineRowHandlers([['.f-numeroDDT', 'numeroDDT'], ['.f-consegnaEffettiva', 'dataConsegnaEffettiva'], ['.f-descrizioneArrivo', 'descrizioneArrivo'], ['.f-quantitaConfermata', 'quantitaConfermata', 'checkbox']], renderAcquistiDDT);
+  document.querySelectorAll('.prevent-main-row .ordine-save').forEach((btn) => {
+    const mainTr = btn.closest('tr');
+    const ferroTr = mainTr.nextElementSibling;
+    if (!ferroTr || !ferroTr.classList.contains('prevent-ferro-row')) return;
+    btn.onclick = () => {
+      const catId = mainTr.dataset.cat; const idx = Number(mainTr.dataset.idx);
+      const cat = DATA.acquisti.categorie.find((c) => String(c.id) === catId);
+      const righeAggiornate = (cat.ordini[idx].righeFerro || []).map((r, ri) => {
+        const div = ferroTr.querySelector(`.riga-ferro[data-riga-idx="${ri}"]`);
+        if (!div) return r;
+        const input = div.querySelector('.rf-tonnArrivate');
+        return input ? { ...r, tonnellateArrivate: input.value } : r;
+      });
+      const patch = {
+        numeroDDT: mainTr.querySelector('.f-numeroDDT').value,
+        dataConsegnaEffettiva: mainTr.querySelector('.f-consegnaEffettiva').value,
+        descrizioneArrivo: mainTr.querySelector('.f-descrizioneArrivo').value,
+        quantitaConfermata: mainTr.querySelector('.f-quantitaConfermata').checked,
+        righeFerro: righeAggiornate,
+        bloccato: true
+      };
+      Object.assign(cat.ordini[idx], patch);
+      saveData();
+      renderAcquistiDDT();
+    };
+  });
+}
+
+function renderAcquistiFattura() {
+  const flat = allOrdiniFlat().filter(({ o }) => o.statoPreventivo !== 'rifiutato');
+  const rows = flat.map(({ catId, catNome, idx, o }) => {
+    const fattura = DATA.finanziario.fatture.find((f) => String(f.id) === String(o.fatturaId));
+    const fatturaStatoHtml = fattura ? chip(statoFattura(fattura), statoFattura(fattura) === 'pagata' ? 'Pagata' : 'Da pagare') : '<span class="no-link">Non collegata</span>';
+    const dis = o.bloccato ? 'disabled' : '';
+    return `
+    <tr data-cat="${catId}" data-idx="${idx}">
+      <td class="empty-note">${catNome}<br><strong>${o.fornitore || '-'}</strong></td>
+      <td class="empty-note"><strong>Ord. ${o.numeroOrdine || '-'}</strong><br>DDT ${o.numeroDDT || '-'}</td>
+      <td class="empty-note">${euro(o.importo)}</td>
+      <td><select class="f-fattura" ${dis}>${fattureRicevuteOptions(o.fatturaId)}</select></td>
+      <td>${fatturaStatoHtml}</td>
+      <td><label style="display:flex; align-items:center; gap:6px; font-weight:400;"><input type="checkbox" class="f-verificata" style="width:auto;" ${o.fatturaVerificata ? 'checked' : ''} ${dis} /> Verificata</label></td>
+      <td>${faseChipOrdine(o)}</td>
+      <td>${pulsantiOrdineRiga(o.bloccato)}</td>
+    </tr>`;
+  }).join('');
+
+  document.getElementById('main').innerHTML = `
+    <div class="panel">
+      <h2>4. Fattura collegata &mdash; verifica e pagamento</h2>
+      <p class="sub">Collega la fattura ricevuta (creala in Finanziario &rarr; Fatture se manca) e controlla che l'importo corrisponda a ordine/DDT (visibili qui a fianco) prima di spuntare "Verificata". Il pagamento si vede dallo stato della fattura.</p>
+      ${acquistiSubNav('fattura')}
+      <table class="row-table">
+        <thead><tr><th>Categoria / Fornitore</th><th>Rif. Ordine / DDT</th><th>Importo ordinato</th><th>Fattura collegata</th><th>Stato pagamento</th><th>Verifica</th><th>Fase</th><th></th></tr></thead>
+        <tbody>${rows || '<tr><td colspan="8" class="empty-note">Nessun ordine ancora.</td></tr>'}</tbody>
+      </table>
+    </div>
+  `;
+  attachAcquistiSubNav();
+  attachOrdineRowHandlers([['.f-fattura', 'fatturaId'], ['.f-verificata', 'fatturaVerificata', 'checkbox']], renderAcquistiFattura);
+}
+
+// ---------- AREA: FINANZIARIO ----------
+function subImporto(id) { return Number(DATA.subappalti[id].importo) || 0; }
+function subSpeso(id) { return Number(DATA.subappalti[id].speso) || 0; }
+
+function renderFinPanoramica() {
+  const importoTotale = Number(DATA.cantiere.importoTotale) || 0;
+  const totaleSubappalti = SUBAPPALTI_DEF.reduce((s, x) => s + subImporto(x.id), 0);
+  const totaleSpeso = SUBAPPALTI_DEF.reduce((s, x) => s + subSpeso(x.id), 0);
+  const margineAtteso = importoTotale - totaleSubappalti;
+  const fatture = DATA.finanziario.fatture;
+  const emesseNonPagate = fatture.filter((f) => f.tipo === 'emessa' && !f.pagata).reduce((s, f) => s + (Number(f.importo) || 0), 0);
+  const ricevuteNonPagate = fatture.filter((f) => f.tipo === 'ricevuta' && !f.pagata).reduce((s, f) => s + (Number(f.importo) || 0), 0);
+  const ultimoSal = DATA.finanziario.sal[DATA.finanziario.sal.length - 1];
+  const totaleRate = DATA.finanziario.pianificazione.reduce((s, p) => s + (Number(p.importo) || 0), 0);
+  const scostamentoPianificazione = totaleRate - importoTotale;
+
+  document.getElementById('main').innerHTML = `
+    <div class="panel">
+      <h2>Panoramica economica</h2>
+      <p class="sub">Calcolata dagli importi inseriti in Anagrafica, Documentazione &rarr; Subappaltatori e nelle sezioni qui sotto.</p>
+      <div class="grid-stats cols-3">
+        <div class="stat-card blue"><div class="num">${euro(importoTotale)}</div><div class="label">Importo totale appalto</div></div>
+        <div class="stat-card gray"><div class="num">${euro(totaleSubappalti)}</div><div class="label">Impegnato in subappalti</div></div>
+        <div class="stat-card ${margineAtteso >= 0 ? 'teal' : 'red'}"><div class="num">${euro(margineAtteso)}</div><div class="label">Margine atteso</div></div>
+        <div class="stat-card gray"><div class="num">${euro(totaleSpeso)}</div><div class="label">Speso ad oggi (subappalti)</div></div>
+        <div class="stat-card amber"><div class="num">${euro(emesseNonPagate)}</div><div class="label">Da incassare (fatture emesse)</div></div>
+        <div class="stat-card red"><div class="num">${euro(ricevuteNonPagate)}</div><div class="label">Da pagare (fatture ricevute)</div></div>
+        <div class="stat-card blue"><div class="num">${euro(totaleRate)}</div><div class="label">Totale rate pianificate</div></div>
+        <div class="stat-card ${scostamentoPianificazione >= 0 ? 'teal' : 'red'}"><div class="num">${euro(scostamentoPianificazione)}</div><div class="label">Scostamento pianificazione vs importo totale</div></div>
+      </div>
+    </div>
+    <div class="panel">
+      <h2>Ultimo SAL</h2>
+      ${ultimoSal ? `<p class="sub">SAL n. ${ultimoSal.numero || '-'} del ${ultimoSal.data || '-'} &middot; lavori eseguiti ${euro(ultimoSal.importoLavoriEseguiti)} &middot; da liquidare ${euro(ultimoSal.importoDaLiquidare)}</p>` : '<p class="empty-note">Nessun SAL registrato ancora. Vai alla sezione SAL per aggiungerne uno.</p>'}
+    </div>
+  `;
+}
+
+function renderFinPianificazione() {
+  const piano = DATA.finanziario.pianificazione;
+  const totaleRate = piano.reduce((s, p) => s + (Number(p.importo) || 0), 0);
+  let cumulato = 0;
+  const rows = piano.map((p, i) => {
+    const importo = Number(p.importo) || 0;
+    cumulato += importo;
+    const pct = totaleRate > 0 ? (importo / totaleRate * 100) : 0;
+    const bl = !!p.bloccato; const dis = bl ? 'disabled' : '';
+    return `
+    <tr data-idx="${i}">
+      <td><input type="text" class="f-numero" value="${p.numero || ''}" style="width:50px;" ${dis} /></td>
+      <td><strong>${meseAnno(p.data)}</strong></td>
+      <td><input type="date" class="f-data" value="${p.data || ''}" ${dis} /></td>
+      <td><input type="number" class="f-importo" value="${p.importo || ''}" placeholder="€" ${dis} /></td>
+      <td class="empty-note">${pct.toFixed(1)}%</td>
+      <td class="empty-note">${euro(cumulato)}</td>
+      <td>${bl ? '<button class="btn btn-outline btn-sm pian-unlock">&#128274; Sblocca</button>' : '<button class="btn btn-primary btn-sm pian-save">Salva</button> <button class="btn btn-outline btn-sm pian-del">Elimina</button>'}</td>
+    </tr>`;
+  }).join('');
+  const importoTotale = Number(DATA.cantiere.importoTotale) || 0;
+  const scostamento = totaleRate - importoTotale;
+
+  let cumRun = 0;
+  const cumulatoSerie = piano.map((p) => { cumRun += Number(p.importo) || 0; return cumRun; });
+  const labelsMesi = piano.map((p) => meseAnno(p.data));
+  const importiSerie = piano.map((p) => Number(p.importo) || 0);
+
+  document.getElementById('main').innerHTML = `
+    <div class="panel">
+      <h2>Pianificazione finanziaria</h2>
+      <p class="sub">Piano rate/pagamenti previsti nel tempo.</p>
+      <div class="grid-stats cols-3">
+        <div class="stat-card blue"><div class="num">${euro(totaleRate)}</div><div class="label">Totale rate pianificate</div></div>
+        <div class="stat-card gray"><div class="num">${euro(importoTotale)}</div><div class="label">Importo dichiarato (totale appalto)</div></div>
+        <div class="stat-card ${scostamento < 0 ? 'red' : 'teal'}"><div class="num">${euro(scostamento)}</div><div class="label">Scostamento rate vs dichiarato</div></div>
+      </div>
+      <p class="sub" style="margin-top:4px;">${scostamento < 0 ? `Mancano ${euro(Math.abs(scostamento))} di rate ancora da pianificare.` : 'Le rate coprono per intero importo dichiarato.'}</p>
+      <div style="height:300px; margin-top:14px;"><canvas id="pianChart"></canvas></div>
+    </div>
+    <div class="panel">
+      <h2>Rate in dettaglio</h2>
+      <table class="row-table">
+        <thead><tr><th>N.</th><th>Mese</th><th>Data</th><th>Importo</th><th>% sul totale</th><th>Cumulato</th><th></th></tr></thead>
+        <tbody id="pianBody">${rows}</tbody>
+        <tfoot><tr><td colspan="3"><strong>Totale rate</strong></td><td><strong>${euro(totaleRate)}</strong></td><td colspan="2"></td><td></td></tr></tfoot>
+      </table>
+      <button class="btn btn-outline add-row-btn" id="addPian">+ Aggiungi rata</button>
+      <div class="panel" style="margin-top:16px; background:var(--bg);">
+        <div class="field"><label>Importo dichiarato (totale appalto)</label><input id="importoDichiaratoInput" type="number" value="${importoTotale}" style="max-width:260px;" /></div>
+        <button class="btn btn-primary btn-sm" id="saveImportoDichiarato">Salva importo dichiarato</button>
+      </div>
+    </div>
+  `;
+
+  // Pulsanti attivati PRIMA del grafico: se Chart.js fallisce a caricare (rete assente,
+  // blocco pubblicitario, ecc.) i pulsanti restano comunque funzionanti.
+  document.getElementById('addPian').onclick = () => {
+    DATA.finanziario.pianificazione.push({ id: nextId('pianificazione'), numero: DATA.finanziario.pianificazione.length + 1, data: '', importo: '', bloccato: false });
+    saveData(); renderFinPianificazione();
+  };
+  document.getElementById('saveImportoDichiarato').onclick = () => {
+    DATA.cantiere.importoTotale = document.getElementById('importoDichiaratoInput').value;
+    saveData(); renderFinPianificazione();
+  };
+  document.querySelectorAll('.pian-save').forEach((btn) => {
+    btn.onclick = () => {
+      const tr = btn.closest('tr'); const idx = Number(tr.dataset.idx);
+      Object.assign(DATA.finanziario.pianificazione[idx], {
+        numero: tr.querySelector('.f-numero').value,
+        data: tr.querySelector('.f-data').value,
+        importo: tr.querySelector('.f-importo').value,
+        bloccato: true
+      });
+      saveData(); renderFinPianificazione();
+    };
+  });
+  document.querySelectorAll('.pian-unlock').forEach((btn) => {
+    btn.onclick = () => {
+      const tr = btn.closest('tr'); const idx = Number(tr.dataset.idx);
+      DATA.finanziario.pianificazione[idx].bloccato = false;
+      saveData(); renderFinPianificazione();
+    };
+  });
+  document.querySelectorAll('.pian-del').forEach((btn) => {
+    btn.onclick = () => {
+      const tr = btn.closest('tr'); const idx = Number(tr.dataset.idx);
+      if (!confirm('Eliminare questa rata?')) return;
+      DATA.finanziario.pianificazione.splice(idx, 1); saveData(); renderFinPianificazione();
+    };
+  });
+
+  try {
+    const amountLabelPlugin = {
+      id: 'amountLabelPlugin',
+      afterDatasetsDraw(chart) {
+        const { ctx } = chart;
+        const meta = chart.getDatasetMeta(0);
+        ctx.save();
+        ctx.fillStyle = '#0f172a';
+        ctx.font = 'bold 11px Segoe UI, sans-serif';
+        ctx.textAlign = 'center';
+        meta.data.forEach((bar, i) => {
+          ctx.fillText('€' + Math.round(importiSerie[i] / 1000) + 'k', bar.x, bar.y - 8);
+        });
+        ctx.restore();
+      }
+    };
+    new Chart(document.getElementById('pianChart').getContext('2d'), {
+      data: {
+        labels: labelsMesi,
+        datasets: [
+          { type: 'bar', label: 'Importo rata', data: importiSerie, backgroundColor: '#2563eb', borderRadius: 6, order: 2 },
+          { type: 'line', label: 'Cumulato', data: cumulatoSerie, borderColor: '#0d9488', backgroundColor: '#0d9488', tension: 0.25, yAxisID: 'y1', order: 1, pointRadius: 4 }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        layout: { padding: { top: 24 } },
+        plugins: { legend: { position: 'bottom' } },
+        scales: {
+          y: { title: { display: true, text: 'Importo rata (€)' } },
+          y1: { position: 'right', grid: { drawOnChartArea: false }, title: { display: true, text: 'Cumulato (€)' } }
+        }
+      },
+      plugins: [amountLabelPlugin]
+    });
+  } catch (err) {
+    document.getElementById('pianChart').outerHTML = '<p class="empty-note">Grafico non disponibile (problema di rete). I dati e i pulsanti sotto funzionano comunque.</p>';
+  }
+}
+
+function renderFinSal() {
+  const rows = DATA.finanziario.sal.map((s, i) => {
+    const bl = !!s.bloccato; const dis = bl ? 'disabled' : '';
+    return `
+    <tr data-idx="${i}">
+      <td><input type="text" class="f-numero" value="${s.numero || ''}" style="width:60px;" ${dis} /></td>
+      <td><input type="date" class="f-data" value="${s.data || ''}" ${dis} /></td>
+      <td><input type="number" class="f-eseguiti" value="${s.importoLavoriEseguiti || ''}" placeholder="€" ${dis} /></td>
+      <td><input type="number" class="f-liquidare" value="${s.importoDaLiquidare || ''}" placeholder="€" ${dis} /></td>
+      <td><input type="number" class="f-ritenuta" value="${s.ritenutaGaranzia || ''}" placeholder="€" ${dis} /></td>
+      <td><input type="text" class="f-note" value="${s.note || ''}" ${dis} /></td>
+      <td>${bl ? '<button class="btn btn-outline btn-sm sal-unlock">&#128274; Sblocca</button>' : '<button class="btn btn-primary btn-sm sal-save">Salva</button> <button class="btn btn-outline btn-sm sal-del">Elimina</button>'}</td>
+    </tr>`;
+  }).join('');
+  document.getElementById('main').innerHTML = `
+    <div class="panel">
+      <h2>Stati avanzamento lavori (SAL)</h2>
+      <p class="sub">Un rigo per ogni SAL certificato dal Direttore Lavori. Gli importi sono quelli indicati nel certificato, non cumulativi.</p>
+      <table class="row-table">
+        <thead><tr><th>N.</th><th>Data</th><th>Lavori eseguiti</th><th>Da liquidare</th><th>Ritenuta garanzia</th><th>Note</th><th></th></tr></thead>
+        <tbody id="salBody">${rows}</tbody>
+      </table>
+      <button class="btn btn-outline add-row-btn" id="addSal">+ Aggiungi SAL</button>
+    </div>
+  `;
+  document.getElementById('addSal').onclick = () => {
+    DATA.finanziario.sal.push({ id: nextId('sal'), numero: DATA.finanziario.sal.length + 1, data: '', importoLavoriEseguiti: '', importoDaLiquidare: '', ritenutaGaranzia: '', note: '', bloccato: false });
+    saveData(); renderFinSal();
+  };
+  document.querySelectorAll('.sal-save').forEach((btn) => {
+    btn.onclick = () => {
+      const tr = btn.closest('tr'); const idx = Number(tr.dataset.idx);
+      Object.assign(DATA.finanziario.sal[idx], {
+        numero: tr.querySelector('.f-numero').value,
+        data: tr.querySelector('.f-data').value,
+        importoLavoriEseguiti: tr.querySelector('.f-eseguiti').value,
+        importoDaLiquidare: tr.querySelector('.f-liquidare').value,
+        ritenutaGaranzia: tr.querySelector('.f-ritenuta').value,
+        note: tr.querySelector('.f-note').value,
+        bloccato: true
+      });
+      saveData(); renderFinSal();
+    };
+  });
+  document.querySelectorAll('.sal-unlock').forEach((btn) => {
+    btn.onclick = () => {
+      const tr = btn.closest('tr'); const idx = Number(tr.dataset.idx);
+      DATA.finanziario.sal[idx].bloccato = false;
+      saveData(); renderFinSal();
+    };
+  });
+  document.querySelectorAll('.sal-del').forEach((btn) => {
+    btn.onclick = () => {
+      const tr = btn.closest('tr'); const idx = Number(tr.dataset.idx);
+      if (!confirm('Eliminare questo SAL?')) return;
+      DATA.finanziario.sal.splice(idx, 1); saveData(); renderFinSal();
+    };
+  });
+}
+
+function renderFinCosti() {
+  const { totali: materialiPerSub } = acquistiPerSubappalto();
+  const rows = SUBAPPALTI_DEF.map((s) => {
+    const a = DATA.subappalti[s.id];
+    const importo = subImporto(s.id);
+    const speso = subSpeso(s.id);
+    const materiali = materialiPerSub[s.id] || 0;
+    const costoComplessivo = speso + materiali;
+    const margine = importo - costoComplessivo;
+    const pct = importo > 0 ? Math.min(100, Math.round((costoComplessivo / importo) * 100)) : 0;
+    const bl = !!a.bloccatoCosti; const dis = bl ? 'disabled' : '';
+    return `
+    <tr data-id="${s.id}">
+      <td><strong>${s.lavorazione}</strong><br><span class="empty-note">${a.ragioneSociale || 'Da definire'}</span></td>
+      <td><input type="number" class="f-importo" value="${a.importo || ''}" placeholder="€" ${dis} /></td>
+      <td><input type="number" class="f-speso" value="${a.speso || ''}" placeholder="€" ${dis} /></td>
+      <td class="empty-note">${euro(materiali)}</td>
+      <td>${euro(costoComplessivo)}</td>
+      <td>${euro(margine)}</td>
+      <td>
+        <div class="progress-bar-track"><div class="progress-bar-fill ${costoComplessivo > importo ? 'over' : ''}" style="width:${pct}%"></div></div>
+        <span class="empty-note">${pct}%</span>
+      </td>
+      <td>${bl ? '<button class="btn btn-outline btn-sm costi-unlock">&#128274; Sblocca</button>' : '<button class="btn btn-primary btn-sm costi-save">Salva</button>'}</td>
+    </tr>`;
+  }).join('');
+  const totImporto = SUBAPPALTI_DEF.reduce((s, x) => s + subImporto(x.id), 0);
+  const totSpeso = SUBAPPALTI_DEF.reduce((s, x) => s + subSpeso(x.id), 0);
+  const totMateriali = SUBAPPALTI_DEF.reduce((s, x) => s + (materialiPerSub[x.id] || 0), 0);
+
+  document.getElementById('main').innerHTML = `
+    <div class="panel">
+      <h2>Costi vs budget per subappalto</h2>
+      <p class="sub">Importo contrattuale rispetto al costo reale ad oggi. "Speso" = quanto pagato al subappaltatore (manodopera/SAL); "Materiali forniti" arriva da Ufficio acquisti e si somma per il costo complessivo.</p>
+      <table class="row-table">
+        <thead><tr><th>Lavorazione</th><th>Importo contrattuale</th><th>Speso ad oggi</th><th>Materiali forniti</th><th>Costo complessivo</th><th>Margine</th><th>% costo/importo</th><th></th></tr></thead>
+        <tbody>${rows}</tbody>
+        <tfoot><tr><td><strong>Totale</strong></td><td><strong>${euro(totImporto)}</strong></td><td><strong>${euro(totSpeso)}</strong></td><td><strong>${euro(totMateriali)}</strong></td><td><strong>${euro(totSpeso + totMateriali)}</strong></td><td><strong>${euro(totImporto - totSpeso - totMateriali)}</strong></td><td></td><td></td></tr></tfoot>
+      </table>
+    </div>
+  `;
+  document.querySelectorAll('.costi-save').forEach((btn) => {
+    btn.onclick = () => {
+      const tr = btn.closest('tr'); const id = tr.dataset.id;
+      DATA.subappalti[id].importo = tr.querySelector('.f-importo').value;
+      DATA.subappalti[id].speso = tr.querySelector('.f-speso').value;
+      DATA.subappalti[id].bloccatoCosti = true;
+      saveData(); renderFinCosti();
+    };
+  });
+  document.querySelectorAll('.costi-unlock').forEach((btn) => {
+    btn.onclick = () => {
+      const tr = btn.closest('tr'); const id = tr.dataset.id;
+      DATA.subappalti[id].bloccatoCosti = false;
+      saveData(); renderFinCosti();
+    };
+  });
+}
+
+function statoFattura(f) {
+  if (f.pagata) return 'pagata';
+  if (!f.scadenzaPagamento) return 'da_pagare';
+  const giorni = Math.ceil((new Date(f.scadenzaPagamento) - new Date()) / (1000 * 60 * 60 * 24));
+  if (giorni < 0) return 'scaduto';
+  if (giorni <= 30) return 'in_scadenza';
+  return 'da_pagare';
+}
+
+function trovaOrdinePerId(ordineId) {
+  if (!ordineId) return null;
+  for (const cat of DATA.acquisti.categorie) {
+    const o = cat.ordini.find((x) => String(x.id) === String(ordineId));
+    if (o) return o;
+  }
+  return null;
+}
+
+function ddtSelectOptions(fatturaId) {
+  const candidati = allOrdiniFlat().filter(({ o }) => o.numeroDDT || o.dataConsegnaEffettiva);
+  let html = `<option value="">Nessun DDT collegato (fattura non legata a uno scarico merce)</option>`;
+  candidati.forEach(({ o, catNome }) => {
+    const selected = String(o.fatturaId) === String(fatturaId) ? 'selected' : '';
+    html += `<option value="${o.id}" ${selected}>DDT ${o.numeroDDT || '-'} (${o.dataConsegnaEffettiva ? dataBreve(o.dataConsegnaEffettiva) : '-'}) &middot; ${o.fornitore || catNome}</option>`;
+  });
+  return html;
+}
+
+function scollegaOrdiniDaFattura(fatturaId, tranneOrdineId) {
+  DATA.acquisti.categorie.forEach((cat) => {
+    cat.ordini.forEach((o) => {
+      if (String(o.fatturaId) === String(fatturaId) && String(o.id) !== String(tranneOrdineId)) o.fatturaId = '';
+    });
+  });
+}
+
+function renderFinFatture() {
+  const rows = DATA.finanziario.fatture.map((f, i) => {
+    const bl = !!f.bloccato; const dis = bl ? 'disabled' : '';
+    const ordineCollegato = allOrdiniFlat().map(({ o }) => o).find((o) => String(o.fatturaId) === String(f.id));
+    let scostamentoHtml = '<span class="no-link">-</span>';
+    const haRigheFerroValide = ordineCollegato && ordineCollegato.righeFerro && ordineCollegato.righeFerro.some((r) => r.tipo && Number(r.prezzoTonnellata) && (Number(r.tonnellateArrivate) || Number(r.tonnellate)));
+    if (haRigheFerroValide) {
+      const previsionale = prezzoPrevisionale(ordineCollegato);
+      const riferimento = Number(f.imponibile) || Number(f.importo) || 0;
+      const scostamento = riferimento - previsionale;
+      const pct = previsionale > 0 ? (scostamento / previsionale * 100) : 0;
+      const cls = Math.abs(pct) <= 3 ? 'valido' : (scostamento > 0 ? 'scaduto' : 'in_scadenza');
+      scostamentoHtml = `<span title="Previsionale ${euro(previsionale)}">${chip(cls, `${scostamento >= 0 ? '+' : ''}${euro(scostamento)}`)}</span>`;
+    }
+    return `
+    <tr data-idx="${i}">
+      <td><select class="f-tipo" ${dis}><option value="emessa" ${f.tipo === 'emessa' ? 'selected' : ''}>Emessa (a stazione appaltante)</option><option value="ricevuta" ${f.tipo === 'ricevuta' ? 'selected' : ''}>Ricevuta (da subappaltatore)</option></select></td>
+      <td><input type="text" class="f-numero" value="${f.numero || ''}" ${dis} /></td>
+      <td><input type="text" class="f-controparte" value="${f.controparte || ''}" ${dis} /></td>
+      <td><input type="date" class="f-data" value="${f.data || ''}" ${dis} /></td>
+      <td><input type="number" class="f-imponibile" value="${f.imponibile || ''}" placeholder="€" ${dis} /></td>
+      <td><input type="number" class="f-iva" value="${f.iva || ''}" placeholder="€" ${dis} /></td>
+      <td><input type="number" class="f-importo" value="${f.importo || ''}" placeholder="€" ${dis} /></td>
+      <td><select class="f-ddt" ${dis}>${ddtSelectOptions(f.id)}</select></td>
+      <td>${scostamentoHtml}</td>
+      <td><input type="date" class="f-scadenza" value="${f.scadenzaPagamento || ''}" ${dis} /></td>
+      <td><label style="display:flex; align-items:center; gap:6px; font-weight:400;"><input type="checkbox" class="f-pagata" style="width:auto;" ${f.pagata ? 'checked' : ''} ${dis} /> pagata</label></td>
+      <td>${chip(statoFattura(f))}</td>
+      <td>${bl ? '<button class="btn btn-outline btn-sm fatt-unlock">&#128274; Sblocca</button>' : '<button class="btn btn-primary btn-sm fatt-save">Salva</button> <button class="btn btn-outline btn-sm fatt-del">Elimina</button>'}</td>
+    </tr>`;
+  }).join('');
+  document.getElementById('main').innerHTML = `
+    <div class="panel">
+      <h2>Fatture</h2>
+      <p class="sub">Fatture emesse verso la stazione appaltante e fatture ricevute dai subappaltatori. "DDT collegato" e' facoltativo. Per il ferro, "Scostamento" confronta l'importo con il prezzo previsionale (quantit&agrave; arrivata &times; prezzo pattuito).</p>
+      <div style="display:flex; align-items:center; gap:10px; margin-bottom:14px; flex-wrap:wrap;">
+        <button class="btn btn-outline btn-sm" id="addFattura">+ Aggiungi fattura vuota</button>
+        <label class="btn btn-primary btn-sm" style="cursor:pointer;">
+          Allega PDF fattura (autofill sperimentale)
+          <input type="file" accept="application/pdf" id="fatturaPdfInput" style="display:none;" />
+        </label>
+        <span id="pdfStatus" class="empty-note"></span>
+      </div>
+      <p class="sub" style="margin-top:-8px;">Funziona solo su PDF digitali (fatture elettroniche), non su foto/scansioni. Compila i campi in bozza: controlla sempre prima di salvare.</p>
+      <table class="row-table">
+        <thead><tr><th>Tipo</th><th>N.</th><th>Controparte</th><th>Data</th><th>Imponibile</th><th>IVA</th><th>Totale</th><th>DDT collegato</th><th>Scostamento</th><th>Scadenza pag.</th><th>Pagata</th><th>Stato</th><th></th></tr></thead>
+        <tbody id="fattBody">${rows}</tbody>
+      </table>
+    </div>
+  `;
+  document.getElementById('addFattura').onclick = () => {
+    DATA.finanziario.fatture.push({ id: nextId('fatture'), tipo: 'emessa', numero: '', controparte: '', data: '', imponibile: '', iva: '', importo: '', scadenzaPagamento: '', pagata: false, bloccato: false });
+    saveData(); renderFinFatture();
+  };
+  document.getElementById('fatturaPdfInput').onchange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const status = document.getElementById('pdfStatus');
+    status.textContent = 'Leggo il PDF...';
+    try {
+      const testo = await estraiTestoPDF(file);
+      const dati = estraiDatiFattura(testo);
+      DATA.finanziario.fatture.push({
+        id: nextId('fatture'),
+        tipo: 'ricevuta',
+        numero: dati.numero,
+        controparte: dati.controparte,
+        data: dati.data,
+        imponibile: dati.imponibile,
+        iva: dati.iva,
+        importo: dati.importo,
+        scadenzaPagamento: dati.scadenzaPagamento,
+        pagata: false
+      });
+      saveData();
+      renderFinFatture();
+      const found = ['numero', 'controparte', 'data', 'imponibile', 'iva', 'importo', 'scadenzaPagamento'].filter((k) => dati[k]).length;
+      alert(`Estratti ${found} di 7 campi dal PDF (numero, controparte, data, imponibile, IVA, totale, scadenza). Controlla la riga aggiunta (in fondo alla tabella) prima di considerarla definitiva.`);
+    } catch (err) {
+      status.textContent = '';
+      alert('Non sono riuscito a leggere questo PDF: ' + err.message + '. Probabilmente è una scansione/foto, non un PDF con testo digitale.');
+    }
+  };
+  document.querySelectorAll('.fatt-save').forEach((btn) => {
+    btn.onclick = () => {
+      const tr = btn.closest('tr'); const idx = Number(tr.dataset.idx);
+      const fattura = DATA.finanziario.fatture[idx];
+      Object.assign(fattura, {
+        tipo: tr.querySelector('.f-tipo').value,
+        numero: tr.querySelector('.f-numero').value,
+        controparte: tr.querySelector('.f-controparte').value,
+        data: tr.querySelector('.f-data').value,
+        imponibile: tr.querySelector('.f-imponibile').value,
+        iva: tr.querySelector('.f-iva').value,
+        importo: tr.querySelector('.f-importo').value,
+        scadenzaPagamento: tr.querySelector('.f-scadenza').value,
+        pagata: tr.querySelector('.f-pagata').checked,
+        bloccato: true
+      });
+      const ordineSelezionatoId = tr.querySelector('.f-ddt').value;
+      scollegaOrdiniDaFattura(fattura.id, ordineSelezionatoId);
+      if (ordineSelezionatoId) {
+        const ordine = trovaOrdinePerId(ordineSelezionatoId);
+        if (ordine) ordine.fatturaId = fattura.id;
+      }
+      saveData(); renderFinFatture();
+    };
+  });
+  document.querySelectorAll('.fatt-unlock').forEach((btn) => {
+    btn.onclick = () => {
+      const tr = btn.closest('tr'); const idx = Number(tr.dataset.idx);
+      DATA.finanziario.fatture[idx].bloccato = false;
+      saveData(); renderFinFatture();
+    };
+  });
+  document.querySelectorAll('.fatt-del').forEach((btn) => {
+    btn.onclick = () => {
+      const tr = btn.closest('tr'); const idx = Number(tr.dataset.idx);
+      if (!confirm('Eliminare questa fattura?')) return;
+      DATA.finanziario.fatture.splice(idx, 1); saveData(); renderFinFatture();
+    };
+  });
+}
+
+// ---------- AREA: CRONOPROGRAMMA ----------
+function faseStato(f) {
+  const oggi = new Date();
+  if (f.dataFineEffettiva) return 'completata';
+  if (!f.dataInizioPrevista || !f.dataFinePrevista) return 'da_pianificare';
+  if (oggi < new Date(f.dataInizioPrevista)) return 'da_iniziare';
+  if (oggi > new Date(f.dataFinePrevista)) return 'in_ritardo';
+  return 'in_corso';
+}
+const FASE_LABEL = { completata: 'Completata', da_pianificare: 'Da pianificare', da_iniziare: 'Da iniziare', in_ritardo: 'In ritardo', in_corso: 'In corso' };
+const FASE_COLOR = { completata: '#0d9488', da_pianificare: '#94a3b8', da_iniziare: '#2563eb', in_ritardo: '#dc2626', in_corso: '#d97706' };
+function faseChip(stato) { return `<span class="chip" style="background:${FASE_COLOR[stato]}22; color:${FASE_COLOR[stato]};">${FASE_LABEL[stato]}</span>`; }
+
+function faseStatusText(f) {
+  const oggi = new Date(); oggi.setHours(0, 0, 0, 0);
+  if (f.dataFineEffettiva) return `Completata il ${dataBreve(f.dataFineEffettiva)}`;
+  if (!f.dataInizioPrevista || !f.dataFinePrevista) return 'Nessuna data pianificata';
+  const inizio = new Date(f.dataInizioPrevista), fine = new Date(f.dataFinePrevista);
+  const ggInizio = Math.round((inizio - oggi) / 86400000);
+  const ggFine = Math.round((fine - oggi) / 86400000);
+  if (oggi < inizio) return `Inizia tra ${ggInizio} giorni`;
+  if (oggi > fine) return `In ritardo di ${Math.abs(ggFine)} giorni rispetto al piano`;
+  return `In corso, termina tra ${ggFine} giorni`;
+}
+
+function renderCronoprogramma() {
+  const fasi = DATA.cronoprogramma;
+  const conDate = fasi.filter((f) => f.dataInizioPrevista && f.dataFinePrevista);
+  const counts = { completata: 0, in_corso: 0, in_ritardo: 0, da_iniziare: 0, da_pianificare: 0 };
+  fasi.forEach((f) => counts[faseStato(f)]++);
+
+  let ganttHtml = '<p class="empty-note">Inserisci le date previste per vedere il diagramma.</p>';
+  if (conDate.length) {
+    const start = new Date(Math.min(...conDate.map((f) => new Date(f.dataInizioPrevista))));
+    const end = new Date(Math.max(...conDate.map((f) => new Date(f.dataFinePrevista))));
+    const totalDays = Math.max(1, (end - start) / (1000 * 60 * 60 * 24));
+    const oggi = new Date();
+    const oggiPct = Math.min(100, Math.max(0, ((oggi - start) / (1000 * 60 * 60 * 24) / totalDays) * 100));
+
+    // righello mesi
+    const mesi = [];
+    let cursor = new Date(start.getFullYear(), start.getMonth(), 1);
+    while (cursor <= end) {
+      const pct = Math.max(0, Math.min(100, ((cursor - start) / (1000 * 60 * 60 * 24) / totalDays) * 100));
+      mesi.push({ label: meseAnno(cursor.toISOString().slice(0, 10)), pct });
+      cursor = new Date(cursor.getFullYear(), cursor.getMonth() + 1, 1);
+    }
+    const rulerHtml = `<div class="gantt-ruler">${mesi.map((m) => `<div class="gantt-ruler-tick" style="left:${m.pct}%">${m.label}</div>`).join('')}</div>`;
+
+    const barsHtml = conDate.map((f) => {
+      const left = ((new Date(f.dataInizioPrevista) - start) / (1000 * 60 * 60 * 24) / totalDays) * 100;
+      const width = Math.max(1.5, ((new Date(f.dataFinePrevista) - new Date(f.dataInizioPrevista)) / (1000 * 60 * 60 * 24) / totalDays) * 100);
+      const st = faseStato(f);
+      return `<div class="gantt-row-label">${f.nome} <span class="gantt-dates">${dataBreve(f.dataInizioPrevista)} &rarr; ${dataBreve(f.dataFinePrevista)} &middot; ${faseStatusText(f)}</span></div><div class="gantt-track"><div class="gantt-bar" style="left:${left}%; width:${width}%; background:${FASE_COLOR[st]};">${f.nome}</div></div>`;
+    }).join('');
+    ganttHtml = `${rulerHtml}<div class="gantt-wrap">${barsHtml}<div class="gantt-today" style="left:${oggiPct}%;" title="Oggi"></div><div class="gantt-today-label" style="left:${oggiPct}%;">OGGI &middot; ${oggiStr()}</div></div>`;
+  }
+
+  const nonPianificate = counts.da_pianificare;
+
+  const rows = fasi.map((f, i) => {
+    const bl = !!f.bloccato; const dis = bl ? 'disabled' : '';
+    return `
+    <tr data-idx="${i}">
+      <td class="empty-note">${f.sezione || ''}</td>
+      <td><input type="text" class="f-nome" value="${f.nome || ''}" ${dis} /></td>
+      <td><input type="number" class="f-durata" value="${f.durataGiorni || ''}" style="width:60px;" placeholder="gg" ${dis} /></td>
+      <td>
+        <select class="f-sub" ${dis}>
+          <option value="" ${!f.subappaltoId ? 'selected' : ''}>Cantiere (generale)</option>
+          ${SUBAPPALTI_DEF.map((s) => `<option value="${s.id}" ${f.subappaltoId === s.id ? 'selected' : ''}>${s.lavorazione}</option>`).join('')}
+        </select>
+      </td>
+      <td><input type="date" class="f-inizio" value="${f.dataInizioPrevista || ''}" ${dis} /></td>
+      <td><input type="date" class="f-fineprev" value="${f.dataFinePrevista || ''}" ${dis} /></td>
+      <td><input type="date" class="f-fineeff" value="${f.dataFineEffettiva || ''}" ${dis} /></td>
+      <td>${faseChip(faseStato(f))}<br><span class="empty-note">${faseStatusText(f)}</span></td>
+      <td>${bl ? '<button class="btn btn-outline btn-sm fase-unlock">&#128274; Sblocca</button>' : '<button class="btn btn-primary btn-sm fase-save">Salva</button> <button class="btn btn-outline btn-sm fase-del">Elimina</button>'}</td>
+    </tr>`;
+  }).join('');
+
+  document.getElementById('main').innerHTML = `
+    <div class="panel">
+      <h2>Rispetto al cronoprogramma &mdash; oggi &egrave; il ${oggiStr()}</h2>
+      <div class="grid-stats">
+        <div class="stat-card red"><div class="num">${counts.in_ritardo}</div><div class="label">In ritardo</div></div>
+        <div class="stat-card amber"><div class="num">${counts.in_corso}</div><div class="label">In corso</div></div>
+        <div class="stat-card blue"><div class="num">${counts.da_iniziare}</div><div class="label">Da iniziare</div></div>
+        <div class="stat-card teal"><div class="num">${counts.completata}</div><div class="label">Completate</div></div>
+        <div class="stat-card gray"><div class="num">${counts.da_pianificare}</div><div class="label">Senza data</div></div>
+      </div>
+    </div>
+    <div class="panel">
+      <h2>Diagramma di avanzamento</h2>
+      <p class="sub">Riga rossa verticale = oggi. Ogni fase mostra le date e quanti giorni di anticipo/ritardo ha rispetto al piano. ${nonPianificate ? `${nonPianificate} fasi senza data non appaiono qui, sono elencate nella tabella sotto.` : ''}</p>
+      ${ganttHtml}
+    </div>
+    <div class="panel">
+      <h2>Fasi lavori</h2>
+      <p class="sub">Importate dal cronoprogramma caricato (36 attivit&agrave;, raggruppate per sezione). Le date derivano dalle barre colorate del file originale.</p>
+      <div style="overflow-x:auto;">
+        <table class="row-table fasi-table">
+          <colgroup>
+            <col style="width:9%"><col style="width:24%"><col style="width:6%"><col style="width:13%">
+            <col style="width:9%"><col style="width:9%"><col style="width:9%"><col style="width:11%"><col style="width:10%">
+          </colgroup>
+          <thead><tr><th>Sezione</th><th>Fase</th><th>Durata (gg)</th><th>Subappalto collegato</th><th>Inizio previsto</th><th>Fine prevista</th><th>Fine effettiva</th><th>Stato</th><th></th></tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>
+      <button class="btn btn-outline add-row-btn" id="addFase">+ Aggiungi fase</button>
+    </div>
+  `;
+  document.getElementById('addFase').onclick = () => {
+    DATA.cronoprogramma.push({ id: nextId('fasi'), sezione: '', nome: 'Nuova fase', durataGiorni: '', subappaltoId: '', dataInizioPrevista: '', dataFinePrevista: '', dataFineEffettiva: '', note: '', bloccato: false });
+    saveData(); renderCronoprogramma();
+  };
+  document.querySelectorAll('.fase-save').forEach((btn) => {
+    btn.onclick = () => {
+      const tr = btn.closest('tr'); const idx = Number(tr.dataset.idx);
+      Object.assign(DATA.cronoprogramma[idx], {
+        nome: tr.querySelector('.f-nome').value,
+        durataGiorni: tr.querySelector('.f-durata').value,
+        subappaltoId: tr.querySelector('.f-sub').value,
+        dataInizioPrevista: tr.querySelector('.f-inizio').value,
+        dataFinePrevista: tr.querySelector('.f-fineprev').value,
+        dataFineEffettiva: tr.querySelector('.f-fineeff').value,
+        bloccato: true
+      });
+      saveData(); renderCronoprogramma();
+    };
+  });
+  document.querySelectorAll('.fase-unlock').forEach((btn) => {
+    btn.onclick = () => {
+      const tr = btn.closest('tr'); const idx = Number(tr.dataset.idx);
+      DATA.cronoprogramma[idx].bloccato = false;
+      saveData(); renderCronoprogramma();
+    };
+  });
+  document.querySelectorAll('.fase-del').forEach((btn) => {
+    btn.onclick = () => {
+      const tr = btn.closest('tr'); const idx = Number(tr.dataset.idx);
+      if (!confirm('Eliminare questa fase?')) return;
+      DATA.cronoprogramma.splice(idx, 1); saveData(); renderCronoprogramma();
+    };
+  });
+}
+
+// ---------- NAV / ROUTER ----------
+const SUBTABS = {
+  anagrafica: [ ['appalto', 'Appalto'], ['azienda', 'Appaltatore'], ['ente', 'Stazione appaltante'], ['subappaltatori', 'Subappaltatori'], ['referenti', 'Referenti e ruoli'] ],
+  documentazione: [ ['scadenzario', 'Scadenzario'], ['cantiere', 'Checklist appalto'], ['subappalti', 'Subappaltatori'] ],
+  acquisti: [],
+  finanziario: [ ['panoramica', 'Panoramica'], ['pianificazione', 'Pianificazione'], ['sal', 'SAL'], ['costi', 'Costi per subappalto'], ['fatture', 'Fatture'] ],
+  cronoprogramma: []
+};
+let CURRENT_AREA = 'documentazione';
+let CURRENT_SUBTAB = 'scadenzario';
+
+function renderSubTabsNav() {
+  const subTabsNav = document.getElementById('subTabs');
+  const tabs = SUBTABS[CURRENT_AREA];
+  if (!tabs.length) { subTabsNav.style.display = 'none'; subTabsNav.innerHTML = ''; return; }
+  subTabsNav.style.display = 'flex';
+  subTabsNav.innerHTML = tabs.map(([key, label]) => `<button data-subtab="${key}" class="${key === CURRENT_SUBTAB ? 'active' : ''}">${label}</button>`).join('');
+  subTabsNav.querySelectorAll('button').forEach((btn) => {
+    btn.onclick = () => {
+      CURRENT_SUBTAB = btn.getAttribute('data-subtab');
+      if (CURRENT_SUBTAB === 'subappalti') DOC_SUBAPPALTO_SELEZIONATO = null;
+      renderSubTabsNav();
+      renderMain();
+    };
+  });
+}
+
+function renderMain() {
+  if (CURRENT_AREA === 'anagrafica') {
+    if (CURRENT_SUBTAB === 'appalto') renderAnagraficaAppalto();
+    else if (CURRENT_SUBTAB === 'azienda') renderAnagraficaAzienda();
+    else if (CURRENT_SUBTAB === 'ente') renderAnagraficaEnte();
+    else if (CURRENT_SUBTAB === 'subappaltatori') renderAnagraficaSubappaltatori();
+    else if (CURRENT_SUBTAB === 'referenti') renderReferenti();
+  } else if (CURRENT_AREA === 'documentazione') {
+    if (CURRENT_SUBTAB === 'scadenzario') renderScadenzario();
+    else if (CURRENT_SUBTAB === 'cantiere') renderCantiereDoc();
+    else if (CURRENT_SUBTAB === 'subappalti') renderSubappaltiDoc();
+  } else if (CURRENT_AREA === 'acquisti') {
+    renderAcquisti();
+  } else if (CURRENT_AREA === 'finanziario') {
+    if (CURRENT_SUBTAB === 'panoramica') renderFinPanoramica();
+    else if (CURRENT_SUBTAB === 'pianificazione') renderFinPianificazione();
+    else if (CURRENT_SUBTAB === 'sal') renderFinSal();
+    else if (CURRENT_SUBTAB === 'costi') renderFinCosti();
+    else if (CURRENT_SUBTAB === 'fatture') renderFinFatture();
+  } else if (CURRENT_AREA === 'cronoprogramma') {
+    renderCronoprogramma();
+  }
+}
+
+document.getElementById('areaTabs').addEventListener('click', (e) => {
+  const btn = e.target.closest('button[data-area]');
+  if (!btn) return;
+  document.querySelectorAll('#areaTabs button').forEach((b) => b.classList.remove('active'));
+  btn.classList.add('active');
+  CURRENT_AREA = btn.getAttribute('data-area');
+  CURRENT_SUBTAB = SUBTABS[CURRENT_AREA].length ? SUBTABS[CURRENT_AREA][0][0] : null;
+  renderSubTabsNav();
+  renderMain();
+});
+
+// ============================================================================
+// Login (Supabase Auth) e avvio app
+// ============================================================================
+async function avviaApp() {
+  document.getElementById('loginGate').style.display = 'none';
+  document.getElementById('appRoot').style.display = '';
+  aggiornaStatoSync('Caricamento…');
+  try {
+    DATA = await caricaDatiDaSupabase();
+    aggiornaStatoSync('');
+    renderSubTabsNav();
+    renderMain();
+  } catch (err) {
+    aggiornaStatoSync('');
+    document.getElementById('main').innerHTML = '<div class="panel"><p class="empty-note">Caricamento dati non riuscito: ' + err.message + '. Ricarica la pagina per riprovare.</p></div>';
+  }
+}
+
+function mostraLogin(messaggioErrore) {
+  document.getElementById('appRoot').style.display = 'none';
+  document.getElementById('loginGate').style.display = 'flex';
+  const err = document.getElementById('loginError');
+  if (messaggioErrore) { err.textContent = messaggioErrore; err.style.display = 'block'; }
+  else { err.style.display = 'none'; }
+}
+
+document.getElementById('loginForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const btn = document.getElementById('loginSubmitBtn');
+  btn.disabled = true; btn.textContent = 'Accesso in corso…';
+  const email = document.getElementById('loginEmail').value;
+  const password = document.getElementById('loginPassword').value;
+  const { error } = await supa.auth.signInWithPassword({ email, password });
+  btn.disabled = false; btn.textContent = 'Accedi';
+  if (error) {
+    mostraLogin('Accesso non riuscito: email o password errate.');
+    return;
+  }
+  avviaApp();
+});
+
+document.getElementById('logoutBtn').addEventListener('click', async () => {
+  await supa.auth.signOut();
+  DATA = null;
+  mostraLogin();
+});
+
+// Alla prima apertura, controlla se c'e' gia' una sessione valida (login precedente).
+supa.auth.getSession().then(({ data }) => {
+  if (data.session) avviaApp();
+  else mostraLogin();
+});
+</script>
+</body>
+</html>
