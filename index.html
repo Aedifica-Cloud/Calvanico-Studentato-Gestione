@@ -339,8 +339,17 @@ const SUPABASE_URL = 'https://xrqesmaebimgzgbkxftv.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhycWVzbWFlYmltZ3pnYmt4ZnR2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMwMDcxNDgsImV4cCI6MjA5ODU4MzE0OH0.Um9GbwCqoZdAQJnyynEkmuIgkH456HFzTReOm1K8Crw';
 const supa = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+// Contatore indipendente da DATA._seq (che potrebbe non esistere ancora quando
+// nuoviDatiVuoti() sta costruendo il suo stesso oggetto). Ogni documento checklist
+// ottiene sempre un id esplicito, cosi' l'insert su Supabase non lascia mai la
+// colonna "id" ambigua tra piu' righe dello stesso invio bulk. Parte da un numero
+// alto (timestamp) apposta per non collidere mai con gli id reali assegnati da
+// Postgres (che partono da 1 e crescono lentamente per una checklist di poche
+// decine di voci) nel raro caso in cui un tipo di documento nuovo (aggiunto in una
+// versione futura dell'app) venga creato al volo insieme a righe gia' salvate.
+let PROSSIMO_ID_DOC = Date.now();
 function emptyDoc(tipo) {
-  return { tipoNome: tipo.nome, validitaGiorni: tipo.validitaGiorni, dataEmissione: '', dataScadenza: '', numeroProtocollo: '', linkDrive: '', bloccato: false };
+  return { id: PROSSIMO_ID_DOC++, tipoNome: tipo.nome, validitaGiorni: tipo.validitaGiorni, dataEmissione: '', dataScadenza: '', numeroProtocollo: '', linkDrive: '', bloccato: false };
 }
 
 function nuoviDatiVuoti() {
@@ -798,28 +807,71 @@ async function caricaDatiDaSupabase() {
   data._seq.foto = maxId(data.cantiereFoto);
   data._seq.righeFerro = maxId(data.acquisti.categorie.flatMap((c) => c.ordini.flatMap((o) => o.righeFerro)));
 
-  return normalizzaData(data);
+  // Auto-riparazione: se un salvataggio iniziale si era fermato a meta' (es. per un
+  // errore di rete o un bug corretto nel frattempo), alcune collezioni-seed possono
+  // essere rimaste vuote pur non essendo un progetto "primo avvio" nel complesso
+  // (cantiere/referenti gia' presenti). Le ricontrolliamo una per una e le
+  // riseminiamo solo se davvero vuote, poi scriviamo il risultato su Supabase cosi'
+  // non serve piu' ripetere l'operazione ai prossimi accessi.
+  let riparato = false;
+  if (data.acquisti.categorie.length === 0) {
+    CATEGORIE_ACQUISTI_INIZIALI.forEach((nome) => {
+      data._seq.categorieAcquisto += 1;
+      data.acquisti.categorie.push({ id: data._seq.categorieAcquisto, nome, ordini: [] });
+    });
+    riparato = true;
+  }
+  if (data.cronoprogramma.length === 0) {
+    FASI_REALI.forEach((f) => {
+      data._seq.fasi += 1;
+      data.cronoprogramma.push({ id: data._seq.fasi, sezione: f.sezione, nome: f.nome, durataGiorni: f.durataGiorni, subappaltoId: '', dataInizioPrevista: f.dataInizioPrevista, dataFinePrevista: f.dataFinePrevista, dataFineEffettiva: '', note: '', bloccato: false });
+    });
+    riparato = true;
+  }
+  if (data.finanziario.pianificazione.length === 0) {
+    PIANIFICAZIONE_INIZIALE.forEach((p) => {
+      data._seq.pianificazione += 1;
+      data.finanziario.pianificazione.push({ id: data._seq.pianificazione, numero: p.numero, data: p.data, importo: p.importo, bloccato: false });
+    });
+    riparato = true;
+  }
+
+  const normalizzato = normalizzaData(data);
+  if (riparato) await sincronizzaSuSupabase(normalizzato);
+  return normalizzato;
 }
 
 // ---- scrittura su Supabase ----
+// PostgREST, negli insert "bulk" (piu' righe in una chiamata), tratta una chiave
+// mancante su una riga ma presente su un'altra come NULL, non come "usa il default
+// di colonna" - e per le righe senza id (es. i documenti checklist, mai avuto un id
+// applicativo) questo puo' far arrivare "id: null" e violare il NOT NULL del
+// bigserial. pulisciRiga toglie del tutto le chiavi undefined, cosi' la colonna non
+// viene mai inviata quando non abbiamo un id da proporre.
+function pulisciRiga(obj) {
+  const out = {};
+  Object.keys(obj).forEach((k) => { if (obj[k] !== undefined) out[k] = obj[k]; });
+  return out;
+}
+
 async function eliminaEReinserisci(tabella, righe) {
   const del = await supa.from(tabella).delete().gt('id', 0);
   if (del.error) throw del.error;
   if (righe.length) {
-    const ins = await supa.from(tabella).insert(righe);
+    const ins = await supa.from(tabella).insert(righe.map(pulisciRiga));
     if (ins.error) throw ins.error;
   }
 }
 
 async function sincronizzaSuSupabase(data) {
-  let r = await supa.from('cantiere').upsert({ id: 1, ...cantiereToDb(data.cantiere) });
+  let r = await supa.from('cantiere').upsert(pulisciRiga({ id: 1, ...cantiereToDb(data.cantiere) }));
   if (r.error) throw r.error;
-  r = await supa.from('appaltatore').upsert({ id: 1, ...appaltatoreToDb(data.appaltatore) });
+  r = await supa.from('appaltatore').upsert(pulisciRiga({ id: 1, ...appaltatoreToDb(data.appaltatore) }));
   if (r.error) throw r.error;
-  r = await supa.from('ente_appaltante').upsert({ id: 1, ...enteToDb(data.enteAppaltante) });
+  r = await supa.from('ente_appaltante').upsert(pulisciRiga({ id: 1, ...enteToDb(data.enteAppaltante) }));
   if (r.error) throw r.error;
 
-  r = await supa.from('subappalti').upsert(SUBAPPALTI_DEF.map((s) => subappaltoToDb(s.id, s.lavorazione, data.subappalti[s.id])));
+  r = await supa.from('subappalti').upsert(SUBAPPALTI_DEF.map((s) => pulisciRiga(subappaltoToDb(s.id, s.lavorazione, data.subappalti[s.id]))));
   if (r.error) throw r.error;
 
   await eliminaEReinserisci('cantiere_foto', data.cantiereFoto.map(fotoToDb));
@@ -848,11 +900,11 @@ async function sincronizzaSuSupabase(data) {
   r = await supa.from('finanziario_fatture').delete().gt('id', 0);
   if (r.error) throw r.error;
   if (data.acquisti.categorie.length) {
-    r = await supa.from('acquisti_categorie').insert(data.acquisti.categorie.map((c) => ({ id: c.id, nome: c.nome })));
+    r = await supa.from('acquisti_categorie').insert(data.acquisti.categorie.map((c) => pulisciRiga({ id: c.id, nome: c.nome })));
     if (r.error) throw r.error;
   }
   if (data.finanziario.fatture.length) {
-    r = await supa.from('finanziario_fatture').insert(data.finanziario.fatture.map(fatturaToDb));
+    r = await supa.from('finanziario_fatture').insert(data.finanziario.fatture.map((f) => pulisciRiga(fatturaToDb(f))));
     if (r.error) throw r.error;
   }
   const tuttiOrdini = [];
@@ -864,11 +916,11 @@ async function sincronizzaSuSupabase(data) {
     });
   });
   if (tuttiOrdini.length) {
-    r = await supa.from('acquisti_ordini').insert(tuttiOrdini);
+    r = await supa.from('acquisti_ordini').insert(tuttiOrdini.map(pulisciRiga));
     if (r.error) throw r.error;
   }
   if (tutteRighe.length) {
-    r = await supa.from('acquisti_righe_ferro').insert(tutteRighe);
+    r = await supa.from('acquisti_righe_ferro').insert(tutteRighe.map(pulisciRiga));
     if (r.error) throw r.error;
   }
 }
