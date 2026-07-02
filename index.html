@@ -170,17 +170,20 @@
   <div style="display:flex; align-items:center; gap:10px;">
     <span id="syncStatus" style="font-size:11.5px; color:#cbd5e1;"></span>
     <a class="drive-link" href="https://drive.google.com/drive/folders/1zllqdchS_EpAYoiCV7fTJXqYE8_U947V" target="_blank" rel="noopener">Apri cartella Drive &#8599;</a>
+    <button class="drive-link" id="backupBtn" style="border:none; cursor:pointer;" title="Scarica una copia di sicurezza di tutti i dati">Esporta backup &#8595;</button>
     <button class="drive-link" id="logoutBtn" style="border:none; cursor:pointer;">Esci</button>
   </div>
 </header>
 <nav class="area-tabs" id="areaTabs">
+  <button data-area="home" class="active">Home</button>
   <button data-area="anagrafica">Anagrafica</button>
-  <button data-area="documentazione" class="active">Documentazione</button>
+  <button data-area="documentazione">Documentazione</button>
   <button data-area="acquisti">Ufficio acquisti</button>
   <button data-area="finanziario">Finanziario</button>
   <button data-area="cronoprogramma">Cronoprogramma</button>
 </nav>
 <nav class="tabs" id="subTabs"></nav>
+<div id="alertBanner" style="display:none;"></div>
 <main id="main"></main>
 <footer class="note">Dati salvati su Supabase (cloud) &middot; sincronizzazione automatica ad ogni "Salva".</footer>
 </div>
@@ -2835,16 +2838,108 @@ function renderCronoprogramma() {
   });
 }
 
+// ---------- AREA: HOME (cruscotto avvisi) ----------
+// Raccoglie in un colpo d'occhio tutte le scadenze imminenti sparse nell'app,
+// riusando le funzioni di stato gia' esistenti (statoDocumento, faseStato, statoFattura).
+function scadenzeImminenti() {
+  const docs = allDocsFlat().map((d) => Object.assign({}, d, { stato: statoDocumento(d) }));
+  const oggi = new Date(); oggi.setHours(0, 0, 0, 0);
+  const fatture = DATA.finanziario.fatture.map((f) => Object.assign({}, f, { stato: statoFattura(f) }));
+  return {
+    docsScaduti: docs.filter((d) => d.stato === 'scaduto'),
+    docsInScadenza: docs.filter((d) => d.stato === 'in_scadenza'),
+    fasiRitardo: DATA.cronoprogramma.filter((f) => faseStato(f) === 'in_ritardo'),
+    fattureScadute: fatture.filter((f) => f.stato === 'scaduto'),
+    fattureInScadenza: fatture.filter((f) => f.stato === 'in_scadenza'),
+    rateImminenti: DATA.finanziario.pianificazione
+      .map((p) => Object.assign({}, p, { gg: p.data ? Math.ceil((new Date(p.data) - oggi) / 86400000) : null }))
+      .filter((p) => p.gg !== null && p.gg >= 0 && p.gg <= 30)
+      .sort((a, b) => a.gg - b.gg)
+  };
+}
+
+// Naviga verso un'altra area/scheda (usato dai clic nel cruscotto e nel banner).
+function vaiA(area, subtab) {
+  CURRENT_AREA = area;
+  CURRENT_SUBTAB = subtab || (SUBTABS[area] && SUBTABS[area].length ? SUBTABS[area][0][0] : null);
+  document.querySelectorAll('#areaTabs button').forEach((b) => b.classList.toggle('active', b.getAttribute('data-area') === area));
+  renderSubTabsNav();
+  renderMain();
+  window.scrollTo(0, 0);
+}
+
+// Banner globale sotto l'intestazione: visibile da ogni scheda quando ci sono scadenze.
+function aggiornaBanner() {
+  const el = document.getElementById('alertBanner');
+  if (!el || !DATA) return;
+  const s = scadenzeImminenti();
+  const parti = [];
+  if (s.docsScaduti.length) parti.push(`${s.docsScaduti.length} documenti scaduti`);
+  if (s.docsInScadenza.length) parti.push(`${s.docsInScadenza.length} documenti in scadenza`);
+  if (s.fasiRitardo.length) parti.push(`${s.fasiRitardo.length} fasi in ritardo`);
+  if (s.fattureScadute.length) parti.push(`${s.fattureScadute.length} fatture scadute`);
+  if (s.fattureInScadenza.length) parti.push(`${s.fattureInScadenza.length} fatture in scadenza`);
+  if (!parti.length) { el.style.display = 'none'; el.innerHTML = ''; return; }
+  const critico = s.docsScaduti.length + s.fattureScadute.length > 0;
+  el.style.cssText = `display:block; padding:10px 28px; font-size:13px; font-weight:700; cursor:pointer; color:${critico ? '#fff' : 'var(--navy)'}; background:${critico ? 'var(--red)' : 'var(--amber-light)'};`;
+  el.innerHTML = `&#9888;&#65039; ${parti.join(' &middot; ')} &mdash; clicca per aprire il cruscotto`;
+  el.onclick = () => vaiA('home', null);
+}
+
+function renderHome() {
+  const s = scadenzeImminenti();
+  const totale = s.docsScaduti.length + s.docsInScadenza.length + s.fasiRitardo.length +
+    s.fattureScadute.length + s.fattureInScadenza.length + s.rateImminenti.length;
+  const box = (items, riga) => `<div class="panel">${items.map(riga).join('')}</div>`;
+  const rigaDoc = (d) => `<div class="doc-row" style="grid-template-columns:2fr 1fr auto; cursor:pointer;" onclick="vaiA('documentazione','scadenzario')"><div class="name">${d.tipoNome}</div><div class="empty-note">${d.ctx}</div>${chip(d.stato)}</div>`;
+  const rigaFase = (f) => `<div class="doc-row" style="grid-template-columns:2fr 1fr auto; cursor:pointer;" onclick="vaiA('cronoprogramma',null)"><div class="name">${f.nome}</div><div class="empty-note">${f.sezione}</div>${faseChip('in_ritardo')}</div>`;
+  const rigaFatt = (f) => `<div class="doc-row" style="grid-template-columns:2fr 1fr 1.2fr auto; cursor:pointer;" onclick="vaiA('finanziario','fatture')"><div class="name">${f.controparte || 'Fattura ' + (f.numero || '')}</div><div class="empty-note">${euro(f.importo)}</div><div class="empty-note">Scad. ${dataBreve(f.scadenzaPagamento)}</div>${chip(f.stato === 'scaduto' ? 'scaduto' : 'in_scadenza', f.stato === 'scaduto' ? 'Scaduta' : 'In scadenza')}</div>`;
+  const rigaRata = (p) => `<div class="doc-row" style="grid-template-columns:2fr 1fr auto; cursor:pointer;" onclick="vaiA('finanziario','pianificazione')"><div class="name">Rata ${p.numero || ''}</div><div class="empty-note">${euro(p.importo)}</div><span class="chip ${p.gg <= 7 ? 'amber' : 'blue'}">tra ${p.gg} gg &middot; ${dataBreve(p.data)}</span></div>`;
+  const sezione = (titolo, items, riga) => items.length ? `<h2 style="font-size:15px; margin:18px 0 8px;">${titolo}</h2>${box(items, riga)}` : '';
+
+  document.getElementById('main').innerHTML = `
+    <div class="grid-stats">
+      <div class="stat-card scaduto" style="cursor:pointer;" onclick="vaiA('documentazione','scadenzario')"><div class="num">${s.docsScaduti.length}</div><div class="label">Documenti scaduti</div></div>
+      <div class="stat-card in_scadenza" style="cursor:pointer;" onclick="vaiA('documentazione','scadenzario')"><div class="num">${s.docsInScadenza.length}</div><div class="label">Documenti in scadenza</div></div>
+      <div class="stat-card red" style="cursor:pointer;" onclick="vaiA('cronoprogramma',null)"><div class="num">${s.fasiRitardo.length}</div><div class="label">Fasi in ritardo</div></div>
+      <div class="stat-card amber" style="cursor:pointer;" onclick="vaiA('finanziario','fatture')"><div class="num">${s.fattureScadute.length + s.fattureInScadenza.length}</div><div class="label">Fatture da pagare</div></div>
+    </div>
+    <div class="panel">
+      <h2>Benvenuta nel cantiere Studentato Calvanico</h2>
+      <p class="sub">Questo cruscotto raccoglie tutte le scadenze imminenti (prossimi 30 giorni). Clicca su una voce per aprire la scheda corrispondente. Aggiornato al ${oggiStr()}.</p>
+      ${totale === 0 ? `<p class="empty-note" style="color:var(--teal); font-weight:700;">Tutto in regola: nessuna scadenza critica al momento. &#9989;</p>` : ''}
+    </div>
+    ${sezione('Documenti scaduti', s.docsScaduti, rigaDoc)}
+    ${sezione('Documenti in scadenza (30 giorni)', s.docsInScadenza, rigaDoc)}
+    ${sezione('Fasi in ritardo sul cronoprogramma', s.fasiRitardo, rigaFase)}
+    ${sezione('Fatture da pagare (scadute o in scadenza)', s.fattureScadute.concat(s.fattureInScadenza), rigaFatt)}
+    ${sezione('Prossime rate pianificate (30 giorni)', s.rateImminenti, rigaRata)}
+  `;
+}
+
+// Scarica una copia di sicurezza di tutti i dati (backup manuale, Fase 0).
+function esportaBackup() {
+  if (!DATA) { alert('Dati non ancora caricati: attendi il caricamento e riprova.'); return; }
+  const blob = new Blob([JSON.stringify(DATA, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'calvanico-backup-' + new Date().toISOString().slice(0, 10) + '.json';
+  document.body.appendChild(a); a.click(); a.remove();
+  URL.revokeObjectURL(url);
+}
+
 // ---------- NAV / ROUTER ----------
 const SUBTABS = {
+  home: [],
   anagrafica: [ ['appalto', 'Appalto'], ['azienda', 'Appaltatore'], ['ente', 'Stazione appaltante'], ['subappaltatori', 'Subappaltatori'], ['referenti', 'Referenti e ruoli'] ],
   documentazione: [ ['scadenzario', 'Scadenzario'], ['cantiere', 'Checklist appalto'], ['subappalti', 'Subappaltatori'] ],
   acquisti: [],
   finanziario: [ ['panoramica', 'Panoramica'], ['pianificazione', 'Pianificazione'], ['sal', 'SAL'], ['costi', 'Costi per subappalto'], ['fatture', 'Fatture'] ],
   cronoprogramma: []
 };
-let CURRENT_AREA = 'documentazione';
-let CURRENT_SUBTAB = 'scadenzario';
+let CURRENT_AREA = 'home';
+let CURRENT_SUBTAB = null;
 
 function renderSubTabsNav() {
   const subTabsNav = document.getElementById('subTabs');
@@ -2863,7 +2958,9 @@ function renderSubTabsNav() {
 }
 
 function renderMain() {
-  if (CURRENT_AREA === 'anagrafica') {
+  if (CURRENT_AREA === 'home') {
+    renderHome();
+  } else if (CURRENT_AREA === 'anagrafica') {
     if (CURRENT_SUBTAB === 'appalto') renderAnagraficaAppalto();
     else if (CURRENT_SUBTAB === 'azienda') renderAnagraficaAzienda();
     else if (CURRENT_SUBTAB === 'ente') renderAnagraficaEnte();
@@ -2884,6 +2981,7 @@ function renderMain() {
   } else if (CURRENT_AREA === 'cronoprogramma') {
     renderCronoprogramma();
   }
+  aggiornaBanner();
 }
 
 document.getElementById('areaTabs').addEventListener('click', (e) => {
@@ -2937,6 +3035,8 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
   }
   avviaApp();
 });
+
+document.getElementById('backupBtn').addEventListener('click', esportaBackup);
 
 document.getElementById('logoutBtn').addEventListener('click', async () => {
   await supa.auth.signOut();
