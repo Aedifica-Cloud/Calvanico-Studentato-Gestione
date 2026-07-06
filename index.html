@@ -68,7 +68,7 @@
   .chart-wrap { display: flex; gap: 24px; align-items: center; flex-wrap: wrap; }
   .chart-canvas-box { width: 200px; height: 200px; flex-shrink: 0; }
   .doc-row {
-    display: grid; grid-template-columns: 1.6fr 1fr 1fr 1fr 1.3fr auto auto; gap: 8px; align-items: center;
+    display: grid; grid-template-columns: 1.6fr 1fr 1fr 1.5fr auto auto; gap: 8px; align-items: center;
     padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 13px;
   }
   .doc-row:last-child { border-bottom: none; }
@@ -85,7 +85,7 @@
   .chip.valido, .chip.presente, .chip.teal { background: var(--teal-light); color: var(--teal); }
   .empty-note { font-size: 13px; color: var(--gray); padding: 6px 0; }
   .doc-list-head {
-    display: grid; grid-template-columns: 1.6fr 1fr 1fr 1fr 1.3fr auto auto; gap: 8px; font-size: 11px;
+    display: grid; grid-template-columns: 1.6fr 1fr 1fr 1.5fr auto auto; gap: 8px; font-size: 11px;
     font-weight: 700; color: var(--gray); text-transform: uppercase; letter-spacing: .03em;
     padding-bottom: 8px; border-bottom: 2px solid var(--border); margin-bottom: 2px;
   }
@@ -185,7 +185,7 @@
 <nav class="tabs" id="subTabs"></nav>
 <div id="alertBanner" style="display:none;"></div>
 <main id="main"></main>
-<footer class="note">Dati salvati su Supabase (cloud) &middot; sincronizzazione automatica ad ogni "Salva".</footer>
+<footer class="note">Dati salvati su Supabase (cloud) &middot; sincronizzazione automatica ad ogni "Salva" &middot; con pi&ugrave; postazioni aperte i dati si riallineano da soli (al rientro sulla scheda e ogni 60 secondi).</footer>
 </div>
 
 <script>
@@ -233,10 +233,9 @@ const DOCUMENTI_SICUREZZA_81_2008 = [
 ];
 
 // Checklist "sicurezza" D.Lgs 81/2008 (lista fornita da Noemi), per appaltatore e
-// subappaltatori. A livello di cantiere si aggiunge la Notifica preliminare.
+// subappaltatori.
 const TIPI_CANTIERE = [
-  ...DOCUMENTI_SICUREZZA_81_2008,
-  { nome: 'Notifica preliminare', validitaGiorni: null }
+  ...DOCUMENTI_SICUREZZA_81_2008
 ];
 const TIPI_SUBAPPALTO = [
   { nome: 'Contratto di subappalto', validitaGiorni: null },
@@ -244,12 +243,14 @@ const TIPI_SUBAPPALTO = [
 ];
 
 // Documentazione amministrativa/economica del CANTIERE (richiesta di Noemi, lug 2026):
-// solo polizza e contratto di appalto generale, mostrati in Anagrafica > Appalto.
-// La "Polizza CAR" prima stava nella checklist sicurezza: il caricamento e la
-// migrazione per nome la spostano qui senza perdere i dati gia' inseriti.
+// polizza, contratto di appalto generale e notifica preliminare, mostrati in
+// Anagrafica > Appalto. "Polizza CAR" e "Notifica preliminare" prima stavano
+// nella checklist sicurezza: il caricamento e la migrazione per nome le
+// spostano qui senza perdere i dati gia' inseriti.
 const TIPI_AMMINISTRATIVO_CANTIERE = [
   { nome: 'Polizza CAR', validitaGiorni: 365 },
-  { nome: 'Contratto di appalto generale', validitaGiorni: null }
+  { nome: 'Contratto di appalto generale', validitaGiorni: null },
+  { nome: 'Notifica preliminare', validitaGiorni: null }
 ];
 // Subappaltatori: NESSUNA documentazione amministrativa (niente autorizzazione al
 // subappalto, comunicazione subappalto, SOA...). La lista resta vuota di proposito:
@@ -474,7 +475,11 @@ function normalizzaData(data) {
     const spostati = data.cantiereDocs.filter((d) => nomiAmmCantiere.has(d.tipoNome));
     data.cantiereDocs = data.cantiereDocs.filter((d) => !nomiAmmCantiere.has(d.tipoNome));
     spostati.forEach((d) => {
-      if (!data.cantiereDocsAmministrativi.some((x) => x.tipoNome === d.tipoNome)) data.cantiereDocsAmministrativi.push(d);
+      const esistente = data.cantiereDocsAmministrativi.find((x) => x.tipoNome === d.tipoNome);
+      if (!esistente) data.cantiereDocsAmministrativi.push(d);
+      // se la voce amministrativa esiste ma e' vuota e quella spostata ha dati,
+      // vincono i dati (caso: voce gia' seminata vuota prima della migrazione)
+      else if (docVuoto(esistente) && !docVuoto(d)) Object.assign(esistente, d);
     });
   }
   {
@@ -794,7 +799,23 @@ function dbToCrono(r) {
 // la sezione SAL fornitori lo segnala e la sincronizzazione la salta, cosi' il
 // resto dell'app continua a funzionare anche con il DB non ancora aggiornato.
 let TAPPE_DISPONIBILI = false;
+// Lucchetto multi-PC (tabella sync_stato, patch_05): VERSIONE_LOCALE e' la
+// versione del DB su cui si basa la copia in memoria. Se manca la tabella,
+// l'app si comporta come prima (un solo PC alla volta) e lo segnala.
+let SYNC_LOCK_DISPONIBILE = false;
+let VERSIONE_LOCALE = 0;
+let EMAIL_UTENTE = '';
 async function caricaDatiDaSupabase() {
+  // versione corrente del DB, PRIMA di leggere i dati: qualunque salvataggio
+  // altrui successivo a questa lettura fara' fallire il nostro prossimo
+  // "prendi lucchetto", quindi non potremo mai sovrascriverlo per sbaglio.
+  const statoR = await supa.from('sync_stato').select('*').eq('id', 1).maybeSingle();
+  if (statoR.error || !statoR.data) {
+    SYNC_LOCK_DISPONIBILE = false;
+  } else {
+    SYNC_LOCK_DISPONIBILE = true;
+    VERSIONE_LOCALE = Number(statoR.data.versione) || 0;
+  }
   const risposte = await Promise.all([
     supa.from('cantiere').select('*').eq('id', 1).maybeSingle(),
     supa.from('appaltatore').select('*').eq('id', 1).maybeSingle(),
@@ -1024,25 +1045,148 @@ function aggiornaStatoSync(testo) {
 // comunque scritto se arrivano altre richieste mentre una e' in corso.
 let SYNC_IN_CORSO = false;
 let SYNC_RICHIESTA_PENDING = false;
+
+// ---- lucchetto multi-PC (tabella sync_stato, patch_05) ----------------------
+// Prima di riscrivere il database, l'app "prende il lucchetto" alzando la
+// versione con un UPDATE condizionato sulla versione attesa: e' un'operazione
+// atomica lato Postgres, quindi due PC non possono prenderlo insieme. Se la
+// versione nel DB non e' piu' quella su cui si basa la nostra copia in memoria,
+// qualcun altro ha salvato nel frattempo: invece di sovrascriverlo (com'era
+// prima, in silenzio) si avvisa e si ricaricano i dati aggiornati.
+const LUCCHETTO_STANTIO_MS = 2 * 60 * 1000; // salvataggio interrotto a meta' (PC spento): dopo 2 minuti si ignora
+
+async function leggiSyncStato() {
+  const r = await supa.from('sync_stato').select('*').eq('id', 1).maybeSingle();
+  if (r.error) throw r.error;
+  return r.data;
+}
+
+// Ritorna { ok: true } se il lucchetto e' nostro; { ok: false, occupato: true }
+// se l'altro PC sta salvando proprio ora; { ok: false } se la nostra copia e'
+// vecchia (l'altro PC ha salvato dopo il nostro ultimo caricamento).
+async function acquisisciLucchetto() {
+  for (let tentativo = 0; tentativo < 3; tentativo++) {
+    const upd = await supa.from('sync_stato')
+      .update({ versione: VERSIONE_LOCALE + 1, stato: 'salvataggio', aggiornato_da: EMAIL_UTENTE || null, aggiornato_il: new Date().toISOString() })
+      .eq('id', 1).eq('versione', VERSIONE_LOCALE).select();
+    if (upd.error) throw upd.error;
+    if (upd.data && upd.data.length) { VERSIONE_LOCALE += 1; return { ok: true }; }
+
+    const st = await leggiSyncStato();
+    if (!st) return { ok: true }; // tabella svuotata a mano: non blocchiamo il lavoro
+    const etaMs = st.aggiornato_il ? (Date.now() - new Date(st.aggiornato_il).getTime()) : Infinity;
+    if (st.stato === 'salvataggio' && etaMs < LUCCHETTO_STANTIO_MS) {
+      // salvataggio altrui in corso in questo istante: piccola attesa e riprova
+      await new Promise((resolve) => setTimeout(resolve, 1500));
+      continue;
+    }
+    if (st.stato === 'salvataggio') {
+      // lucchetto stantio: chi salvava si e' interrotto a meta'. Adottiamo la sua
+      // versione e riproviamo: il nostro salvataggio completo ripara il DB.
+      VERSIONE_LOCALE = Number(st.versione) || 0;
+      continue;
+    }
+    if (Number(st.versione) === VERSIONE_LOCALE) continue; // stato libero e versione giusta: riprova il CAS
+    return { ok: false }; // conflitto vero: la nostra copia e' vecchia
+  }
+  const finale = await leggiSyncStato();
+  if (finale && finale.stato === 'salvataggio') return { ok: false, occupato: true };
+  return { ok: false };
+}
+
+async function rilasciaLucchetto() {
+  const upd = await supa.from('sync_stato')
+    .update({ versione: VERSIONE_LOCALE + 1, stato: 'libero', aggiornato_da: EMAIL_UTENTE || null, aggiornato_il: new Date().toISOString() })
+    .eq('id', 1).eq('versione', VERSIONE_LOCALE).select();
+  if (!upd.error && upd.data && upd.data.length) VERSIONE_LOCALE += 1;
+}
+
+async function ricaricaDatiERender() {
+  DATA = await caricaDatiDaSupabase();
+  renderMain();
+}
+
 async function saveData() {
   SYNC_RICHIESTA_PENDING = true;
   if (SYNC_IN_CORSO) return;
   SYNC_IN_CORSO = true;
   aggiornaStatoSync('Salvataggio…');
+
+  if (SYNC_LOCK_DISPONIBILE) {
+    let esito;
+    try {
+      esito = await acquisisciLucchetto();
+    } catch (err) {
+      SYNC_IN_CORSO = false;
+      SYNC_RICHIESTA_PENDING = false;
+      aggiornaStatoSync('Errore di salvataggio');
+      alert('Salvataggio non riuscito (controllo versione): ' + err.message + '. Controlla la connessione e premi di nuovo Salva.');
+      return;
+    }
+    if (!esito.ok) {
+      SYNC_IN_CORSO = false;
+      SYNC_RICHIESTA_PENDING = false;
+      if (esito.occupato) {
+        aggiornaStatoSync('Altra postazione sta salvando');
+        alert("L'altra postazione sta salvando proprio in questo momento. Attendi qualche secondo e premi di nuovo Salva.");
+        return;
+      }
+      aggiornaStatoSync('Dati aggiornati da altra postazione');
+      alert("Qualcun altro ha salvato da un'altra postazione dopo che questa pagina aveva caricato i dati. Ricarico ora i dati aggiornati: controlla e ripeti la tua ULTIMA modifica, che non e' stata salvata.");
+      try { await ricaricaDatiERender(); } catch (err) { aggiornaStatoSync('Errore di caricamento'); }
+      return;
+    }
+  }
+
+  let errore = null;
   while (SYNC_RICHIESTA_PENDING) {
     SYNC_RICHIESTA_PENDING = false;
     try {
       await sincronizzaSuSupabase(DATA);
-    } catch (err) {
-      aggiornaStatoSync('Errore di salvataggio');
-      alert('Salvataggio su Supabase non riuscito: ' + err.message + '. Controlla la connessione e riprova (i dati modificati restano visibili in questa pagina finche\' non la ricarichi, ma NON sono ancora salvati).');
-      SYNC_IN_CORSO = false;
-      return;
-    }
+    } catch (err) { errore = err; break; }
+  }
+  if (SYNC_LOCK_DISPONIBILE) {
+    // rilascio anche dopo un errore: cosi' l'altra postazione non resta bloccata
+    // e ricaricando vede lo stato reale del DB. Se il rilascio stesso fallisce,
+    // il lucchetto scade comunque da solo dopo 2 minuti.
+    try { await rilasciaLucchetto(); } catch (err) { /* vedi sopra */ }
   }
   SYNC_IN_CORSO = false;
+  if (errore) {
+    aggiornaStatoSync('Errore di salvataggio');
+    alert('Salvataggio su Supabase non riuscito: ' + errore.message + '. Controlla la connessione e riprova (i dati modificati restano visibili in questa pagina finche\' non la ricarichi, ma NON sono ancora salvati).');
+    return;
+  }
   aggiornaStatoSync('Salvato ' + new Date().toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' }));
 }
+
+// ---- auto-aggiornamento dall'altra postazione --------------------------------
+// Ogni 60 secondi (e ogni volta che si torna sulla scheda del browser) si
+// controlla se la versione nel DB e' cambiata: in quel caso i dati vengono
+// ricaricati e la pagina ridisegnata, cosi' le due postazioni restano allineate
+// e il conflitto al salvataggio diventa raro. Il controllo si salta mentre si
+// sta scrivendo in un campo, per non buttare via il testo non ancora salvato.
+async function ricaricaSeServe() {
+  if (!SYNC_LOCK_DISPONIBILE || SYNC_IN_CORSO || !DATA) return;
+  const attivo = document.activeElement;
+  if (attivo && attivo.closest && attivo.closest('#main') && ['INPUT', 'TEXTAREA', 'SELECT'].includes(attivo.tagName)) return;
+  let st;
+  try { st = await leggiSyncStato(); } catch (err) { return; }
+  if (!st || st.stato === 'salvataggio' || Number(st.versione) === VERSIONE_LOCALE) return;
+  aggiornaStatoSync('Aggiornamento da altra postazione…');
+  try {
+    await ricaricaDatiERender();
+    const chi = st.aggiornato_da ? 'da ' + st.aggiornato_da : "dall'altra postazione";
+    aggiornaStatoSync('Aggiornato ' + chi + ' ' + new Date().toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' }));
+    // se qualcuno ha salvato proprio mentre ricaricavamo, riallinea tra poco
+    const dopo = await leggiSyncStato();
+    if (dopo && Number(dopo.versione) !== VERSIONE_LOCALE) setTimeout(ricaricaSeServe, 2000);
+  } catch (err) {
+    aggiornaStatoSync('');
+  }
+}
+window.addEventListener('focus', ricaricaSeServe);
+setInterval(ricaricaSeServe, 60000);
 window.addEventListener('beforeunload', (e) => {
   if (SYNC_IN_CORSO) { e.preventDefault(); e.returnValue = ''; }
 });
@@ -1133,11 +1277,20 @@ function estraiDatiFattura(testo) {
   return dati;
 }
 
+// Completezza (usata per i documenti dei subappaltatori, dove le scadenze non
+// interessano — richiesta di Noemi): un documento "conta" appena ha una data o
+// un link. Il numero di protocollo non compare piu' in nessuna checklist (i
+// valori gia' salvati restano nel DB, semplicemente non si vedono/modificano).
+function docCompilato(doc) { return !!(doc.dataEmissione || doc.dataScadenza || doc.linkDrive); }
+function chipCompletezza(doc) { return docCompilato(doc) ? chip('valido', 'Compilato') : chip('mancante', 'Da compilare'); }
+
 function docListHead() {
-  return `<div class="doc-list-head"><div>Documento</div><div>Emissione</div><div>Scadenza</div><div>Protocollo</div><div>Link Drive</div><div>Stato</div><div></div></div>`;
+  return `<div class="doc-list-head"><div>Documento</div><div>Emissione</div><div>Scadenza</div><div>Link Drive</div><div>Stato</div><div></div></div>`;
 }
 function docRow(doc, section, subId, idx) {
-  const stato = statoDocumento(doc);
+  // Subappaltatori: solo compilato/da compilare. Cantiere: stati di scadenza.
+  const soloCompletezza = section === 'sub' || section === 'sub-amm';
+  const statoHtml = soloCompletezza ? chipCompletezza(doc) : chip(statoDocumento(doc));
   const key = `${section}-${subId || 'x'}-${idx}`;
   const bl = !!doc.bloccato;
   const dis = bl ? 'disabled' : '';
@@ -1146,9 +1299,8 @@ function docRow(doc, section, subId, idx) {
     <div class="name">${doc.tipoNome}</div>
     <input type="date" class="f-emissione" value="${doc.dataEmissione || ''}" ${dis} />
     <input type="date" class="f-scadenza" value="${doc.dataScadenza || ''}" ${dis} />
-    <input type="text" class="f-protocollo" placeholder="N. prot." value="${doc.numeroProtocollo || ''}" ${dis} />
     <input type="text" class="f-link" placeholder="Incolla link Drive" value="${doc.linkDrive || ''}" ${dis} />
-    ${chip(stato)}
+    ${statoHtml}
     <div style="display:flex; gap:6px;">
       ${doc.linkDrive ? `<a class="file-link" href="${doc.linkDrive}" target="_blank" rel="noopener">Apri &#8599;</a>` : '<span class="no-link">-</span>'}
       ${bl
@@ -1162,7 +1314,6 @@ function readDocRow(key) {
   return {
     dataEmissione: row.querySelector('.f-emissione').value,
     dataScadenza: row.querySelector('.f-scadenza').value,
-    numeroProtocollo: row.querySelector('.f-protocollo').value,
     linkDrive: row.querySelector('.f-link').value
   };
 }
@@ -1200,35 +1351,51 @@ function attachDocRowHandlers(renderFn) {
     };
   });
 }
+// "ambito" distingue i documenti del cantiere (contano le scadenze) da quelli
+// dei subappaltatori (conta solo la completezza — vedi docCompilato).
 function allDocsFlat() {
-  const arr = DATA.cantiereDocs.map((d) => Object.assign({}, d, { ctx: 'Cantiere (generale)' }));
-  arr.push(...DATA.cantiereDocsAmministrativi.map((d) => Object.assign({}, d, { ctx: 'Cantiere (amministrativo)' })));
+  const arr = DATA.cantiereDocs.map((d) => Object.assign({}, d, { ctx: 'Cantiere (generale)', ambito: 'cantiere' }));
+  arr.push(...DATA.cantiereDocsAmministrativi.map((d) => Object.assign({}, d, { ctx: 'Cantiere (amministrativo)', ambito: 'cantiere' })));
   elencoSubappalti().forEach((s) => {
-    DATA.subappaltiDocs[s.id].forEach((d) => arr.push(Object.assign({}, d, { ctx: s.lavorazione })));
-    DATA.subappaltiDocsAmministrativi[s.id].forEach((d) => arr.push(Object.assign({}, d, { ctx: s.lavorazione + ' (amministrativo)' })));
+    DATA.subappaltiDocs[s.id].forEach((d) => arr.push(Object.assign({}, d, { ctx: s.lavorazione, ambito: 'sub' })));
+    DATA.subappaltiDocsAmministrativi[s.id].forEach((d) => arr.push(Object.assign({}, d, { ctx: s.lavorazione + ' (amministrativo)', ambito: 'sub' })));
   });
   return arr;
 }
 
 // ---------- AREA: DOCUMENTAZIONE ----------
 function renderScadenzario() {
-  const all = allDocsFlat().map((d) => Object.assign({}, d, { stato: statoDocumento(d) }));
-  const scaduti = all.filter((d) => d.stato === 'scaduto');
-  const inScadenza = all.filter((d) => d.stato === 'in_scadenza');
-  const mancanti = all.filter((d) => d.stato === 'mancante');
-  const valido = all.filter((d) => d.stato === 'valido' || d.stato === 'presente');
+  // Cantiere: contano le scadenze. Subappaltatori: conta solo se la checklist
+  // e' compilata (le scadenze non interessano — richiesta di Noemi).
+  const cantiereDocs = allDocsFlat().filter((d) => d.ambito === 'cantiere').map((d) => Object.assign({}, d, { stato: statoDocumento(d) }));
+  const scaduti = cantiereDocs.filter((d) => d.stato === 'scaduto');
+  const inScadenza = cantiereDocs.filter((d) => d.stato === 'in_scadenza');
+  const mancanti = cantiereDocs.filter((d) => d.stato === 'mancante');
+  const valido = cantiereDocs.filter((d) => d.stato === 'valido' || d.stato === 'presente');
+  const perSub = elencoSubappalti().map((s) => {
+    const docs = DATA.subappaltiDocs[s.id] || [];
+    const compilati = docs.filter(docCompilato).length;
+    return { s, tot: docs.length, compilati, daCompilare: docs.length - compilati };
+  });
+  const totSubDaCompilare = perSub.reduce((sum, x) => sum + x.daCompilare, 0);
   const lista = (l) => l.length ? `<div class="panel">${l.map((d) => `<div class="doc-row" style="grid-template-columns:2fr 1fr auto;"><div class="name">${d.tipoNome}</div><div class="empty-note">${d.ctx}</div>${chip(d.stato)}</div>`).join('')}</div>` : '<p class="empty-note">Nessuno.</p>';
+  const listaSub = `<div class="panel">${perSub.map(({ s, tot, compilati, daCompilare }) => `
+    <div class="doc-row" style="grid-template-columns:2fr 1fr auto;">
+      <div class="name">${s.lavorazione}</div>
+      <div class="empty-note">${compilati} su ${tot} compilati</div>
+      ${daCompilare ? chip('mancante', daCompilare + ' da compilare') : chip('valido', 'Completa')}
+    </div>`).join('')}</div>`;
 
   document.getElementById('main').innerHTML = `
     <div class="grid-stats">
-      <div class="stat-card scaduto"><div class="num">${scaduti.length}</div><div class="label">Scaduti</div></div>
-      <div class="stat-card in_scadenza"><div class="num">${inScadenza.length}</div><div class="label">In scadenza (30gg)</div></div>
-      <div class="stat-card mancante"><div class="num">${mancanti.length}</div><div class="label">Mancanti</div></div>
-      <div class="stat-card valido"><div class="num">${valido.length}</div><div class="label">In regola</div></div>
+      <div class="stat-card scaduto"><div class="num">${scaduti.length}</div><div class="label">Scaduti (cantiere)</div></div>
+      <div class="stat-card in_scadenza"><div class="num">${inScadenza.length}</div><div class="label">In scadenza 30gg (cantiere)</div></div>
+      <div class="stat-card mancante"><div class="num">${mancanti.length}</div><div class="label">Mancanti (cantiere)</div></div>
+      <div class="stat-card ${totSubDaCompilare ? 'amber' : 'teal'}"><div class="num">${totSubDaCompilare}</div><div class="label">Da compilare (subappaltatori)</div></div>
     </div>
     <div class="panel">
-      <h2>Panoramica documentale</h2>
-      <p class="sub">Distribuzione dei ${all.length} documenti previsti (cantiere + ${elencoSubappalti().length} subappalti).</p>
+      <h2>Panoramica documentale del cantiere</h2>
+      <p class="sub">Scadenze dei ${cantiereDocs.length} documenti del cantiere (checklist appalto + amministrativa). Per i subappaltatori conta solo la completezza, riassunta qui sotto.</p>
       <div class="chart-wrap">
         <div class="chart-canvas-box"><canvas id="statusChart"></canvas></div>
         <div style="flex:1; min-width:220px;">
@@ -1238,9 +1405,10 @@ function renderScadenzario() {
         </div>
       </div>
     </div>
-    <h2 style="font-size:15px; margin: 18px 0 8px;">Scaduti</h2>${lista(scaduti)}
-    <h2 style="font-size:15px; margin: 18px 0 8px;">In scadenza (30 giorni)</h2>${lista(inScadenza)}
-    <h2 style="font-size:15px; margin: 18px 0 8px;">Mancanti</h2>${lista(mancanti)}
+    <h2 style="font-size:15px; margin: 18px 0 8px;">Scaduti (cantiere)</h2>${lista(scaduti)}
+    <h2 style="font-size:15px; margin: 18px 0 8px;">In scadenza 30 giorni (cantiere)</h2>${lista(inScadenza)}
+    <h2 style="font-size:15px; margin: 18px 0 8px;">Mancanti (cantiere)</h2>${lista(mancanti)}
+    <h2 style="font-size:15px; margin: 18px 0 8px;">Checklist subappaltatori &mdash; stato compilazione</h2>${listaSub}
   `;
   try {
     new Chart(document.getElementById('statusChart').getContext('2d'), {
@@ -1264,28 +1432,9 @@ function renderCantiereDoc() {
 }
 
 // ---------- AREA: ANAGRAFICA ----------
-async function comprimiImmagine(file) {
-  const dataUrl = await new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result);
-    reader.onerror = reject;
-    reader.readAsDataURL(file);
-  });
-  const img = await new Promise((resolve, reject) => {
-    const im = new Image();
-    im.onload = () => resolve(im);
-    im.onerror = reject;
-    im.src = dataUrl;
-  });
-  const maxW = 700;
-  const scale = Math.min(1, maxW / img.width);
-  const canvas = document.createElement('canvas');
-  canvas.width = Math.round(img.width * scale);
-  canvas.height = Math.round(img.height * scale);
-  const ctx = canvas.getContext('2d');
-  ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-  return canvas.toDataURL('image/jpeg', 0.6);
-}
+// (la sezione "Foto dello studentato" e' stata rimossa su richiesta di Noemi,
+// lug 2026: le foto gia' salvate restano nella tabella cantiere_foto, solo
+// senza interfaccia. Per l'archivio fotografico si usa la cartella Drive.)
 
 function spazioUsatoKB() {
   try {
@@ -1346,22 +1495,6 @@ function renderAnagraficaAppalto() {
       ${docListHead()}
       ${DATA.cantiereDocsAmministrativi.map((d, i) => docRow(d, 'cantiere-amm', null, i)).join('')}
     </div>
-    <div class="panel">
-      <h2>Foto dello studentato</h2>
-      <p class="sub">Le foto sono compresse e salvate in questo browser (${spazioUsatoKB() !== null ? spazioUsatoKB() + ' KB usati su tutti i dati dell\'app' : 'spazio non calcolabile'}). Se il salvataggio inizia a fallire altrove nell'app, rimuovi qualche foto qui. Per un archivio fotografico grande, meglio la cartella Drive.</p>
-      <div class="foto-grid">
-        ${DATA.cantiereFoto.map((f) => `
-          <div class="foto-item" data-foto="${f.id}">
-            <img src="${f.dataUrl}" />
-            <input type="text" class="foto-caption" placeholder="Didascalia" value="${f.didascalia || ''}" />
-            <button class="btn btn-outline btn-sm foto-del">Elimina</button>
-          </div>`).join('')}
-      </div>
-      <label class="btn btn-outline btn-sm" style="cursor:pointer; margin-top:12px; display:inline-block;">
-        + Aggiungi foto
-        <input type="file" accept="image/*" multiple id="fotoInput" style="display:none;" />
-      </label>
-    </div>
   `;
   if (bl) {
     disabilitaForm('appaltoForm');
@@ -1375,30 +1508,6 @@ function renderAnagraficaAppalto() {
     };
   }
   attachDocRowHandlers(renderAnagraficaAppalto);
-  document.getElementById('fotoInput').onchange = async (e) => {
-    for (const file of e.target.files) {
-      try {
-        const dataUrl = await comprimiImmagine(file);
-        DATA.cantiereFoto.push({ id: nextId('foto'), dataUrl, didascalia: '' });
-      } catch (err) { alert('Errore su ' + file.name + ': ' + err.message); }
-    }
-    saveData(); renderAnagraficaAppalto();
-  };
-  document.querySelectorAll('.foto-caption').forEach((input) => {
-    input.onchange = () => {
-      const id = input.closest('[data-foto]').getAttribute('data-foto');
-      const foto = DATA.cantiereFoto.find((f) => String(f.id) === id);
-      foto.didascalia = input.value; saveData();
-    };
-  });
-  document.querySelectorAll('.foto-del').forEach((btn) => {
-    btn.onclick = () => {
-      const id = btn.closest('[data-foto]').getAttribute('data-foto');
-      if (!confirm('Eliminare questa foto?')) return;
-      DATA.cantiereFoto = DATA.cantiereFoto.filter((f) => String(f.id) !== id);
-      saveData(); renderAnagraficaAppalto();
-    };
-  });
 }
 
 function renderAnagraficaAzienda() {
@@ -1703,14 +1812,8 @@ function renderSubappaltiDoc() {
   const rows = elencoSubappalti().map((s) => {
     const a = DATA.subappalti[s.id];
     const docs = DATA.subappaltiDocs[s.id];
-    const scaduti = docs.filter((d) => statoDocumento(d) === 'scaduto').length;
-    const inScadenza = docs.filter((d) => statoDocumento(d) === 'in_scadenza').length;
-    const mancanti = docs.filter((d) => statoDocumento(d) === 'mancante').length;
-    let statoHtml;
-    if (scaduti) statoHtml = chip('scaduto', scaduti + ' scaduti');
-    else if (inScadenza) statoHtml = chip('in_scadenza', inScadenza + ' in scadenza');
-    else if (mancanti) statoHtml = chip('mancante', mancanti + ' mancanti');
-    else statoHtml = chip('valido', 'In regola');
+    const daCompilare = docs.filter((d) => !docCompilato(d)).length;
+    const statoHtml = daCompilare ? chip('mancante', daCompilare + ' da compilare') : chip('valido', 'Completa');
     return `
     <tr class="doc-sub-row" data-id="${s.id}" style="cursor:pointer;">
       <td><strong>${s.lavorazione}</strong></td>
@@ -1745,8 +1848,8 @@ function renderSubappaltoDocDettaglio(id) {
   const docs = DATA.subappaltiDocs[s.id];
   const a = DATA.subappalti[s.id];
   const bl = !!a.bloccatoContratto;
-  const ok = docs.filter((d) => { const st = statoDocumento(d); return st === 'valido' || st === 'presente'; }).length;
-  const pct = Math.round((ok / docs.length) * 100);
+  const compilati = docs.filter(docCompilato).length;
+  const pct = docs.length ? Math.round((compilati / docs.length) * 100) : 0;
 
   document.getElementById('main').innerHTML = `
     <a href="#" id="backToList" style="font-size:13px; color:var(--teal); text-decoration:none; font-weight:600;">&larr; Torna all'elenco subappaltatori</a>
@@ -3321,7 +3424,9 @@ function renderCronoprogramma() {
 // Raccoglie in un colpo d'occhio tutte le scadenze imminenti sparse nell'app,
 // riusando le funzioni di stato gia' esistenti (statoDocumento, faseStato, statoFattura).
 function scadenzeImminenti() {
-  const docs = allDocsFlat().map((d) => Object.assign({}, d, { stato: statoDocumento(d) }));
+  // Solo i documenti del CANTIERE hanno scadenze che generano avvisi: per i
+  // subappaltatori conta la sola completezza (vedi Documentazione > Scadenzario).
+  const docs = allDocsFlat().filter((d) => d.ambito === 'cantiere').map((d) => Object.assign({}, d, { stato: statoDocumento(d) }));
   const oggi = new Date(); oggi.setHours(0, 0, 0, 0);
   const fatture = DATA.finanziario.fatture.map((f) => Object.assign({}, f, { stato: statoFattura(f) }));
   return {
@@ -3496,8 +3601,12 @@ async function avviaApp() {
   document.getElementById('appRoot').style.display = '';
   aggiornaStatoSync('Caricamento…');
   try {
+    const sess = await supa.auth.getSession();
+    EMAIL_UTENTE = (sess.data.session && sess.data.session.user && sess.data.session.user.email) || '';
+  } catch (err) { EMAIL_UTENTE = ''; }
+  try {
     DATA = await caricaDatiDaSupabase();
-    aggiornaStatoSync('');
+    aggiornaStatoSync(SYNC_LOCK_DISPONIBILE ? '' : '⚠ Uso da più PC non protetto: esegui patch_05 su Supabase');
     renderSubTabsNav();
     renderMain();
   } catch (err) {
