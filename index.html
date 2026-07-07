@@ -350,7 +350,7 @@ function emptyDoc(tipo) {
 }
 
 function nuovoSubappaltoVuoto(lavorazione) {
-  return { lavorazione: lavorazione || '', ragioneSociale: '', piva: '', nomeCognome: '', email: '', indirizzo: '', telefono: '', importo: '', speso: '', percentuale: '', dataAutorizzazione: '', note: '', bloccatoAnagrafica: false, bloccatoCosti: false, bloccatoContratto: false, visuraFile: null, docAmministratoreFile: null };
+  return { lavorazione: lavorazione || '', ragioneSociale: '', piva: '', nomeCognome: '', email: '', indirizzo: '', telefono: '', importo: '', speso: '', percentuale: '', dataAutorizzazione: '', tipoAccordo: '', dataConversioneSubappalto: '', note: '', bloccatoAnagrafica: false, bloccatoCosti: false, bloccatoContratto: false, visuraFile: null, docAmministratoreFile: null };
 }
 
 // Elenco dinamico dei subappaltatori: i 4 storici di SUBAPPALTI_DEF piu' quelli
@@ -543,6 +543,8 @@ function normalizzaData(data) {
     if (s.telefono === undefined) s.telefono = '';
     if (s.visuraFile === undefined) s.visuraFile = null;
     if (s.docAmministratoreFile === undefined) s.docAmministratoreFile = null;
+    if (s.tipoAccordo === undefined) s.tipoAccordo = '';
+    if (s.dataConversioneSubappalto === undefined) s.dataConversioneSubappalto = '';
   });
   data.finanziario.sal.forEach((s) => { if (s.bloccato === undefined) s.bloccato = false; });
   data.finanziario.pianificazione.forEach((p) => { if (p.bloccato === undefined) p.bloccato = false; });
@@ -691,6 +693,10 @@ function subappaltoToDb(id, lavorazione, s) {
     email: orNull(s.email), indirizzo: orNull(s.indirizzo), telefono: orNull(s.telefono),
     importo: orNullNum(s.importo), speso: orNullNum(s.speso), percentuale: orNullNum(s.percentuale),
     data_autorizzazione: orNull(s.dataAutorizzazione), note: orNull(s.note),
+    // colonne di patch_06: si inviano solo se esistono nel DB (chiavi undefined
+    // vengono tolte da pulisciRiga), cosi' il salvataggio non si rompe prima della patch
+    tipo_accordo: ACCORDO_DISPONIBILE ? orNull(s.tipoAccordo) : undefined,
+    data_conversione_subappalto: ACCORDO_DISPONIBILE ? orNull(s.dataConversioneSubappalto) : undefined,
     visura_data_url: s.visuraFile ? orNull(s.visuraFile.dataUrl) : null,
     visura_nome_file: s.visuraFile ? orNull(s.visuraFile.nome) : null,
     doc_amministratore_data_url: s.docAmministratoreFile ? orNull(s.docAmministratoreFile.dataUrl) : null,
@@ -705,6 +711,7 @@ function dbToSubappalto(r) {
     email: orEmpty(r.email), indirizzo: orEmpty(r.indirizzo), telefono: orEmpty(r.telefono),
     importo: orEmpty(r.importo), speso: orEmpty(r.speso), percentuale: orEmpty(r.percentuale),
     dataAutorizzazione: orEmpty(r.data_autorizzazione), note: orEmpty(r.note),
+    tipoAccordo: orEmpty(r.tipo_accordo), dataConversioneSubappalto: orEmpty(r.data_conversione_subappalto),
     visuraFile: r.visura_data_url ? { nome: r.visura_nome_file || 'visura', dataUrl: r.visura_data_url } : null,
     docAmministratoreFile: r.doc_amministratore_data_url ? { nome: r.doc_amministratore_nome_file || 'documento', dataUrl: r.doc_amministratore_data_url } : null,
     bloccatoAnagrafica: !!r.bloccato_anagrafica, bloccatoCosti: !!r.bloccato_costi, bloccatoContratto: !!r.bloccato_contratto
@@ -805,6 +812,10 @@ let TAPPE_DISPONIBILI = false;
 let SYNC_LOCK_DISPONIBILE = false;
 let VERSIONE_LOCALE = 0;
 let EMAIL_UTENTE = '';
+// true quando subappalti ha le colonne tipo_accordo / data_conversione_subappalto
+// (patch_06): si rileva dalle righe caricate, per non rompere i salvataggi se
+// la patch non e' ancora stata eseguita.
+let ACCORDO_DISPONIBILE = false;
 async function caricaDatiDaSupabase() {
   // versione corrente del DB, PRIMA di leggere i dati: qualunque salvataggio
   // altrui successivo a questa lettura fara' fallire il nostro prossimo
@@ -866,6 +877,7 @@ async function caricaDatiDaSupabase() {
   // recuperati. In caso di doppione vince la riga della tabella amministrativa
   // (docsAmmR, concatenata per ultima: la Map di ordinaDocsSecondoTipi sovrascrive).
   data.cantiereDocsAmministrativi = ordinaDocsSecondoTipi(docsR.data.concat(docsAmmR.data), TIPI_AMMINISTRATIVO_CANTIERE);
+  ACCORDO_DISPONIBILE = subR.data.length > 0 && ('tipo_accordo' in subR.data[0]);
   subR.data.forEach((s) => { data.subappalti[s.id] = dbToSubappalto(s); });
   elencoSubappalti(data).forEach((s) => {
     data.subappaltiDocs[s.id] = ordinaDocsSecondoTipi(subDocsR.data.filter((d) => d.subappalto_id === s.id), TIPI_SUBAPPALTO);
@@ -1806,6 +1818,27 @@ function renderReferenti() {
 
 let DOC_SUBAPPALTO_SELEZIONATO = null;
 
+// Promemoria conversione accordo -> subappalto (es. Movisud: prima noleggio a
+// caldo per 10 giorni, poi va convertito in subappalto). Ritorna null se non
+// c'e' una data di conversione impostata; l'avviso scala di colore: grigio
+// (oltre 30 gg), ambra (entro 30 gg), rosso (data passata). A conversione
+// avvenuta basta svuotare la data (o aggiornare il tipo accordo): l'avviso sparisce.
+function statoConversione(a) {
+  if (!a || !a.dataConversioneSubappalto) return null;
+  const oggi = new Date(); oggi.setHours(0, 0, 0, 0);
+  const gg = Math.ceil((new Date(a.dataConversioneSubappalto) - oggi) / 86400000);
+  const quando = dataBreve(a.dataConversioneSubappalto);
+  if (gg < 0) return { gg, chipHtml: chip('scaduto', `Conversione in ritardo di ${Math.abs(gg)} gg (${quando})`) };
+  if (gg <= 30) return { gg, chipHtml: chip('in_scadenza', `Convertire in subappalto entro il ${quando} (${gg} gg)`) };
+  return { gg, chipHtml: chip('gray', `Conversione in subappalto il ${quando}`) };
+}
+
+// Apre direttamente la checklist di un subappaltatore (usato dal cruscotto Home).
+function apriDocSub(id) {
+  DOC_SUBAPPALTO_SELEZIONATO = id;
+  vaiA('documentazione', 'subappalti');
+}
+
 function renderSubappaltiDoc() {
   if (DOC_SUBAPPALTO_SELEZIONATO) { renderSubappaltoDocDettaglio(DOC_SUBAPPALTO_SELEZIONATO); return; }
 
@@ -1814,11 +1847,14 @@ function renderSubappaltiDoc() {
     const docs = DATA.subappaltiDocs[s.id];
     const daCompilare = docs.filter((d) => !docCompilato(d)).length;
     const statoHtml = daCompilare ? chip('mancante', daCompilare + ' da compilare') : chip('valido', 'Completa');
+    const conv = statoConversione(a);
+    const accordoHtml = `${a.tipoAccordo ? '<strong>' + a.tipoAccordo + '</strong>' : '<span class="no-link">Subappalto</span>'}${conv ? '<br>' + conv.chipHtml : ''}`;
     return `
     <tr class="doc-sub-row" data-id="${s.id}" style="cursor:pointer;">
       <td><strong>${s.lavorazione}</strong></td>
       <td>${a.ragioneSociale || 'Da definire'}</td>
       <td>${a.piva || '-'}</td>
+      <td>${accordoHtml}</td>
       <td>${statoHtml}</td>
       <td><button class="btn btn-outline btn-sm doc-sub-view" data-id="${s.id}">Vedi documenti &rarr;</button></td>
     </tr>`;
@@ -1827,9 +1863,9 @@ function renderSubappaltiDoc() {
   document.getElementById('main').innerHTML = `
     <div class="panel">
       <h2>Subappaltatori</h2>
-      <p class="sub">Clicca su un subappaltatore per vedere la checklist documenti completa.</p>
+      <p class="sub">Clicca su un subappaltatore per vedere la checklist documenti completa. "Tipo accordo" indica il rapporto attuale (es. noleggio a caldo): se c'&egrave; una data di conversione, l'avviso ti ricorda quando trasformarlo in subappalto.</p>
       <table class="row-table">
-        <thead><tr><th>Oggetto appalto</th><th>Ragione sociale</th><th>P.IVA</th><th>Stato documenti</th><th></th></tr></thead>
+        <thead><tr><th>Oggetto appalto</th><th>Ragione sociale</th><th>P.IVA</th><th>Tipo accordo</th><th>Stato documenti</th><th></th></tr></thead>
         <tbody>${rows}</tbody>
       </table>
     </div>
@@ -1862,7 +1898,12 @@ function renderSubappaltoDocDettaglio(id) {
           <span style="font-size:12.5px; font-weight:700; color:var(--gray);">${pct}%</span>
         </div>
       </div>
+      ${(() => { const conv = statoConversione(a); return conv ? `<div style="margin:2px 0 12px;">${conv.chipHtml}</div>` : ''; })()}
       <form class="form-grid sub-form" data-id="${s.id}" style="margin-bottom:14px;">
+        ${ACCORDO_DISPONIBILE ? `
+        <div class="field"><label>Tipo di accordo attuale</label><input name="tipoAccordo" placeholder="es. Noleggio a caldo, Subappalto" value="${a.tipoAccordo || ''}" /></div>
+        <div class="field"><label>Da convertire in subappalto entro il</label><input name="dataConversioneSubappalto" type="date" value="${a.dataConversioneSubappalto || ''}" /></div>
+        ` : `<p class="empty-note" style="grid-column:1/-1;">Per registrare il tipo di accordo (es. noleggio a caldo) e il promemoria di conversione, esegui prima <code>patch_06_tipo_accordo.sql</code> su Supabase e ricarica la pagina.</p>`}
         <div class="field"><label>Importo subappalto (€)</label><input name="importo" type="number" value="${a.importo || ''}" /></div>
         <div class="field"><label>Data autorizzazione subappalto</label><input name="dataAutorizzazione" type="date" value="${a.dataAutorizzazione || ''}" /></div>
         <div style="grid-column:1/-1;">${bl ? '<button class="btn btn-outline btn-sm" type="button" id="subAnagraficaUnlock">&#128274; Sblocca</button>' : '<button class="btn btn-outline btn-sm" type="submit">Salva dati</button><span class="save-msg" id="saveMsg-' + s.id + '">Salvato</span>'}</div>
@@ -3435,6 +3476,10 @@ function scadenzeImminenti() {
     fasiRitardo: DATA.cronoprogramma.filter((f) => faseStato(f) === 'in_ritardo'),
     fattureScadute: fatture.filter((f) => f.stato === 'scaduto'),
     fattureInScadenza: fatture.filter((f) => f.stato === 'in_scadenza'),
+    accordiDaConvertire: elencoSubappalti()
+      .map((s) => ({ id: s.id, lavorazione: s.lavorazione, a: DATA.subappalti[s.id], conv: statoConversione(DATA.subappalti[s.id]) }))
+      .filter((x) => x.conv && x.conv.gg <= 30)
+      .sort((x, y) => x.conv.gg - y.conv.gg),
     salFornScadute: DATA.finanziario.salFornitori.filter((t) => t.stato !== 'pagato' && t.dataPrevista && new Date(t.dataPrevista) < oggi),
     salFornImminenti: DATA.finanziario.salFornitori.filter((t) => {
       if (t.stato === 'pagato' || !t.dataPrevista) return false;
@@ -3471,8 +3516,9 @@ function aggiornaBanner() {
   if (s.fattureInScadenza.length) parti.push(`${s.fattureInScadenza.length} fatture in scadenza`);
   if (s.salFornScadute.length) parti.push(`${s.salFornScadute.length} pagamenti fornitori scaduti`);
   if (s.salFornImminenti.length) parti.push(`${s.salFornImminenti.length} pagamenti fornitori in scadenza`);
+  if (s.accordiDaConvertire.length) parti.push(`${s.accordiDaConvertire.length} accordi da convertire in subappalto`);
   if (!parti.length) { el.style.display = 'none'; el.innerHTML = ''; return; }
-  const critico = s.docsScaduti.length + s.fattureScadute.length + s.salFornScadute.length > 0;
+  const critico = s.docsScaduti.length + s.fattureScadute.length + s.salFornScadute.length + s.accordiDaConvertire.filter((x) => x.conv.gg < 0).length > 0;
   el.style.cssText = `display:block; padding:10px 28px; font-size:13px; font-weight:700; cursor:pointer; color:${critico ? '#fff' : 'var(--navy)'}; background:${critico ? 'var(--red)' : 'var(--amber-light)'};`;
   el.innerHTML = `&#9888;&#65039; ${parti.join(' &middot; ')} &mdash; clicca per aprire il cruscotto`;
   el.onclick = () => vaiA('home', null);
@@ -3482,13 +3528,14 @@ function renderHome() {
   const s = scadenzeImminenti();
   const totale = s.docsScaduti.length + s.docsInScadenza.length + s.fasiRitardo.length +
     s.fattureScadute.length + s.fattureInScadenza.length + s.rateImminenti.length +
-    s.salFornScadute.length + s.salFornImminenti.length;
+    s.salFornScadute.length + s.salFornImminenti.length + s.accordiDaConvertire.length;
   const box = (items, riga) => `<div class="panel">${items.map(riga).join('')}</div>`;
   const rigaDoc = (d) => `<div class="doc-row" style="grid-template-columns:2fr 1fr auto; cursor:pointer;" onclick="vaiA('documentazione','scadenzario')"><div class="name">${d.tipoNome}</div><div class="empty-note">${d.ctx}</div>${chip(d.stato)}</div>`;
   const rigaFase = (f) => `<div class="doc-row" style="grid-template-columns:2fr 1fr auto; cursor:pointer;" onclick="vaiA('cronoprogramma',null)"><div class="name">${f.nome}</div><div class="empty-note">${f.sezione}</div>${faseChip('in_ritardo')}</div>`;
   const rigaFatt = (f) => `<div class="doc-row" style="grid-template-columns:2fr 1fr 1.2fr auto; cursor:pointer;" onclick="vaiA('finanziario','fatture')"><div class="name">${f.controparte || 'Fattura ' + (f.numero || '')}</div><div class="empty-note">${euro(f.importo)}</div><div class="empty-note">Scad. ${dataBreve(f.scadenzaPagamento)}</div>${chip(f.stato === 'scaduto' ? 'scaduto' : 'in_scadenza', f.stato === 'scaduto' ? 'Scaduta' : 'In scadenza')}</div>`;
   const rigaRata = (p) => `<div class="doc-row" style="grid-template-columns:2fr 1fr auto; cursor:pointer;" onclick="vaiA('finanziario','pianificazione')"><div class="name">Rata ${p.numero || ''}</div><div class="empty-note">${euro(p.importo)}</div><span class="chip ${p.gg <= 7 ? 'amber' : 'blue'}">tra ${p.gg} gg &middot; ${dataBreve(p.data)}</span></div>`;
   const rigaSalForn = (t) => `<div class="doc-row" style="grid-template-columns:2fr 1fr auto; cursor:pointer;" onclick="vaiA('finanziario','salfornitori')"><div class="name">${salFornChi(t)}${t.descrizione ? ' — ' + t.descrizione : ''}</div><div class="empty-note">${euro(t.importo)}</div>${salFornStatoChip(t)}</div>`;
+  const rigaAccordo = (x) => `<div class="doc-row" style="grid-template-columns:2fr 1fr auto; cursor:pointer;" onclick="apriDocSub('${x.id}')"><div class="name">${x.a.ragioneSociale || x.lavorazione}</div><div class="empty-note">${x.a.tipoAccordo || 'accordo'} &middot; ${x.lavorazione}</div>${x.conv.chipHtml}</div>`;
   const sezione = (titolo, items, riga) => items.length ? `<h2 style="font-size:15px; margin:18px 0 8px;">${titolo}</h2>${box(items, riga)}` : '';
 
   document.getElementById('main').innerHTML = `
@@ -3506,6 +3553,7 @@ function renderHome() {
     ${sezione('Documenti scaduti', s.docsScaduti, rigaDoc)}
     ${sezione('Documenti in scadenza (30 giorni)', s.docsInScadenza, rigaDoc)}
     ${sezione('Fasi in ritardo sul cronoprogramma', s.fasiRitardo, rigaFase)}
+    ${sezione('Accordi da convertire in subappalto', s.accordiDaConvertire, rigaAccordo)}
     ${sezione('Fatture da pagare (scadute o in scadenza)', s.fattureScadute.concat(s.fattureInScadenza), rigaFatt)}
     ${sezione('Pagamenti fornitori (SAL scaduti o in scadenza)', s.salFornScadute.concat(s.salFornImminenti), rigaSalForn)}
     ${sezione('Prossime rate pianificate (30 giorni)', s.rateImminenti, rigaRata)}
