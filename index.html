@@ -547,7 +547,15 @@ function normalizzaData(data) {
     if (s.dataConversioneSubappalto === undefined) s.dataConversioneSubappalto = '';
   });
   data.finanziario.sal.forEach((s) => { if (s.bloccato === undefined) s.bloccato = false; });
-  data.finanziario.pianificazione.forEach((p) => { if (p.bloccato === undefined) p.bloccato = false; if (p.iva === undefined) p.iva = ''; });
+  data.finanziario.pianificazione.forEach((p) => {
+    if (p.bloccato === undefined) p.bloccato = false;
+    if (p.iva === undefined) p.iva = '';
+    if (p.incassato === undefined) p.incassato = false;
+    if (p.dataIncasso === undefined) p.dataIncasso = '';
+    if (p.fatturaEmessa === undefined) p.fatturaEmessa = false;
+    if (p.numeroFattura === undefined) p.numeroFattura = '';
+    if (p.importoFattura === undefined) p.importoFattura = '';
+  });
   // migrazione: sezione "SAL fornitori" (scadenze di pagamento verso subappaltatori
   // e fornitori esterni) aggiunta a lug 2026
   if (!data.finanziario.salFornitori) data.finanziario.salFornitori = [];
@@ -773,8 +781,8 @@ function fatturaToDb(f) {
 function dbToFattura(r) {
   return { id: r.id, tipo: orEmpty(r.tipo), numero: orEmpty(r.numero), controparte: orEmpty(r.controparte), data: orEmpty(r.data), imponibile: orEmpty(r.imponibile), iva: orEmpty(r.iva), importo: orEmpty(r.importo), scadenzaPagamento: orEmpty(r.scadenza_pagamento), pagata: !!r.pagata, bloccato: !!r.bloccato };
 }
-function pianToDb(p) { return { id: p.id, numero: orNull(p.numero), data: orNull(p.data), importo: orNullNum(p.importo), iva: orNullNum(p.iva), bloccato: !!p.bloccato }; }
-function dbToPian(r) { return { id: r.id, numero: orEmpty(r.numero), data: orEmpty(r.data), importo: orEmpty(r.importo), iva: orEmpty(r.iva), bloccato: !!r.bloccato }; }
+function pianToDb(p) { return { id: p.id, numero: orNull(p.numero), data: orNull(p.data), importo: orNullNum(p.importo), iva: orNullNum(p.iva), incassato: !!p.incassato, data_incasso: orNull(p.dataIncasso), fattura_emessa: !!p.fatturaEmessa, numero_fattura: orNull(p.numeroFattura), importo_fattura: orNullNum(p.importoFattura), bloccato: !!p.bloccato }; }
+function dbToPian(r) { return { id: r.id, numero: orEmpty(r.numero), data: orEmpty(r.data), importo: orEmpty(r.importo), iva: orEmpty(r.iva), incassato: !!r.incassato, dataIncasso: orEmpty(r.data_incasso), fatturaEmessa: !!r.fattura_emessa, numeroFattura: orEmpty(r.numero_fattura), importoFattura: orEmpty(r.importo_fattura), bloccato: !!r.bloccato }; }
 // ---- mapper: SAL fornitori (tabella subappalti_tappe, patch_02 + patch_04) ----
 function salFornToDb(t) {
   return {
@@ -2685,11 +2693,12 @@ function renderFinScadenzario() {
     return gg < 0 ? 'scaduto' : (gg <= 30 ? 'in_scadenza' : 'previsto');
   };
 
-  // ENTRATE 1 — Fatture da emettere (dal piano incassi): imponibile + IVA -> totale
-  const daEmettere = DATA.finanziario.pianificazione.filter((p) => p.data || Number(p.importo))
-    .map((p) => ({ data: p.data, descr: 'Rata ' + (p.numero || '') + ' — fattura verso stazione appaltante',
-      imponibile: rataImponibile(p), iva: rataIva(p), totale: rataTotale(p), stato: statoData(p.data) }))
-    .sort(perData);
+  // ENTRATE 1 — Fatture da emettere (dal piano incassi), con ciclo incasso -> fattura.
+  // Mantengo l'indice reale nella pianificazione per i pulsanti.
+  const rateEmettere = DATA.finanziario.pianificazione
+    .map((p, idx) => ({ p, idx }))
+    .filter(({ p }) => p.data || Number(p.importo))
+    .sort((a, b) => perData({ data: a.p.data }, { data: b.p.data }));
   // ENTRATE 2 — Cash flow: fatture emesse da incassare (gia' emesse, in attesa di pagamento)
   const daIncassare = fatt.filter((f) => f.tipo === 'emessa' && !f.pagata)
     .map((f) => {
@@ -2706,7 +2715,8 @@ function renderFinScadenzario() {
     .sort(perData);
 
   const somma = (arr, k) => arr.reduce((s, x) => s + (x[k] || 0), 0);
-  const totDaEmettereImp = somma(daEmettere, 'imponibile'), totDaEmettereIva = somma(daEmettere, 'iva'), totDaEmettereTot = somma(daEmettere, 'totale');
+  const totDaEmettereTot = rateEmettere.filter(({ p }) => !p.fatturaEmessa).reduce((s, { p }) => s + rataTotale(p), 0);
+  const daFatturare = rateEmettere.filter(({ p }) => p.incassato && !p.fatturaEmessa).length;
   const totIncassare = somma(daIncassare, 'totale');
   const totPagare = somma(daPagare, 'totale') + somma(salFornDaPagare, 'totale');
 
@@ -2719,6 +2729,33 @@ function renderFinScadenzario() {
   // riga a 6 colonne (con imponibile/IVA/totale) per le entrate
   const rigaIva = (x) => `<div class="doc-row" style="grid-template-columns:1.1fr 2fr 1fr 1fr 1fr auto;"><div class="name">${x.data ? dataBreve(x.data) : 'Senza data'}</div><div>${x.descr}</div><div class="empty-note">${euro(x.imponibile)}</div><div class="empty-note">${euro(x.iva)}</div><div><strong>${euro(x.totale)}</strong></div>${badge(x.stato)}</div>`;
   const bloccoIva = (titolo, sub, items, vuoto, tImp, tIva, tTot) => `<div class="panel"><h2>${titolo}</h2>${sub ? `<p class="sub">${sub}</p>` : ''}${items.length ? `<div class="doc-list-head" style="grid-template-columns:1.1fr 2fr 1fr 1fr 1fr auto;"><div>Data</div><div>Descrizione</div><div>Imponibile</div><div>IVA</div><div>Totale</div><div>Stato</div></div>${items.map(rigaIva).join('')}<div class="doc-row" style="grid-template-columns:1.1fr 2fr 1fr 1fr 1fr auto; font-weight:700;"><div>Totali</div><div></div><div>${euro(tImp)}</div><div>${euro(tIva)}</div><div>${euro(tTot)}</div><div></div></div>` : `<p class="empty-note">${vuoto}</p>`}</div>`;
+  // riga interattiva "fattura da emettere": incasso ricevuto -> allarme emetti fattura -> spunta fatto
+  const gridEm = 'grid-template-columns:1fr 1.3fr 0.9fr 0.9fr 0.9fr;';
+  const rigaEmettere = (p, idx) => {
+    let azione;
+    if (p.fatturaEmessa) {
+      azione = `${chip('valido', '&#10003; Fattura emessa')} <span class="empty-note">N. ${p.numeroFattura || '-'} &middot; ${euro(Number(p.importoFattura) || rataTotale(p))}</span> <button class="btn btn-outline btn-sm emett-modifica" data-idx="${idx}">Modifica</button>`;
+    } else if (p.incassato) {
+      azione = `${chip('scaduto', '&#9888; Ricordati di emettere fattura')}
+        <input type="text" class="ef-num" data-idx="${idx}" placeholder="N. fattura" value="${p.numeroFattura || ''}" style="width:100px;" />
+        <input type="number" class="ef-imp" data-idx="${idx}" placeholder="Importo &euro;" value="${p.importoFattura || (rataTotale(p) || '')}" style="width:120px;" />
+        <button class="btn btn-primary btn-sm emett-fatto" data-idx="${idx}">Fatto &#10003;</button>
+        <button class="btn btn-outline btn-sm emett-annulla-incasso" data-idx="${idx}">Annulla incasso</button>`;
+    } else {
+      azione = `${badge(statoData(p.data))} <button class="btn btn-primary btn-sm emett-incasso" data-idx="${idx}">Pagamento ricevuto</button>`;
+    }
+    return `<div class="doc-row" style="${gridEm} align-items:center;">
+      <div class="name">${p.data ? dataBreve(p.data) : 'Senza data'}</div>
+      <div>Rata ${p.numero || ''}${p.dataIncasso ? ' <span class="empty-note">(incassata ' + dataBreve(p.dataIncasso) + ')</span>' : ''}</div>
+      <div class="empty-note">${euro(rataImponibile(p))}</div>
+      <div class="empty-note">${euro(rataIva(p))}</div>
+      <div><strong>${euro(rataTotale(p))}</strong></div>
+      <div style="grid-column:1/-1; display:flex; gap:8px; align-items:center; flex-wrap:wrap; padding-top:4px;">${azione}</div>
+    </div>`;
+  };
+  const bloccoEmettere = () => `<div class="panel"><h2>Fatture da emettere &middot; piano incassi</h2>
+    <p class="sub">Quando ricevi il pagamento di una rata premi <strong>"Pagamento ricevuto"</strong>: l'app ti ricorda di emettere la fattura. Poi scrivi numero e importo e premi <strong>"Fatto"</strong>.</p>
+    ${rateEmettere.length ? `<div class="doc-list-head" style="${gridEm}"><div>Data prevista</div><div>Descrizione</div><div>Imponibile</div><div>IVA</div><div>Totale</div></div>${rateEmettere.map(({ p, idx }) => rigaEmettere(p, idx)).join('')}` : '<p class="empty-note">Nessuna rata pianificata: aggiungile in Pianificazione.</p>'}</div>`;
   // riga a 4 colonne (solo totale) per le uscite
   const riga = (x) => `<div class="doc-row" style="grid-template-columns:1.3fr 2.4fr 1fr auto;"><div class="name">${x.data ? dataBreve(x.data) : 'Senza data'}</div><div>${x.descr}</div><div class="empty-note">${euro(x.totale)}</div>${badge(x.stato)}</div>`;
   const blocco = (titolo, items, vuoto) => `<div class="panel"><h2>${titolo}</h2>${items.length ? `<div class="doc-list-head" style="grid-template-columns:1.3fr 2.4fr 1fr auto;"><div>Scadenza</div><div>Descrizione</div><div>Importo</div><div>Stato</div></div>${items.map(riga).join('')}` : `<p class="empty-note">${vuoto}</p>`}</div>`;
@@ -2726,17 +2763,39 @@ function renderFinScadenzario() {
   document.getElementById('main').innerHTML = `
     <div class="grid-stats">
       <div class="stat-card blue"><div class="num">${euro(totDaEmettereTot)}</div><div class="label">Da emettere (piano, IVA incl.)</div></div>
+      <div class="stat-card ${daFatturare ? 'red' : 'gray'}"><div class="num">${daFatturare}</div><div class="label">Incassate: fatture da emettere</div></div>
       <div class="stat-card teal"><div class="num">${euro(totIncassare)}</div><div class="label">Cash flow: da incassare (fatture emesse)</div></div>
       <div class="stat-card red"><div class="num">${euro(totPagare)}</div><div class="label">Da pagare (fatture + SAL fornitori)</div></div>
     </div>
-    <p class="sub" style="margin:0 0 16px;">Le <strong>entrate</strong> sono divise in due: le <em>fatture da emettere</em> secondo il piano incassi (con imponibile e IVA) e il <em>cash flow</em> delle fatture gi&agrave; emesse in attesa d'incasso. Il quadro mensile completo &egrave; nella scheda "Incassi vs pagamenti".</p>
+    <p class="sub" style="margin:0 0 16px;">Nelle <strong>entrate</strong>: segna gli incassi ricevuti e emetti le fatture (con promemoria), poi il <em>cash flow</em> delle fatture gi&agrave; emesse in attesa d'incasso. In <strong>uscita</strong> i pagamenti da fare. I promemoria di scadenza (in entrata e in uscita) compaiono anche nella Home e nel banner.</p>
     <h2 style="font-size:15px; margin:6px 0 8px; color:var(--navy);">IN ENTRATA</h2>
-    ${bloccoIva('Fatture da emettere &middot; piano incassi', 'Ogni rata del piano corrisponde a una fattura da emettere verso la stazione appaltante: imponibile, IVA (22%) e totale.', daEmettere, 'Nessuna rata pianificata: aggiungile in Pianificazione.', totDaEmettereImp, totDaEmettereIva, totDaEmettereTot)}
+    ${bloccoEmettere()}
     ${bloccoIva('Cash flow &middot; fatture emesse da incassare', 'Fatture gi&agrave; emesse e non ancora incassate, per data di scadenza pagamento.', daIncassare, 'Nessuna fattura emessa da incassare.', somma(daIncassare,'imponibile'), somma(daIncassare,'iva'), totIncassare)}
     <h2 style="font-size:15px; margin:18px 0 8px; color:var(--navy);">IN USCITA</h2>
     ${blocco('Fatture da pagare', daPagare, 'Nessuna fattura ricevuta da pagare.')}
     ${blocco('Scadenze SAL fornitori', salFornDaPagare, 'Nessuna scadenza SAL fornitori da pagare.')}
   `;
+
+  // handler ciclo incasso -> fattura
+  const pian = (i) => DATA.finanziario.pianificazione[i];
+  document.querySelectorAll('.emett-incasso').forEach((b) => b.onclick = () => {
+    const p = pian(+b.dataset.idx); p.incassato = true; if (!p.dataIncasso) p.dataIncasso = new Date().toISOString().slice(0, 10);
+    saveData(); renderFinScadenzario();
+  });
+  document.querySelectorAll('.emett-annulla-incasso').forEach((b) => b.onclick = () => {
+    const p = pian(+b.dataset.idx); p.incassato = false; p.dataIncasso = '';
+    saveData(); renderFinScadenzario();
+  });
+  document.querySelectorAll('.emett-fatto').forEach((b) => b.onclick = () => {
+    const i = +b.dataset.idx; const p = pian(i);
+    const num = document.querySelector(`.ef-num[data-idx="${i}"]`);
+    const imp = document.querySelector(`.ef-imp[data-idx="${i}"]`);
+    p.numeroFattura = num ? num.value : ''; p.importoFattura = imp ? imp.value : '';
+    p.fatturaEmessa = true; saveData(); renderFinScadenzario();
+  });
+  document.querySelectorAll('.emett-modifica').forEach((b) => b.onclick = () => {
+    const p = pian(+b.dataset.idx); p.fatturaEmessa = false; saveData(); renderFinScadenzario();
+  });
 }
 
 function renderFinPianificazione() {
@@ -3552,10 +3611,13 @@ function scadenzeImminenti() {
       const gg = Math.ceil((new Date(t.dataPrevista) - oggi) / 86400000);
       return gg >= 0 && gg <= 30;
     }),
+    // Pagamenti IN ENTRATA in scadenza: rate del piano non ancora incassate, entro 30 gg
     rateImminenti: DATA.finanziario.pianificazione
       .map((p) => Object.assign({}, p, { gg: p.data ? Math.ceil((new Date(p.data) - oggi) / 86400000) : null }))
-      .filter((p) => p.gg !== null && p.gg >= 0 && p.gg <= 30)
-      .sort((a, b) => a.gg - b.gg)
+      .filter((p) => !p.incassato && p.gg !== null && p.gg >= 0 && p.gg <= 30)
+      .sort((a, b) => a.gg - b.gg),
+    // Ricordati di emettere fattura: rate incassate ma non ancora fatturate
+    fattureDaEmettere: DATA.finanziario.pianificazione.filter((p) => p.incassato && !p.fatturaEmessa)
   };
 }
 
@@ -3583,8 +3645,10 @@ function aggiornaBanner() {
   if (s.salFornScadute.length) parti.push(`${s.salFornScadute.length} pagamenti fornitori scaduti`);
   if (s.salFornImminenti.length) parti.push(`${s.salFornImminenti.length} pagamenti fornitori in scadenza`);
   if (s.accordiDaConvertire.length) parti.push(`${s.accordiDaConvertire.length} accordi da convertire in subappalto`);
+  if (s.fattureDaEmettere.length) parti.push(`${s.fattureDaEmettere.length} fatture da emettere`);
+  if (s.rateImminenti.length) parti.push(`${s.rateImminenti.length} incassi in scadenza`);
   if (!parti.length) { el.style.display = 'none'; el.innerHTML = ''; return; }
-  const critico = s.docsScaduti.length + s.fattureScadute.length + s.salFornScadute.length + s.accordiDaConvertire.filter((x) => x.conv.gg < 0).length > 0;
+  const critico = s.docsScaduti.length + s.fattureScadute.length + s.salFornScadute.length + s.fattureDaEmettere.length + s.accordiDaConvertire.filter((x) => x.conv.gg < 0).length > 0;
   el.style.cssText = `display:block; padding:10px 28px; font-size:13px; font-weight:700; cursor:pointer; color:${critico ? '#fff' : 'var(--navy)'}; background:${critico ? 'var(--red)' : 'var(--amber-light)'};`;
   el.innerHTML = `&#9888;&#65039; ${parti.join(' &middot; ')} &mdash; clicca per aprire il cruscotto`;
   el.onclick = () => vaiA('home', null);
@@ -3594,12 +3658,14 @@ function renderHome() {
   const s = scadenzeImminenti();
   const totale = s.docsScaduti.length + s.docsInScadenza.length + s.fasiRitardo.length +
     s.fattureScadute.length + s.fattureInScadenza.length + s.rateImminenti.length +
-    s.salFornScadute.length + s.salFornImminenti.length + s.accordiDaConvertire.length;
+    s.salFornScadute.length + s.salFornImminenti.length + s.accordiDaConvertire.length +
+    s.fattureDaEmettere.length;
   const box = (items, riga) => `<div class="panel">${items.map(riga).join('')}</div>`;
   const rigaDoc = (d) => `<div class="doc-row" style="grid-template-columns:2fr 1fr auto; cursor:pointer;" onclick="vaiA('documentazione','scadenzario')"><div class="name">${d.tipoNome}</div><div class="empty-note">${d.ctx}</div>${chip(d.stato)}</div>`;
   const rigaFase = (f) => `<div class="doc-row" style="grid-template-columns:2fr 1fr auto; cursor:pointer;" onclick="vaiA('cronoprogramma',null)"><div class="name">${f.nome}</div><div class="empty-note">${f.sezione}</div>${faseChip('in_ritardo')}</div>`;
   const rigaFatt = (f) => `<div class="doc-row" style="grid-template-columns:2fr 1fr 1.2fr auto; cursor:pointer;" onclick="vaiA('finanziario','fatture')"><div class="name">${f.controparte || 'Fattura ' + (f.numero || '')}</div><div class="empty-note">${euro(f.importo)}</div><div class="empty-note">Scad. ${dataBreve(f.scadenzaPagamento)}</div>${chip(f.stato === 'scaduto' ? 'scaduto' : 'in_scadenza', f.stato === 'scaduto' ? 'Scaduta' : 'In scadenza')}</div>`;
-  const rigaRata = (p) => `<div class="doc-row" style="grid-template-columns:2fr 1fr auto; cursor:pointer;" onclick="vaiA('finanziario','pianificazione')"><div class="name">Rata ${p.numero || ''}</div><div class="empty-note">${euro(p.importo)}</div><span class="chip ${p.gg <= 7 ? 'amber' : 'blue'}">tra ${p.gg} gg &middot; ${dataBreve(p.data)}</span></div>`;
+  const rigaRata = (p) => `<div class="doc-row" style="grid-template-columns:2fr 1fr auto; cursor:pointer;" onclick="vaiA('finanziario','scadenzario')"><div class="name">Rata ${p.numero || ''} — incasso previsto</div><div class="empty-note">${euro(rataTotale(p))}</div><span class="chip ${p.gg <= 7 ? 'amber' : 'blue'}">tra ${p.gg} gg &middot; ${dataBreve(p.data)}</span></div>`;
+  const rigaEmett = (p) => `<div class="doc-row" style="grid-template-columns:2fr 1fr auto; cursor:pointer;" onclick="vaiA('finanziario','scadenzario')"><div class="name">Rata ${p.numero || ''}${p.dataIncasso ? ' — incassata ' + dataBreve(p.dataIncasso) : ''}</div><div class="empty-note">${euro(rataTotale(p))}</div>${chip('scaduto', 'Emetti fattura')}</div>`;
   const rigaSalForn = (t) => `<div class="doc-row" style="grid-template-columns:2fr 1fr auto; cursor:pointer;" onclick="vaiA('finanziario','salfornitori')"><div class="name">${salFornChi(t)}${t.descrizione ? ' — ' + t.descrizione : ''}</div><div class="empty-note">${euro(t.importo)}</div>${salFornStatoChip(t)}</div>`;
   const rigaAccordo = (x) => `<div class="doc-row" style="grid-template-columns:2fr 1fr auto; cursor:pointer;" onclick="apriDocSub('${x.id}')"><div class="name">${x.a.ragioneSociale || x.lavorazione}</div><div class="empty-note">${x.a.tipoAccordo || 'accordo'} &middot; ${x.lavorazione}</div>${x.conv.chipHtml}</div>`;
   const sezione = (titolo, items, riga) => items.length ? `<h2 style="font-size:15px; margin:18px 0 8px;">${titolo}</h2>${box(items, riga)}` : '';
@@ -3610,6 +3676,8 @@ function renderHome() {
       <div class="stat-card in_scadenza" style="cursor:pointer;" onclick="vaiA('documentazione','scadenzario')"><div class="num">${s.docsInScadenza.length}</div><div class="label">Documenti in scadenza</div></div>
       <div class="stat-card red" style="cursor:pointer;" onclick="vaiA('cronoprogramma',null)"><div class="num">${s.fasiRitardo.length}</div><div class="label">Fasi in ritardo</div></div>
       <div class="stat-card amber" style="cursor:pointer;" onclick="vaiA('finanziario','fatture')"><div class="num">${s.fattureScadute.length + s.fattureInScadenza.length}</div><div class="label">Fatture da pagare</div></div>
+      <div class="stat-card ${s.fattureDaEmettere.length ? 'red' : 'gray'}" style="cursor:pointer;" onclick="vaiA('finanziario','scadenzario')"><div class="num">${s.fattureDaEmettere.length}</div><div class="label">Fatture da emettere</div></div>
+      <div class="stat-card blue" style="cursor:pointer;" onclick="vaiA('finanziario','scadenzario')"><div class="num">${s.rateImminenti.length}</div><div class="label">Incassi in scadenza</div></div>
     </div>
     <div class="panel">
       <h2>Benvenuta nel cantiere Studentato Calvanico</h2>
@@ -3620,9 +3688,10 @@ function renderHome() {
     ${sezione('Documenti in scadenza (30 giorni)', s.docsInScadenza, rigaDoc)}
     ${sezione('Fasi in ritardo sul cronoprogramma', s.fasiRitardo, rigaFase)}
     ${sezione('Accordi da convertire in subappalto', s.accordiDaConvertire, rigaAccordo)}
-    ${sezione('Fatture da pagare (scadute o in scadenza)', s.fattureScadute.concat(s.fattureInScadenza), rigaFatt)}
-    ${sezione('Pagamenti fornitori (SAL scaduti o in scadenza)', s.salFornScadute.concat(s.salFornImminenti), rigaSalForn)}
-    ${sezione('Prossime rate pianificate (30 giorni)', s.rateImminenti, rigaRata)}
+    ${sezione('Ricordati di emettere fattura (incassi ricevuti)', s.fattureDaEmettere, rigaEmett)}
+    ${sezione('Pagamenti in entrata in scadenza (30 giorni)', s.rateImminenti, rigaRata)}
+    ${sezione('Pagamenti in uscita &middot; fatture da pagare (scadute o in scadenza)', s.fattureScadute.concat(s.fattureInScadenza), rigaFatt)}
+    ${sezione('Pagamenti in uscita &middot; SAL fornitori (scaduti o in scadenza)', s.salFornScadute.concat(s.salFornImminenti), rigaSalForn)}
   `;
 }
 
