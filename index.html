@@ -300,8 +300,8 @@ const FASI_REALI = [
 ];
 
 // Estratto dal file "pianificazione finanziaria.xlsx" caricato da Noemi.
-// L'importo dichiarato (6.000.000) e' stato riportato in Anagrafica > Appalto
-// come importo totale. Le rate coprono solo 4.000.000: mancano 2.000.000 da
+// Importo appalto (corretto da Noemi a lug 2026): 7.850.000 + IVA, formula
+// "chiavi in mano". Le rate del piano coprono solo 4.000.000: il resto e' da
 // pianificare (vedi Finanziario > Pianificazione).
 const PIANIFICAZIONE_INIZIALE = [
   { numero: 1, data: '2026-07-30', importo: 500000 },
@@ -313,7 +313,7 @@ const PIANIFICAZIONE_INIZIALE = [
   { numero: 7, data: '2027-07-30', importo: 500000 },
   { numero: 8, data: '2027-09-30', importo: 500000 }
 ];
-const IMPORTO_DICHIARATO_INIZIALE = 6000000;
+const IMPORTO_DICHIARATO_INIZIALE = 7850000; // 7.850.000 + IVA, chiavi in mano
 
 const RUOLI_INIZIALI = [
   'RUP - Responsabile Unico del Procedimento',
@@ -547,7 +547,7 @@ function normalizzaData(data) {
     if (s.dataConversioneSubappalto === undefined) s.dataConversioneSubappalto = '';
   });
   data.finanziario.sal.forEach((s) => { if (s.bloccato === undefined) s.bloccato = false; });
-  data.finanziario.pianificazione.forEach((p) => { if (p.bloccato === undefined) p.bloccato = false; });
+  data.finanziario.pianificazione.forEach((p) => { if (p.bloccato === undefined) p.bloccato = false; if (p.iva === undefined) p.iva = ''; });
   // migrazione: sezione "SAL fornitori" (scadenze di pagamento verso subappaltatori
   // e fornitori esterni) aggiunta a lug 2026
   if (!data.finanziario.salFornitori) data.finanziario.salFornitori = [];
@@ -773,8 +773,8 @@ function fatturaToDb(f) {
 function dbToFattura(r) {
   return { id: r.id, tipo: orEmpty(r.tipo), numero: orEmpty(r.numero), controparte: orEmpty(r.controparte), data: orEmpty(r.data), imponibile: orEmpty(r.imponibile), iva: orEmpty(r.iva), importo: orEmpty(r.importo), scadenzaPagamento: orEmpty(r.scadenza_pagamento), pagata: !!r.pagata, bloccato: !!r.bloccato };
 }
-function pianToDb(p) { return { id: p.id, numero: orNull(p.numero), data: orNull(p.data), importo: orNullNum(p.importo), bloccato: !!p.bloccato }; }
-function dbToPian(r) { return { id: r.id, numero: orEmpty(r.numero), data: orEmpty(r.data), importo: orEmpty(r.importo), bloccato: !!r.bloccato }; }
+function pianToDb(p) { return { id: p.id, numero: orNull(p.numero), data: orNull(p.data), importo: orNullNum(p.importo), iva: orNullNum(p.iva), bloccato: !!p.bloccato }; }
+function dbToPian(r) { return { id: r.id, numero: orEmpty(r.numero), data: orEmpty(r.data), importo: orEmpty(r.importo), iva: orEmpty(r.iva), bloccato: !!r.bloccato }; }
 // ---- mapper: SAL fornitori (tabella subappalti_tappe, patch_02 + patch_04) ----
 function salFornToDb(t) {
   return {
@@ -1118,11 +1118,31 @@ async function ricaricaDatiERender() {
   renderMain();
 }
 
+// Backup locale automatico: ad ogni salvataggio l'intero stato viene copiato
+// anche nel browser (una copia per giorno, ultimi 3 giorni, piu' l'ultimo
+// salvataggio in assoluto). E' una rete di sicurezza in aggiunta al pulsante
+// "Esporta backup": in caso di dati persi sul cloud si puo' recuperare da qui.
+function salvaBackupLocale() {
+  try {
+    const oggi = new Date().toISOString().slice(0, 10);
+    const testo = JSON.stringify(DATA);
+    localStorage.setItem('calvanico_backup_giorno_' + oggi, testo);
+    localStorage.setItem('calvanico_backup_ultimo', testo);
+    const giornalieri = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (k && k.startsWith('calvanico_backup_giorno_')) giornalieri.push(k);
+    }
+    giornalieri.sort().slice(0, -3).forEach((k) => localStorage.removeItem(k));
+  } catch (err) { /* storage pieno o bloccato: pazienza, e' solo una sicurezza extra */ }
+}
+
 async function saveData() {
   SYNC_RICHIESTA_PENDING = true;
   if (SYNC_IN_CORSO) return;
   SYNC_IN_CORSO = true;
   aggiornaStatoSync('Salvataggio…');
+  salvaBackupLocale();
 
   if (SYNC_LOCK_DISPONIBILE) {
     let esito;
@@ -1335,9 +1355,24 @@ function getDocArray(section, subId) {
   if (section === 'sub-amm') return DATA.subappaltiDocsAmministrativi[subId];
   return DATA.subappaltiDocs[subId];
 }
+// Prima di ridisegnare la pagina, travasa in DATA anche il testo digitato nelle
+// ALTRE righe non ancora salvate (senza bloccarle). Senza questo, premere
+// "Salva" su una riga faceva sparire quanto scritto — ma non salvato — nelle
+// altre righe della stessa checklist.
+function raccogliRigheNonSalvate() {
+  document.querySelectorAll('.doc-row .save-btn').forEach((btn) => {
+    const { section, sub, idx, key } = btn.dataset;
+    const arr = getDocArray(section, sub);
+    const doc = arr && arr[Number(idx)];
+    if (!doc || doc.bloccato) return;
+    Object.assign(doc, readDocRow(key));
+  });
+}
+
 function attachDocRowHandlers(renderFn) {
   document.querySelectorAll('.save-btn').forEach((btn) => {
     btn.onclick = () => {
+      raccogliRigheNonSalvate();
       const { section, sub, idx, key } = btn.dataset;
       const arr = getDocArray(section, sub);
       const doc = arr[Number(idx)];
@@ -1355,6 +1390,7 @@ function attachDocRowHandlers(renderFn) {
   });
   document.querySelectorAll('.unlock-btn').forEach((btn) => {
     btn.onclick = () => {
+      raccogliRigheNonSalvate();
       const { section, sub, idx } = btn.dataset;
       const arr = getDocArray(section, sub);
       arr[Number(idx)].bloccato = false;
@@ -2590,6 +2626,16 @@ function renderAcquistiControllo() {
 }
 
 // ---------- AREA: FINANZIARIO ----------
+// Piano incassi: "importo" della rata = imponibile (netto); l'IVA e' un campo a
+// parte (aliquota 22%, proposta in automatico e modificabile); il totale e'
+// imponibile + IVA. Le fatture emesse hanno gia' i propri imponibile/iva/importo.
+const ALIQUOTA_IVA = 0.22;
+function rataImponibile(p) { return Number(p.importo) || 0; }
+function rataIva(p) {
+  if (p.iva === '' || p.iva === undefined || p.iva === null) return rataImponibile(p) * ALIQUOTA_IVA;
+  return Number(p.iva) || 0;
+}
+function rataTotale(p) { return rataImponibile(p) + rataIva(p); }
 function subImporto(id) { return Number(DATA.subappalti[id].importo) || 0; }
 function subSpeso(id) { return Number(DATA.subappalti[id].speso) || 0; }
 
@@ -2632,31 +2678,37 @@ function renderFinPanoramica() {
 function renderFinScadenzario() {
   const perData = (a, b) => (a.data || '9999-99-99').localeCompare(b.data || '9999-99-99');
   const fatt = DATA.finanziario.fatture;
-
-  const daIncassare = fatt.filter((f) => f.tipo === 'emessa' && !f.pagata)
-    .map((f) => ({ data: f.scadenzaPagamento || f.data, descr: f.controparte || ('Fattura ' + (f.numero || '')), importo: Number(f.importo) || 0, stato: statoFattura(f) }))
-    .sort(perData);
-  const previsti = DATA.finanziario.pianificazione.filter((p) => p.data || p.importo)
-    .map((p) => ({ data: p.data, descr: 'Rata ' + (p.numero || '') + ' — piano incassi', importo: Number(p.importo) || 0, stato: 'previsto' }))
-    .sort(perData);
-  const daPagare = fatt.filter((f) => f.tipo === 'ricevuta' && !f.pagata)
-    .map((f) => ({ data: f.scadenzaPagamento || f.data, descr: f.controparte || ('Fattura ' + (f.numero || '')), importo: Number(f.importo) || 0, stato: statoFattura(f) }))
-    .sort(perData);
   const oggiSc = new Date(); oggiSc.setHours(0, 0, 0, 0);
+  const statoData = (dstr) => {
+    if (!dstr) return 'previsto';
+    const gg = Math.ceil((new Date(dstr) - oggiSc) / 86400000);
+    return gg < 0 ? 'scaduto' : (gg <= 30 ? 'in_scadenza' : 'previsto');
+  };
+
+  // ENTRATE 1 — Fatture da emettere (dal piano incassi): imponibile + IVA -> totale
+  const daEmettere = DATA.finanziario.pianificazione.filter((p) => p.data || Number(p.importo))
+    .map((p) => ({ data: p.data, descr: 'Rata ' + (p.numero || '') + ' — fattura verso stazione appaltante',
+      imponibile: rataImponibile(p), iva: rataIva(p), totale: rataTotale(p), stato: statoData(p.data) }))
+    .sort(perData);
+  // ENTRATE 2 — Cash flow: fatture emesse da incassare (gia' emesse, in attesa di pagamento)
+  const daIncassare = fatt.filter((f) => f.tipo === 'emessa' && !f.pagata)
+    .map((f) => {
+      const imp = Number(f.imponibile) || 0, iv = Number(f.iva) || 0, tot = Number(f.importo) || (imp + iv);
+      return { data: f.scadenzaPagamento || f.data, descr: (f.controparte || 'Cliente') + ' — fatt. ' + (f.numero || ''),
+        imponibile: imp, iva: iv, totale: tot, stato: statoFattura(f) };
+    }).sort(perData);
+  // USCITE
+  const daPagare = fatt.filter((f) => f.tipo === 'ricevuta' && !f.pagata)
+    .map((f) => ({ data: f.scadenzaPagamento || f.data, descr: f.controparte || ('Fattura ' + (f.numero || '')), totale: Number(f.importo) || 0, stato: statoFattura(f) }))
+    .sort(perData);
   const salFornDaPagare = DATA.finanziario.salFornitori.filter((t) => t.stato !== 'pagato' && (t.dataPrevista || Number(t.importo)))
-    .map((t) => {
-      let stato = 'previsto';
-      if (t.dataPrevista) {
-        const gg = Math.ceil((new Date(t.dataPrevista) - oggiSc) / 86400000);
-        stato = gg < 0 ? 'scaduto' : (gg <= 30 ? 'in_scadenza' : 'previsto');
-      }
-      return { data: t.dataPrevista, descr: salFornChi(t) + (t.descrizione ? ' — ' + t.descrizione : ''), importo: Number(t.importo) || 0, stato };
-    })
+    .map((t) => ({ data: t.dataPrevista, descr: salFornChi(t) + (t.descrizione ? ' — ' + t.descrizione : ''), totale: Number(t.importo) || 0, stato: t.dataPrevista ? statoData(t.dataPrevista) : 'previsto' }))
     .sort(perData);
 
-  const totIncassare = daIncassare.reduce((s, x) => s + x.importo, 0);
-  const totPagare = daPagare.reduce((s, x) => s + x.importo, 0);
-  const saldo = totIncassare - totPagare;
+  const somma = (arr, k) => arr.reduce((s, x) => s + (x[k] || 0), 0);
+  const totDaEmettereImp = somma(daEmettere, 'imponibile'), totDaEmettereIva = somma(daEmettere, 'iva'), totDaEmettereTot = somma(daEmettere, 'totale');
+  const totIncassare = somma(daIncassare, 'totale');
+  const totPagare = somma(daPagare, 'totale') + somma(salFornDaPagare, 'totale');
 
   const badge = (stato) => {
     if (stato === 'scaduto') return chip('scaduto', 'Scaduta');
@@ -2664,39 +2716,50 @@ function renderFinScadenzario() {
     if (stato === 'previsto') return `<span class="chip" style="background:var(--blue-light); color:var(--blue);">Previsto</span>`;
     return chip('mancante', 'Da saldare');
   };
-  const riga = (x) => `<div class="doc-row" style="grid-template-columns:1.3fr 2.4fr 1fr auto;"><div class="name">${x.data ? dataBreve(x.data) : 'Senza data'}</div><div>${x.descr}</div><div class="empty-note">${euro(x.importo)}</div>${badge(x.stato)}</div>`;
+  // riga a 6 colonne (con imponibile/IVA/totale) per le entrate
+  const rigaIva = (x) => `<div class="doc-row" style="grid-template-columns:1.1fr 2fr 1fr 1fr 1fr auto;"><div class="name">${x.data ? dataBreve(x.data) : 'Senza data'}</div><div>${x.descr}</div><div class="empty-note">${euro(x.imponibile)}</div><div class="empty-note">${euro(x.iva)}</div><div><strong>${euro(x.totale)}</strong></div>${badge(x.stato)}</div>`;
+  const bloccoIva = (titolo, sub, items, vuoto, tImp, tIva, tTot) => `<div class="panel"><h2>${titolo}</h2>${sub ? `<p class="sub">${sub}</p>` : ''}${items.length ? `<div class="doc-list-head" style="grid-template-columns:1.1fr 2fr 1fr 1fr 1fr auto;"><div>Data</div><div>Descrizione</div><div>Imponibile</div><div>IVA</div><div>Totale</div><div>Stato</div></div>${items.map(rigaIva).join('')}<div class="doc-row" style="grid-template-columns:1.1fr 2fr 1fr 1fr 1fr auto; font-weight:700;"><div>Totali</div><div></div><div>${euro(tImp)}</div><div>${euro(tIva)}</div><div>${euro(tTot)}</div><div></div></div>` : `<p class="empty-note">${vuoto}</p>`}</div>`;
+  // riga a 4 colonne (solo totale) per le uscite
+  const riga = (x) => `<div class="doc-row" style="grid-template-columns:1.3fr 2.4fr 1fr auto;"><div class="name">${x.data ? dataBreve(x.data) : 'Senza data'}</div><div>${x.descr}</div><div class="empty-note">${euro(x.totale)}</div>${badge(x.stato)}</div>`;
   const blocco = (titolo, items, vuoto) => `<div class="panel"><h2>${titolo}</h2>${items.length ? `<div class="doc-list-head" style="grid-template-columns:1.3fr 2.4fr 1fr auto;"><div>Scadenza</div><div>Descrizione</div><div>Importo</div><div>Stato</div></div>${items.map(riga).join('')}` : `<p class="empty-note">${vuoto}</p>`}</div>`;
 
   document.getElementById('main').innerHTML = `
-    <div class="grid-stats cols-3">
-      <div class="stat-card teal"><div class="num">${euro(totIncassare)}</div><div class="label">Da incassare (fatture emesse)</div></div>
-      <div class="stat-card red"><div class="num">${euro(totPagare)}</div><div class="label">Da pagare (fatture ricevute)</div></div>
-      <div class="stat-card ${saldo >= 0 ? 'teal' : 'red'}"><div class="num">${euro(saldo)}</div><div class="label">Saldo previsto (incassi − pagamenti)</div></div>
+    <div class="grid-stats">
+      <div class="stat-card blue"><div class="num">${euro(totDaEmettereTot)}</div><div class="label">Da emettere (piano, IVA incl.)</div></div>
+      <div class="stat-card teal"><div class="num">${euro(totIncassare)}</div><div class="label">Cash flow: da incassare (fatture emesse)</div></div>
+      <div class="stat-card red"><div class="num">${euro(totPagare)}</div><div class="label">Da pagare (fatture + SAL fornitori)</div></div>
     </div>
-    <p class="sub" style="margin:0 0 16px;">Scadenze in ordine di data. Le voci &laquo;Previsto&raquo; (rate del piano incassi e scadenze SAL fornitori) sono un riferimento e non entrano nel saldo qui sopra, che confronta solo le fatture. Il quadro completo per mese &egrave; nella scheda "Incassi vs pagamenti".</p>
-    ${blocco('In entrata &middot; fatturato da incassare', daIncassare, 'Nessuna fattura emessa da incassare.')}
-    ${blocco('In entrata &middot; previsti dal piano incassi', previsti, 'Nessuna rata pianificata.')}
-    ${blocco('In uscita &middot; fatture da pagare', daPagare, 'Nessuna fattura ricevuta da pagare.')}
-    ${blocco('In uscita &middot; scadenze SAL fornitori', salFornDaPagare, 'Nessuna scadenza SAL fornitori da pagare.')}
+    <p class="sub" style="margin:0 0 16px;">Le <strong>entrate</strong> sono divise in due: le <em>fatture da emettere</em> secondo il piano incassi (con imponibile e IVA) e il <em>cash flow</em> delle fatture gi&agrave; emesse in attesa d'incasso. Il quadro mensile completo &egrave; nella scheda "Incassi vs pagamenti".</p>
+    <h2 style="font-size:15px; margin:6px 0 8px; color:var(--navy);">IN ENTRATA</h2>
+    ${bloccoIva('Fatture da emettere &middot; piano incassi', 'Ogni rata del piano corrisponde a una fattura da emettere verso la stazione appaltante: imponibile, IVA (22%) e totale.', daEmettere, 'Nessuna rata pianificata: aggiungile in Pianificazione.', totDaEmettereImp, totDaEmettereIva, totDaEmettereTot)}
+    ${bloccoIva('Cash flow &middot; fatture emesse da incassare', 'Fatture gi&agrave; emesse e non ancora incassate, per data di scadenza pagamento.', daIncassare, 'Nessuna fattura emessa da incassare.', somma(daIncassare,'imponibile'), somma(daIncassare,'iva'), totIncassare)}
+    <h2 style="font-size:15px; margin:18px 0 8px; color:var(--navy);">IN USCITA</h2>
+    ${blocco('Fatture da pagare', daPagare, 'Nessuna fattura ricevuta da pagare.')}
+    ${blocco('Scadenze SAL fornitori', salFornDaPagare, 'Nessuna scadenza SAL fornitori da pagare.')}
   `;
 }
 
 function renderFinPianificazione() {
   const piano = DATA.finanziario.pianificazione;
-  const totaleRate = piano.reduce((s, p) => s + (Number(p.importo) || 0), 0);
+  const totaleRate = piano.reduce((s, p) => s + rataImponibile(p), 0);
+  const totaleIva = piano.reduce((s, p) => s + rataIva(p), 0);
+  const totaleTot = totaleRate + totaleIva;
   let cumulato = 0;
   const rows = piano.map((p, i) => {
-    const importo = Number(p.importo) || 0;
+    const importo = rataImponibile(p);
     cumulato += importo;
     const pct = totaleRate > 0 ? (importo / totaleRate * 100) : 0;
     const bl = !!p.bloccato; const dis = bl ? 'disabled' : '';
+    // IVA: se non compilata, proposta al 22% dell'imponibile (modificabile); Totale = imponibile + IVA
+    const ivaVal = (p.iva === '' || p.iva === undefined || p.iva === null) ? (importo ? (importo * ALIQUOTA_IVA).toFixed(2) : '') : p.iva;
     return `
     <tr data-idx="${i}">
-      <td><input type="text" class="f-numero" value="${p.numero || ''}" style="width:50px;" ${dis} /></td>
+      <td><input type="text" class="f-numero" value="${p.numero || ''}" style="width:44px;" ${dis} /></td>
       <td><strong>${meseAnno(p.data)}</strong></td>
       <td><input type="date" class="f-data" value="${p.data || ''}" ${dis} /></td>
-      <td><input type="number" class="f-importo" value="${p.importo || ''}" placeholder="€" ${dis} /></td>
-      <td class="empty-note">${pct.toFixed(1)}%</td>
+      <td><input type="number" class="f-importo" value="${p.importo || ''}" placeholder="€ imponibile" ${dis} /></td>
+      <td><input type="number" class="f-iva" value="${ivaVal}" placeholder="€ IVA 22%" ${dis} /></td>
+      <td><strong>${euro(rataTotale(p))}</strong></td>
       <td class="empty-note">${euro(cumulato)}</td>
       <td>${bl ? '<button class="btn btn-outline btn-sm pian-unlock">&#128274; Sblocca</button>' : '<button class="btn btn-primary btn-sm pian-save">Salva</button> <button class="btn btn-outline btn-sm pian-del">Elimina</button>'}</td>
     </tr>`;
@@ -2713,20 +2776,22 @@ function renderFinPianificazione() {
     <div class="panel">
       <h2>Pianificazione finanziaria</h2>
       <p class="sub">Piano rate/pagamenti previsti nel tempo.</p>
-      <div class="grid-stats cols-3">
-        <div class="stat-card blue"><div class="num">${euro(totaleRate)}</div><div class="label">Totale rate pianificate</div></div>
-        <div class="stat-card gray"><div class="num">${euro(importoTotale)}</div><div class="label">Importo dichiarato (totale appalto)</div></div>
-        <div class="stat-card ${scostamento < 0 ? 'red' : 'teal'}"><div class="num">${euro(scostamento)}</div><div class="label">Scostamento rate vs dichiarato</div></div>
+      <div class="grid-stats">
+        <div class="stat-card blue"><div class="num">${euro(totaleRate)}</div><div class="label">Totale imponibile rate</div></div>
+        <div class="stat-card amber"><div class="num">${euro(totaleIva)}</div><div class="label">Totale IVA (22%)</div></div>
+        <div class="stat-card teal"><div class="num">${euro(totaleTot)}</div><div class="label">Totale rate (IVA inclusa)</div></div>
+        <div class="stat-card ${scostamento < 0 ? 'red' : 'gray'}"><div class="num">${euro(scostamento)}</div><div class="label">Scostamento imponibile vs appalto</div></div>
       </div>
-      <p class="sub" style="margin-top:4px;">${scostamento < 0 ? `Mancano ${euro(Math.abs(scostamento))} di rate ancora da pianificare.` : 'Le rate coprono per intero importo dichiarato.'}</p>
+      <p class="sub" style="margin-top:4px;">Imponibile confrontato con l'importo dichiarato dell'appalto (${euro(importoTotale)}, al netto IVA). ${scostamento < 0 ? `Mancano ${euro(Math.abs(scostamento))} di rate ancora da pianificare.` : 'Le rate coprono per intero l\'importo dichiarato.'}</p>
       <div style="height:300px; margin-top:14px;"><canvas id="pianChart"></canvas></div>
     </div>
     <div class="panel">
       <h2>Rate in dettaglio</h2>
+      <p class="sub">Inserisci l'imponibile di ogni rata: l'IVA viene proposta al 22% (modificabile) e il totale &egrave; calcolato in automatico.</p>
       <table class="row-table">
-        <thead><tr><th>N.</th><th>Mese</th><th>Data</th><th>Importo</th><th>% sul totale</th><th>Cumulato</th><th></th></tr></thead>
+        <thead><tr><th>N.</th><th>Mese</th><th>Data</th><th>Imponibile</th><th>IVA (22%)</th><th>Totale</th><th>Cumulato imp.</th><th></th></tr></thead>
         <tbody id="pianBody">${rows}</tbody>
-        <tfoot><tr><td colspan="3"><strong>Totale rate</strong></td><td><strong>${euro(totaleRate)}</strong></td><td colspan="2"></td><td></td></tr></tfoot>
+        <tfoot><tr><td colspan="3"><strong>Totali</strong></td><td><strong>${euro(totaleRate)}</strong></td><td><strong>${euro(totaleIva)}</strong></td><td><strong>${euro(totaleTot)}</strong></td><td colspan="2"></td></tr></tfoot>
       </table>
       <button class="btn btn-outline add-row-btn" id="addPian">+ Aggiungi rata</button>
       <div class="panel" style="margin-top:16px; background:var(--bg);">
@@ -2739,7 +2804,7 @@ function renderFinPianificazione() {
   // Pulsanti attivati PRIMA del grafico: se Chart.js fallisce a caricare (rete assente,
   // blocco pubblicitario, ecc.) i pulsanti restano comunque funzionanti.
   document.getElementById('addPian').onclick = () => {
-    DATA.finanziario.pianificazione.push({ id: nextId('pianificazione'), numero: DATA.finanziario.pianificazione.length + 1, data: '', importo: '', bloccato: false });
+    DATA.finanziario.pianificazione.push({ id: nextId('pianificazione'), numero: DATA.finanziario.pianificazione.length + 1, data: '', importo: '', iva: '', bloccato: false });
     saveData(); renderFinPianificazione();
   };
   document.getElementById('saveImportoDichiarato').onclick = () => {
@@ -2753,6 +2818,7 @@ function renderFinPianificazione() {
         numero: tr.querySelector('.f-numero').value,
         data: tr.querySelector('.f-data').value,
         importo: tr.querySelector('.f-importo').value,
+        iva: tr.querySelector('.f-iva').value,
         bloccato: true
       });
       saveData(); renderFinPianificazione();
