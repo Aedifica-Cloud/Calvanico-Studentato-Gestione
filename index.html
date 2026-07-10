@@ -2811,15 +2811,20 @@ function renderFinPianificazione() {
     const bl = !!p.bloccato; const dis = bl ? 'disabled' : '';
     // IVA: se non compilata, proposta al 22% dell'imponibile (modificabile); Totale = imponibile + IVA
     const ivaVal = (p.iva === '' || p.iva === undefined || p.iva === null) ? (importo ? (importo * ALIQUOTA_IVA).toFixed(2) : '') : p.iva;
+    // Ciclo incasso -> fattura (sempre attivo, anche a rata bloccata): quando spunti
+    // "ricevuto", il campo N. fattura diventa rosso "da emettere" finche' non lo scrivi.
+    const daEmettere = p.incassato && !(p.numeroFattura || '').trim();
+    const numFattStyle = daEmettere ? 'border-color:var(--red); background:var(--red-light);' : (p.numeroFattura ? 'border-color:var(--teal); background:var(--teal-light);' : '');
     return `
     <tr data-idx="${i}">
-      <td><input type="text" class="f-numero" value="${p.numero || ''}" style="width:44px;" ${dis} /></td>
+      <td><input type="text" class="f-numero" value="${p.numero || ''}" style="width:40px;" ${dis} /></td>
       <td><strong>${meseAnno(p.data)}</strong></td>
       <td><input type="date" class="f-data" value="${p.data || ''}" ${dis} /></td>
       <td><input type="number" class="f-importo" value="${p.importo || ''}" placeholder="€ imponibile" ${dis} /></td>
       <td><input type="number" class="f-iva" value="${ivaVal}" placeholder="€ IVA 22%" ${dis} /></td>
       <td><strong>${euro(rataTotale(p))}</strong></td>
-      <td class="empty-note">${euro(cumulato)}</td>
+      <td style="text-align:center;"><label style="display:inline-flex; gap:4px; align-items:center; font-weight:400; font-size:12px;"><input type="checkbox" class="f-incassato" style="width:auto;" ${p.incassato ? 'checked' : ''} /> ricevuto</label>${p.dataIncasso ? `<br><span class="empty-note">${dataBreve(p.dataIncasso)}</span>` : ''}</td>
+      <td><input type="text" class="f-numfatt" value="${p.numeroFattura || ''}" placeholder="${daEmettere ? '⚠ da emettere' : 'N. fattura'}" style="${numFattStyle}" />${daEmettere ? '<br><span class="chip scaduto" style="margin-top:3px;">Ricordati di emettere</span>' : (p.numeroFattura ? '<br><span class="chip valido" style="margin-top:3px;">Emessa</span>' : '')}</td>
       <td>${bl ? '<button class="btn btn-outline btn-sm pian-unlock">&#128274; Sblocca</button>' : '<button class="btn btn-primary btn-sm pian-save">Salva</button> <button class="btn btn-outline btn-sm pian-del">Elimina</button>'}</td>
     </tr>`;
   }).join('');
@@ -2846,12 +2851,14 @@ function renderFinPianificazione() {
     </div>
     <div class="panel">
       <h2>Rate in dettaglio</h2>
-      <p class="sub">Inserisci l'imponibile di ogni rata: l'IVA viene proposta al 22% (modificabile) e il totale &egrave; calcolato in automatico.</p>
-      <table class="row-table">
-        <thead><tr><th>N.</th><th>Mese</th><th>Data</th><th>Imponibile</th><th>IVA (22%)</th><th>Totale</th><th>Cumulato imp.</th><th></th></tr></thead>
+      <p class="sub">Inserisci l'imponibile di ogni rata (IVA proposta al 22%, totale automatico). Quando <strong>ricevi il pagamento</strong> spunta "ricevuto": il campo <strong>N. fattura</strong> diventa rosso finch&eacute; non scrivi il numero della fattura emessa. Tutto qui, in questa tabella.</p>
+      <div style="overflow-x:auto;">
+      <table class="row-table" style="min-width:900px;">
+        <thead><tr><th>N.</th><th>Mese</th><th>Data</th><th>Imponibile</th><th>IVA (22%)</th><th>Totale</th><th>Incasso ricevuto</th><th>N. fattura emessa</th><th></th></tr></thead>
         <tbody id="pianBody">${rows}</tbody>
-        <tfoot><tr><td colspan="3"><strong>Totali</strong></td><td><strong>${euro(totaleRate)}</strong></td><td><strong>${euro(totaleIva)}</strong></td><td><strong>${euro(totaleTot)}</strong></td><td colspan="2"></td></tr></tfoot>
+        <tfoot><tr><td colspan="3"><strong>Totali</strong></td><td><strong>${euro(totaleRate)}</strong></td><td><strong>${euro(totaleIva)}</strong></td><td><strong>${euro(totaleTot)}</strong></td><td colspan="3"></td></tr></tfoot>
       </table>
+      </div>
       <button class="btn btn-outline add-row-btn" id="addPian">+ Aggiungi rata</button>
       <div class="panel" style="margin-top:16px; background:var(--bg);">
         <div class="field"><label>Importo dichiarato (totale appalto)</label><input id="importoDichiaratoInput" type="number" value="${importoTotale}" style="max-width:260px;" /></div>
@@ -2887,6 +2894,26 @@ function renderFinPianificazione() {
     btn.onclick = () => {
       const tr = btn.closest('tr'); const idx = Number(tr.dataset.idx);
       DATA.finanziario.pianificazione[idx].bloccato = false;
+      saveData(); renderFinPianificazione();
+    };
+  });
+  // Ciclo incasso -> fattura: spunta "ricevuto" e numero fattura, sempre attivi
+  // (anche a rata bloccata), con salvataggio automatico.
+  document.querySelectorAll('.f-incassato').forEach((cb) => {
+    cb.onchange = () => {
+      const idx = Number(cb.closest('tr').dataset.idx); const p = DATA.finanziario.pianificazione[idx];
+      p.incassato = cb.checked;
+      if (cb.checked) { if (!p.dataIncasso) p.dataIncasso = new Date().toISOString().slice(0, 10); }
+      else { p.dataIncasso = ''; }
+      saveData(); renderFinPianificazione();
+    };
+  });
+  document.querySelectorAll('.f-numfatt').forEach((inp) => {
+    inp.onchange = () => {
+      const idx = Number(inp.closest('tr').dataset.idx); const p = DATA.finanziario.pianificazione[idx];
+      p.numeroFattura = inp.value.trim();
+      p.fatturaEmessa = !!p.numeroFattura;
+      if (p.numeroFattura && !p.importoFattura) p.importoFattura = rataTotale(p);
       saveData(); renderFinPianificazione();
     };
   });
