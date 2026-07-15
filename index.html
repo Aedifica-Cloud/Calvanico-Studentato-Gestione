@@ -580,6 +580,8 @@ function normalizzaData(data) {
   data.acquisti.categorie.forEach((cat) => {
     cat.ordini.forEach((o) => {
       if (o.subappaltoId === undefined) o.subappaltoId = '';
+      if (o.ordinatoDa === undefined) o.ordinatoDa = 'aedifica';
+      if (o.ordinatoDaChi === undefined) o.ordinatoDaChi = '';
       if (o.dataRichiestaPreventivo === undefined) o.dataRichiestaPreventivo = '';
       if (o.importoPreventivo === undefined) o.importoPreventivo = '';
       if (o.numeroOrdine === undefined) o.numeroOrdine = '';
@@ -735,12 +737,14 @@ function ordineToDb(o, categoriaId) {
     importo: orNullNum(o.importo), descrizione_ordine: orNull(o.descrizioneOrdine), data_consegna_prevista: orNull(o.dataConsegnaPrevista),
     numero_ddt: orNull(o.numeroDDT), importo_ddt: orNullNum(o.importoDDT), data_consegna_effettiva: orNull(o.dataConsegnaEffettiva), descrizione_arrivo: orNull(o.descrizioneArrivo),
     quantita_confermata: !!o.quantitaConfermata, fattura_id: o.fatturaId ? Number(o.fatturaId) : null, fattura_verificata: !!o.fatturaVerificata,
+    ordinato_da: o.ordinatoDa || 'aedifica', ordinato_da_chi: orNull(o.ordinatoDaChi),
     bloccato: !!o.bloccato
   };
 }
 function dbToOrdine(r) {
   return {
     id: r.id, subappaltoId: orEmpty(r.subappalto_id), fornitore: orEmpty(r.fornitore),
+    ordinatoDa: r.ordinato_da || 'aedifica', ordinatoDaChi: orEmpty(r.ordinato_da_chi),
     dataRichiestaPreventivo: orEmpty(r.data_richiesta_preventivo), importoPreventivo: orEmpty(r.importo_preventivo),
     statoPreventivo: orEmpty(r.stato_preventivo), numeroOrdine: orEmpty(r.numero_ordine), dataOrdine: orEmpty(r.data_ordine),
     importo: orEmpty(r.importo), descrizioneOrdine: orEmpty(r.descrizione_ordine), dataConsegnaPrevista: orEmpty(r.data_consegna_prevista),
@@ -1978,26 +1982,35 @@ function renderSubappaltoDocDettaglio(id) {
 // 5) Verifica (aggiunta da me: controllo che l'importo fatturato corrisponda a ordine/DDT
 // prima di autorizzare il pagamento - evita di pagare fatture sbagliate) -> 6) Pagamento.
 // La navigazione ricalca l'iter: sotto-schede Panoramica / Preventivi / Ordine / DDT / Fattura.
-const FASI_ACQUISTO = ['Preventivo', 'Ordine', 'DDT', 'Fattura', 'Verifica', 'Pagato'];
+const FASI_ACQUISTO = ['Ordine', 'DDT', 'Fattura', 'Verifica', 'Pagato'];
 
 function faseAcquisto(o) {
   const fattura = DATA.finanziario.fatture.find((f) => String(f.id) === String(o.fatturaId));
-  if (fattura && fattura.pagata) return 5;
-  if (o.fatturaVerificata) return 4;
-  if (o.fatturaId) return 3;
-  if (o.dataConsegnaEffettiva) return 2;
-  if (o.dataOrdine) return 1;
-  if (o.dataRichiestaPreventivo) return 0;
+  if (fattura && fattura.pagata) return 4;
+  if (o.fatturaVerificata) return 3;
+  if (o.fatturaId) return 2;
+  if (o.dataConsegnaEffettiva) return 1;
+  if (o.dataOrdine || o.numeroOrdine) return 0;
   return -1;
 }
 function faseChipOrdine(o) {
   const idx = faseAcquisto(o);
   const label = idx === -1 ? 'Da avviare' : FASI_ACQUISTO[idx];
   let cls = 'mancante';
-  if (idx === 5) cls = 'valido';
-  else if (idx >= 3) cls = 'presente';
+  if (idx === 4) cls = 'valido';
+  else if (idx >= 2) cls = 'presente';
   else if (idx >= 0) cls = 'in_scadenza';
   return chip(cls, label);
+}
+// Etichetta di chi ha ordinato (Aedifica o altri), riportata da Ordine fino a Fattura.
+function ordinatoDaLabel(o) {
+  if (o.ordinatoDa === 'altri') return 'Ordinato da altri' + (o.ordinatoDaChi ? ': ' + o.ordinatoDaChi : '');
+  return 'Ordinato da Aedifica';
+}
+function ordinatoDaChip(o) {
+  return o.ordinatoDa === 'altri'
+    ? `<span class="chip amber">${ordinatoDaLabel(o)}</span>`
+    : `<span class="chip" style="background:var(--blue-light); color:var(--blue);">Aedifica</span>`;
 }
 
 function fattureRicevuteOptions(selectedId) {
@@ -2073,7 +2086,7 @@ function attachOrdineRowHandlers(fields, renderFn) {
   });
 }
 
-const ACQUISTI_SUBTABS = [ ['panoramica', 'Panoramica'], ['preventivi', '1. Preventivi'], ['ordine', '2. Ordine'], ['ddt', '3. DDT'], ['fattura', '4. Fattura'], ['controllo', '5. Controllo scostamenti'] ];
+const ACQUISTI_SUBTABS = [ ['panoramica', 'Panoramica'], ['ordine', '1. Ordine'], ['ddt', '2. DDT'], ['fattura', '3. Fattura'], ['controllo', '4. Controllo scostamenti'], ['storico', '5. Storico costi'] ];
 
 function acquistiSubNav(active) {
   return `<div class="tabs" style="padding:0; border-bottom:2px solid var(--border); margin-bottom:16px;">${ACQUISTI_SUBTABS.map(([key, label]) => `<button class="acq-subtab ${key === active ? 'active' : ''}" data-acqsub="${key}" style="border:none; background:transparent; padding:10px 16px; font-size:13.5px; font-weight:600; color:${key === active ? 'var(--teal)' : 'var(--gray)'}; cursor:pointer; border-bottom:3px solid ${key === active ? 'var(--teal)' : 'transparent'};">${label}</button>`).join('')}</div>`;
@@ -2088,45 +2101,42 @@ function attachAcquistiSubNav() {
 let ACQUISTI_SUBTAB = 'panoramica';
 
 function renderAcquisti() {
+  if (ACQUISTI_SUBTAB === 'preventivi') ACQUISTI_SUBTAB = 'ordine'; // scheda rimossa
   if (ACQUISTI_SUBTAB === 'panoramica') renderAcquistiPanoramica();
-  else if (ACQUISTI_SUBTAB === 'preventivi') renderAcquistiPreventivi();
   else if (ACQUISTI_SUBTAB === 'ordine') renderAcquistiOrdine();
   else if (ACQUISTI_SUBTAB === 'ddt') renderAcquistiDDT();
   else if (ACQUISTI_SUBTAB === 'fattura') renderAcquistiFattura();
   else if (ACQUISTI_SUBTAB === 'controllo') renderAcquistiControllo();
+  else if (ACQUISTI_SUBTAB === 'storico') renderAcquistiStorico();
 }
 
 function renderAcquistiPanoramica() {
   const { totali, generale } = acquistiPerSubappalto();
-  const flatTutti = allOrdiniFlat();
-  const rifiutati = flatTutti.filter(({ o }) => o.statoPreventivo === 'rifiutato').length;
-  const flat = flatTutti.filter(({ o }) => o.statoPreventivo !== 'rifiutato');
-  const conteggi = [0, 0, 0, 0, 0, 0]; let daAvviare = 0;
+  const flat = allOrdiniFlat();
+  const conteggi = [0, 0, 0, 0, 0]; let daAvviare = 0;
   flat.forEach(({ o }) => { const i = faseAcquisto(o); if (i === -1) daAvviare++; else conteggi[i]++; });
 
   document.getElementById('main').innerHTML = `
     <div class="panel">
       <h2>Ufficio acquisti</h2>
-      <p class="sub">Materiali comprati direttamente dalla tua azienda (anche quando destinati a un subappaltatore). Le schede qui sopra seguono l'iter operativo, dal preventivo al controllo scostamenti.</p>
+      <p class="sub">Materiali comprati direttamente dalla tua azienda (anche quando destinati a un subappaltatore). Le schede qui sopra seguono l'iter operativo, dall'ordine allo storico costi.</p>
       ${acquistiSubNav('panoramica')}
       <h3 style="font-size:13.5px; margin:0 0 8px;">Procedura operativa</h3>
       <ol style="font-size:13px; line-height:1.75; margin:0 0 6px; padding-left:22px;">
-        <li><strong>Preventivo</strong> &mdash; chiedi 2-3 preventivi per la stessa fornitura e registra data e importo di ciascuno nella scheda <a href="#" class="acq-goto" data-goto="preventivi">1. Preventivi</a>. Segna l'esito: quello accettato prosegue l'iter, i rifiutati escono dalle schede successive ma restano tracciati.</li>
-        <li><strong>Ordine</strong> &mdash; per il preventivo accettato registra numero ordine, data, importo, quantit&agrave;/specifiche e consegna richiesta nella scheda <a href="#" class="acq-goto" data-goto="ordine">2. Ordine</a>. Il numero ordine &egrave; il riferimento che lega tutto il resto.</li>
-        <li><strong>DDT</strong> &mdash; all'arrivo della merce, nella scheda <a href="#" class="acq-goto" data-goto="ddt">3. DDT</a> registra numero DDT, data e cosa &egrave; arrivato, confrontalo con l'ordinato e spunta "corrisponde". Inserisci anche il valore della merce arrivata (&euro;): serve al controllo scostamenti.</li>
-        <li><strong>Fattura</strong> &mdash; contestualmente al DDT arriva la fattura: creala in Finanziario &rarr; Fatture (anche con l'autofill da PDF) e collegala all'ordine nella scheda <a href="#" class="acq-goto" data-goto="fattura">4. Fattura</a>. Spunta "Verificata" solo dopo il punto 5.</li>
-        <li><strong>Controllo scostamenti</strong> &mdash; prima di autorizzare il pagamento, la scheda <a href="#" class="acq-goto" data-goto="controllo">5. Controllo scostamenti</a> confronta preventivato &rarr; ordinato &rarr; valore DDT &rarr; fatturato: se una differenza supera il 3% la vedi segnalata in rosso/ambra.</li>
+        <li><strong>Ordine</strong> &mdash; nella scheda <a href="#" class="acq-goto" data-goto="ordine">1. Ordine</a> registra il fornitore (ragione sociale), chi ha ordinato (Aedifica o altri), il numero ordine, la data, l'importo, le quantit&agrave;/specifiche e la consegna richiesta. Il numero ordine &egrave; il riferimento che lega tutto il resto.</li>
+        <li><strong>DDT</strong> &mdash; all'arrivo della merce, nella scheda <a href="#" class="acq-goto" data-goto="ddt">2. DDT</a> registra numero DDT, data e cosa &egrave; arrivato, confrontalo con l'ordinato e spunta "corrisponde". Inserisci anche il valore della merce arrivata (&euro;).</li>
+        <li><strong>Fattura</strong> &mdash; contestualmente al DDT arriva la fattura: creala in Finanziario &rarr; Fatture (anche con l'autofill da PDF) e collegala all'ordine nella scheda <a href="#" class="acq-goto" data-goto="fattura">3. Fattura</a>.</li>
+        <li><strong>Controllo scostamenti</strong> &mdash; la scheda <a href="#" class="acq-goto" data-goto="controllo">4. Controllo scostamenti</a> confronta ordinato &rarr; valore DDT &rarr; fatturato: se una differenza supera il 3% la vedi segnalata in rosso/ambra.</li>
+        <li><strong>Storico costi</strong> &mdash; la scheda <a href="#" class="acq-goto" data-goto="storico">5. Storico costi</a> riepiloga i costi sostenuti divisi tra ferro, cemento e contratti di appalto.</li>
       </ol>
       <p class="sub">La registrazione contabile vera e propria (prima nota, pagamenti) resta sul software di contabilit&agrave;: qui tieni il controllo operativo del flusso e intercetti gli errori prima di pagare.</p>
       <h3 style="font-size:13.5px; margin:18px 0 8px;">Ordini per fase</h3>
-      <div class="grid-stats" style="grid-template-columns: repeat(7, 1fr);">
+      <div class="grid-stats" style="grid-template-columns: repeat(5, 1fr);">
         <div class="stat-card gray"><div class="num">${daAvviare}</div><div class="label">Da avviare</div></div>
-        <div class="stat-card in_scadenza"><div class="num">${conteggi[0]}</div><div class="label">In preventivo</div></div>
-        <div class="stat-card in_scadenza"><div class="num">${conteggi[1]}</div><div class="label">Ordinati</div></div>
-        <div class="stat-card in_scadenza"><div class="num">${conteggi[2]}</div><div class="label">In consegna (DDT)</div></div>
-        <div class="stat-card presente"><div class="num">${conteggi[3] + conteggi[4]}</div><div class="label">Fatturati</div></div>
-        <div class="stat-card valido"><div class="num">${conteggi[5]}</div><div class="label">Pagati</div></div>
-        <div class="stat-card scaduto"><div class="num">${rifiutati}</div><div class="label">Preventivi rifiutati</div></div>
+        <div class="stat-card in_scadenza"><div class="num">${conteggi[0]}</div><div class="label">Ordinati</div></div>
+        <div class="stat-card in_scadenza"><div class="num">${conteggi[1]}</div><div class="label">In consegna (DDT)</div></div>
+        <div class="stat-card presente"><div class="num">${conteggi[2] + conteggi[3]}</div><div class="label">Fatturati</div></div>
+        <div class="stat-card valido"><div class="num">${conteggi[4]}</div><div class="label">Pagati</div></div>
       </div>
       <h3 style="font-size:13.5px; margin:18px 0 8px;">Materiali forniti per lavorazione</h3>
       <table class="row-table">
@@ -2312,18 +2322,28 @@ function attachRigheFerroHandlers(catId, idx, renderFn) {
   });
 }
 
-function renderAcquistiPreventivi() {
+function renderAcquistiOrdine() {
   const flat = allOrdiniFlat();
   const rows = flat.map(({ catId, catNome, idx, o }) => {
     const dis = o.bloccato ? 'disabled' : '';
+    const chiHidden = o.ordinatoDa === 'altri' ? '' : 'display:none;';
     const mainRow = `
     <tr class="prevent-main-row" data-cat="${catId}" data-idx="${idx}">
-      <td class="empty-note">${catNome}</td>
-      <td><input type="text" class="f-fornitore" value="${o.fornitore || ''}" placeholder="Fornitore" ${dis} /></td>
-      <td><select class="f-sub" ${dis}>${destinazioneOptions(o.subappaltoId)}</select></td>
-      <td><input type="date" class="f-dataPreventivo" value="${o.dataRichiestaPreventivo || ''}" ${dis} /></td>
-      <td><input type="number" class="f-importoPreventivo" value="${o.importoPreventivo || ''}" placeholder="€" ${dis} /></td>
-      <td><select class="f-esito" ${dis}>${esitoPreventivoOptions(o.statoPreventivo || '')}</select> ${esitoPreventivoChip(o)}</td>
+      <td style="min-width:210px;">
+        <div class="empty-note" style="margin-bottom:4px;">${catNome}</div>
+        <input type="text" class="f-fornitore" value="${o.fornitore || ''}" placeholder="Fornitore (ragione sociale)" ${dis} style="margin-bottom:4px;" />
+        <select class="f-sub" ${dis} style="margin-bottom:4px;">${destinazioneOptions(o.subappaltoId)}</select>
+        <select class="f-ordinatoDa" ${dis}>
+          <option value="aedifica" ${o.ordinatoDa !== 'altri' ? 'selected' : ''}>Ordinato da Aedifica</option>
+          <option value="altri" ${o.ordinatoDa === 'altri' ? 'selected' : ''}>Ordinato da altri</option>
+        </select>
+        <input type="text" class="f-ordinatoDaChi" value="${o.ordinatoDaChi || ''}" placeholder="Ordinato da chi?" ${dis} style="margin-top:4px; ${chiHidden}" />
+      </td>
+      <td><input type="text" class="f-numeroOrdine" value="${o.numeroOrdine || ''}" placeholder="N. ordine" ${dis} /></td>
+      <td><input type="date" class="f-dataOrdine" value="${o.dataOrdine || ''}" ${dis} /></td>
+      <td><input type="number" class="f-importo" value="${o.importo || ''}" placeholder="€" ${dis} /></td>
+      <td><input type="text" class="f-descrizioneOrdine" value="${o.descrizioneOrdine || ''}" placeholder="es. 3 quintali ferro &Oslash;10mm B450C" ${dis} /></td>
+      <td><input type="date" class="f-consegnaPrevista" value="${o.dataConsegnaPrevista || ''}" ${dis} /></td>
       <td>${faseChipOrdine(o)}</td>
       <td>${pulsantiOrdineRiga(o.bloccato)}</td>
     </tr>`;
@@ -2334,18 +2354,20 @@ function renderAcquistiPreventivi() {
 
   document.getElementById('main').innerHTML = `
     <div class="panel">
-      <h2>1. Richiesta di preventivo</h2>
-      <p class="sub">Chiedi 2-3 preventivi ai fornitori prima di ordinare. Se rifiuti un preventivo, quell'ordine non compare piu' nelle schede Ordine/DDT/Fattura. Per la categoria "ferro" trovi anche i campi tecnici (tondo nervato o rete elettrosaldata) &mdash; puoi aggiungere piu' voci se lo stesso ordine include piu' tipi/diametri.</p>
-      ${acquistiSubNav('preventivi')}
+      <h2>1. Ordine</h2>
+      <p class="sub">Registra l'ordine: <strong>fornitore</strong> (ragione sociale), destinazione, <strong>chi ha ordinato</strong> (Aedifica o altri &mdash; se altri, scrivi chi), numero ordine, data, importo, quantit&agrave;/specifiche e consegna. Per la categoria "ferro" trovi anche i campi tecnici (tondo nervato o rete elettrosaldata). Il dato "ordinato da" lo ritrovi fino alla Fattura.</p>
+      ${acquistiSubNav('ordine')}
       ${catExists ? `
       <div style="display:flex; gap:8px; align-items:center; margin-bottom:14px;">
         <select id="newOrdineCat" style="max-width:260px;">${categorieOptions()}</select>
-        <button class="btn btn-primary btn-sm" id="addOrdine">+ Nuova richiesta preventivo</button>
+        <button class="btn btn-primary btn-sm" id="addOrdine">+ Nuovo ordine</button>
       </div>` : `<p class="empty-note">Crea prima una categoria fornitura in Panoramica.</p>`}
-      <table class="row-table">
-        <thead><tr><th>Categoria</th><th>Fornitore</th><th>Destinato a</th><th>Data richiesta</th><th>Importo preventivato</th><th>Esito</th><th>Fase</th><th></th></tr></thead>
-        <tbody>${rows || '<tr><td colspan="8" class="empty-note">Nessuna richiesta ancora.</td></tr>'}</tbody>
+      <div style="overflow-x:auto;">
+      <table class="row-table" style="min-width:1000px;">
+        <thead><tr><th>Fornitore / destinazione / chi ordina</th><th>N. ordine</th><th>Data ordine</th><th>Importo ordinato</th><th>Quantit&agrave;/specifiche ordinate</th><th>Consegna prevista</th><th>Fase</th><th></th></tr></thead>
+        <tbody>${rows || '<tr><td colspan="8" class="empty-note">Nessun ordine ancora. Crea il primo qui sopra.</td></tr>'}</tbody>
       </table>
+      </div>
     </div>
   `;
   attachAcquistiSubNav();
@@ -2353,12 +2375,19 @@ function renderAcquistiPreventivi() {
   if (addBtn) addBtn.onclick = () => {
     const catId = document.getElementById('newOrdineCat').value;
     const cat = DATA.acquisti.categorie.find((c) => String(c.id) === catId);
-    cat.ordini.push({ id: nextId('ordini'), fornitore: '', subappaltoId: '', dataRichiestaPreventivo: '', importoPreventivo: '', statoPreventivo: '', numeroOrdine: '', dataOrdine: '', importo: '', descrizioneOrdine: '', dataConsegnaPrevista: '', numeroDDT: '', importoDDT: '', dataConsegnaEffettiva: '', descrizioneArrivo: '', quantitaConfermata: false, fatturaId: '', fatturaVerificata: false, righeFerro: [] });
+    cat.ordini.push({ id: nextId('ordini'), fornitore: '', subappaltoId: '', ordinatoDa: 'aedifica', ordinatoDaChi: '', dataRichiestaPreventivo: '', importoPreventivo: '', statoPreventivo: '', numeroOrdine: '', dataOrdine: '', importo: '', descrizioneOrdine: '', dataConsegnaPrevista: '', numeroDDT: '', importoDDT: '', dataConsegnaEffettiva: '', descrizioneArrivo: '', quantitaConfermata: false, fatturaId: '', fatturaVerificata: false, righeFerro: [] });
     saveData(); renderAcquisti();
   };
-  attachOrdineRowHandlers([['.f-fornitore', 'fornitore'], ['.f-sub', 'subappaltoId'], ['.f-dataPreventivo', 'dataRichiestaPreventivo'], ['.f-importoPreventivo', 'importoPreventivo'], ['.f-esito', 'statoPreventivo']], renderAcquistiPreventivi);
-  // Sovrascrive "Salva" sulle sole righe con dettaglio ferro, per includere anche
-  // le voci (che vivono nella riga aggiuntiva subito sotto).
+  const OFIELDS = [['.f-fornitore', 'fornitore'], ['.f-sub', 'subappaltoId'], ['.f-ordinatoDa', 'ordinatoDa'], ['.f-ordinatoDaChi', 'ordinatoDaChi'], ['.f-numeroOrdine', 'numeroOrdine'], ['.f-dataOrdine', 'dataOrdine'], ['.f-importo', 'importo'], ['.f-descrizioneOrdine', 'descrizioneOrdine'], ['.f-consegnaPrevista', 'dataConsegnaPrevista']];
+  attachOrdineRowHandlers(OFIELDS, renderAcquistiOrdine);
+  // mostra/nascondi il campo "chi" quando si sceglie "Ordinato da altri"
+  document.querySelectorAll('.f-ordinatoDa').forEach((sel) => {
+    sel.onchange = () => {
+      const chi = sel.closest('td').querySelector('.f-ordinatoDaChi');
+      if (chi) chi.style.display = sel.value === 'altri' ? '' : 'none';
+    };
+  });
+  // Sovrascrive "Salva" sulle righe ferro per includere anche le voci (riga sotto).
   document.querySelectorAll('.prevent-main-row .ordine-save').forEach((btn) => {
     const mainTr = btn.closest('tr');
     const ferroTr = mainTr.nextElementSibling;
@@ -2366,54 +2395,20 @@ function renderAcquistiPreventivi() {
     btn.onclick = () => {
       const catId = mainTr.dataset.cat; const idx = Number(mainTr.dataset.idx);
       const cat = DATA.acquisti.categorie.find((c) => String(c.id) === catId);
-      const patch = {
-        fornitore: mainTr.querySelector('.f-fornitore').value,
-        subappaltoId: mainTr.querySelector('.f-sub').value,
-        dataRichiestaPreventivo: mainTr.querySelector('.f-dataPreventivo').value,
-        importoPreventivo: mainTr.querySelector('.f-importoPreventivo').value,
-        statoPreventivo: mainTr.querySelector('.f-esito').value,
-        righeFerro: leggiRigheFerroDalDom(ferroTr, cat.ordini[idx].righeFerro)
-      };
-      if (!patch.importoPreventivo) {
-        const totalePrevisionale = patch.righeFerro.reduce((s, r) => s + (Number(r.tonnellate) || 0) * (Number(r.prezzoTonnellata) || 0), 0);
-        if (totalePrevisionale > 0) patch.importoPreventivo = totalePrevisionale.toFixed(2);
+      const patch = {};
+      OFIELDS.forEach(([sel, key]) => { const el = mainTr.querySelector(sel); if (el) patch[key] = el.value; });
+      patch.righeFerro = leggiRigheFerroDalDom(ferroTr, cat.ordini[idx].righeFerro);
+      if (!patch.importo) {
+        const tot = patch.righeFerro.reduce((s, r) => s + (Number(r.tonnellate) || 0) * (Number(r.prezzoTonnellata) || 0), 0);
+        if (tot > 0) patch.importo = tot.toFixed(2);
       }
       patch.bloccato = true;
       Object.assign(cat.ordini[idx], patch);
       saveData();
-      renderAcquistiPreventivi();
+      renderAcquistiOrdine();
     };
   });
-  flat.filter(({ catNome }) => isFerroCategoria(catNome)).forEach(({ catId, idx }) => attachRigheFerroHandlers(catId, idx, renderAcquistiPreventivi));
-}
-
-function renderAcquistiOrdine() {
-  const flat = allOrdiniFlat().filter(({ o }) => o.statoPreventivo !== 'rifiutato');
-  const rows = flat.map(({ catId, catNome, idx, o }) => { const dis = o.bloccato ? 'disabled' : ''; return `
-    <tr data-cat="${catId}" data-idx="${idx}">
-      <td class="empty-note">${catNome}<br><strong>${o.fornitore || '-'}</strong></td>
-      <td><input type="text" class="f-numeroOrdine" value="${o.numeroOrdine || ''}" placeholder="N. ordine" ${dis} /></td>
-      <td><input type="date" class="f-dataOrdine" value="${o.dataOrdine || ''}" ${dis} /></td>
-      <td><input type="number" class="f-importo" value="${o.importo || ''}" placeholder="€" ${dis} /></td>
-      <td><input type="text" class="f-descrizioneOrdine" value="${o.descrizioneOrdine || ''}" placeholder="es. 3 quintali ferro &Oslash;10mm B450C" ${dis} /></td>
-      <td><input type="date" class="f-consegnaPrevista" value="${o.dataConsegnaPrevista || ''}" ${dis} /></td>
-      <td>${faseChipOrdine(o)}</td>
-      <td>${pulsantiOrdineRiga(o.bloccato)}</td>
-    </tr>`; }).join('');
-
-  document.getElementById('main').innerHTML = `
-    <div class="panel">
-      <h2>2. Ordine</h2>
-      <p class="sub">Confermato il fornitore, registra l'ordine formale con importo, quantit&agrave;/specifiche e consegna richiesta. La descrizione la ritrovi affiancata a quella del DDT nella scheda successiva, per il confronto.</p>
-      ${acquistiSubNav('ordine')}
-      <table class="row-table">
-        <thead><tr><th>Categoria / Fornitore</th><th>N. ordine</th><th>Data ordine</th><th>Importo ordinato</th><th>Quantit&agrave;/specifiche ordinate</th><th>Consegna prevista</th><th>Fase</th><th></th></tr></thead>
-        <tbody>${rows || '<tr><td colspan="8" class="empty-note">Nessun ordine ancora. Vai su Preventivi per crearne uno.</td></tr>'}</tbody>
-      </table>
-    </div>
-  `;
-  attachAcquistiSubNav();
-  attachOrdineRowHandlers([['.f-numeroOrdine', 'numeroOrdine'], ['.f-dataOrdine', 'dataOrdine'], ['.f-importo', 'importo'], ['.f-descrizioneOrdine', 'descrizioneOrdine'], ['.f-consegnaPrevista', 'dataConsegnaPrevista']], renderAcquistiOrdine);
+  flat.filter(({ catNome }) => isFerroCategoria(catNome)).forEach(({ catId, idx }) => attachRigheFerroHandlers(catId, idx, renderAcquistiOrdine));
 }
 
 // Somma, su tutte le voci di ferro dell'ordine, quantita' arrivata (o ordinata se non
@@ -2463,12 +2458,12 @@ function ferroDdtExtraRowHtml(o, catId, idx, dis) {
 }
 
 function renderAcquistiDDT() {
-  const flat = allOrdiniFlat().filter(({ o }) => o.statoPreventivo !== 'rifiutato');
+  const flat = allOrdiniFlat();
   const rows = flat.map(({ catId, catNome, idx, o }) => { const dis = o.bloccato ? 'disabled' : '';
     const mismatchWarn = o.numeroDDT && !o.quantitaConfermata ? `<br><span style="color:var(--amber); font-size:11px; font-weight:700;">&#9888; da verificare</span>` : '';
     const mainRow = `
     <tr class="prevent-main-row" data-cat="${catId}" data-idx="${idx}">
-      <td class="empty-note">${catNome}<br><strong>${o.fornitore || '-'}</strong></td>
+      <td class="empty-note">${catNome}<br><strong>${o.fornitore || '-'}</strong><br>${ordinatoDaChip(o)}</td>
       <td class="empty-note"><strong>${o.numeroOrdine || '-'}</strong><br>${o.dataOrdine ? dataBreve(o.dataOrdine) : ''}</td>
       <td class="empty-note" style="max-width:140px; white-space:normal;">${o.descrizioneOrdine || '<span class="no-link">nessuna descrizione</span>'}</td>
       <td><input type="text" class="f-numeroDDT" value="${o.numeroDDT || ''}" placeholder="N. DDT/bolla" ${dis} /></td>
@@ -2532,14 +2527,14 @@ function renderAcquistiDDT() {
 }
 
 function renderAcquistiFattura() {
-  const flat = allOrdiniFlat().filter(({ o }) => o.statoPreventivo !== 'rifiutato');
+  const flat = allOrdiniFlat();
   const rows = flat.map(({ catId, catNome, idx, o }) => {
     const fattura = DATA.finanziario.fatture.find((f) => String(f.id) === String(o.fatturaId));
     const fatturaStatoHtml = fattura ? chip(statoFattura(fattura), statoFattura(fattura) === 'pagata' ? 'Pagata' : 'Da pagare') : '<span class="no-link">Non collegata</span>';
     const dis = o.bloccato ? 'disabled' : '';
     return `
     <tr data-cat="${catId}" data-idx="${idx}">
-      <td class="empty-note">${catNome}<br><strong>${o.fornitore || '-'}</strong></td>
+      <td class="empty-note">${catNome}<br><strong>${o.fornitore || '-'}</strong><br>${ordinatoDaChip(o)}</td>
       <td class="empty-note"><strong>Ord. ${o.numeroOrdine || '-'}</strong><br>DDT ${o.numeroDDT || '-'}</td>
       <td class="empty-note">${euro(o.importo)}</td>
       <td><select class="f-fattura" ${dis}>${fattureRicevuteOptions(o.fatturaId)}</select></td>
@@ -2589,23 +2584,21 @@ function chipScostamento(valore, riferimento) {
 }
 
 function renderAcquistiControllo() {
-  const flat = allOrdiniFlat().filter(({ o }) => o.statoPreventivo !== 'rifiutato');
+  const flat = allOrdiniFlat();
   let anomalie = 0;
-  const tot = { prev: 0, ord: 0, ddt: 0, fatt: 0 };
+  const tot = { ord: 0, ddt: 0, fatt: 0 };
   const rows = flat.map(({ catNome, o }) => {
-    const prev = Number(o.importoPreventivo) || null;
     const ord = Number(o.importo) || null;
     const ddt = valoreDdtOrdine(o);
     const fatt = fatturatoOrdine(o);
-    tot.prev += prev || 0; tot.ord += ord || 0; tot.ddt += ddt || 0; tot.fatt += fatt || 0;
+    tot.ord += ord || 0; tot.ddt += ddt || 0; tot.fatt += fatt || 0;
     const fuoriSoglia = (v, rif) => v !== null && rif !== null && rif > 0 && Math.abs((v - rif) / rif * 100) > 3;
-    if (fuoriSoglia(ord, prev) || fuoriSoglia(ddt, ord) || fuoriSoglia(fatt, ddt !== null ? ddt : ord)) anomalie++;
+    if (fuoriSoglia(ddt, ord) || fuoriSoglia(fatt, ddt !== null ? ddt : ord)) anomalie++;
     return `
     <tr>
-      <td class="empty-note">${catNome}<br><strong>${o.fornitore || '-'}</strong></td>
+      <td class="empty-note">${catNome}<br><strong>${o.fornitore || '-'}</strong><br>${ordinatoDaChip(o)}</td>
       <td class="empty-note">Ord. ${o.numeroOrdine || '-'}<br>DDT ${o.numeroDDT || '-'}</td>
-      <td>${euro(prev)}</td>
-      <td>${euro(ord)}<br>${chipScostamento(ord, prev)}</td>
+      <td>${euro(ord)}</td>
       <td>${euro(ddt)}<br>${chipScostamento(ddt, ord)}</td>
       <td>${euro(fatt)}<br>${chipScostamento(fatt, ddt !== null ? ddt : ord)}</td>
       <td>${o.fatturaVerificata ? chip('valido', 'Verificata') : (fatt !== null ? chip('in_scadenza', 'Da verificare') : chip('mancante', 'Senza fattura'))}</td>
@@ -2614,21 +2607,70 @@ function renderAcquistiControllo() {
 
   document.getElementById('main').innerHTML = `
     <div class="panel">
-      <h2>5. Controllo scostamenti &mdash; preventivato / ordinato / DDT / fatturato</h2>
-      <p class="sub">Ogni passaggio &egrave; confrontato con il precedente: "Ordinato" vs preventivo accettato, "Valore DDT" vs ordinato, "Fatturato" (imponibile della fattura collegata) vs valore DDT. Entro il &plusmn;3% il confronto &egrave; verde; in ambra se arriva/fatturato meno, in rosso se di pi&ugrave;. Controlla qui prima di autorizzare il pagamento sul software di contabilit&agrave;.</p>
+      <h2>4. Controllo scostamenti &mdash; ordinato / DDT / fatturato</h2>
+      <p class="sub">Ogni passaggio &egrave; confrontato con il precedente: "Valore DDT" vs ordinato, "Fatturato" (imponibile della fattura collegata) vs valore DDT. Entro il &plusmn;3% il confronto &egrave; verde; in ambra se arriva/fatturato meno, in rosso se di pi&ugrave;. Controlla qui prima di autorizzare il pagamento sul software di contabilit&agrave;.</p>
       ${acquistiSubNav('controllo')}
-      <div class="grid-stats">
-        <div class="stat-card blue"><div class="num">${euro(tot.prev)}</div><div class="label">Totale preventivato</div></div>
+      <div class="grid-stats cols-3">
         <div class="stat-card gray"><div class="num">${euro(tot.ord)}</div><div class="label">Totale ordinato</div></div>
         <div class="stat-card teal"><div class="num">${euro(tot.fatt)}</div><div class="label">Totale fatturato</div></div>
         <div class="stat-card ${anomalie ? 'red' : 'teal'}"><div class="num">${anomalie}</div><div class="label">Ordini con scostamenti oltre il 3%</div></div>
       </div>
       <table class="row-table">
-        <thead><tr><th>Categoria / Fornitore</th><th>Rif.</th><th>Preventivato</th><th>Ordinato vs prev.</th><th>Valore DDT vs ord.</th><th>Fatturato vs DDT</th><th>Verifica fattura</th></tr></thead>
-        <tbody>${rows || '<tr><td colspan="7" class="empty-note">Nessun ordine ancora.</td></tr>'}</tbody>
-        ${rows ? `<tfoot><tr><td colspan="2"><strong>Totali</strong></td><td><strong>${euro(tot.prev)}</strong></td><td><strong>${euro(tot.ord)}</strong></td><td><strong>${euro(tot.ddt)}</strong></td><td><strong>${euro(tot.fatt)}</strong></td><td></td></tr></tfoot>` : ''}
+        <thead><tr><th>Categoria / Fornitore</th><th>Rif.</th><th>Ordinato</th><th>Valore DDT vs ord.</th><th>Fatturato vs DDT</th><th>Verifica fattura</th></tr></thead>
+        <tbody>${rows || '<tr><td colspan="6" class="empty-note">Nessun ordine ancora.</td></tr>'}</tbody>
+        ${rows ? `<tfoot><tr><td colspan="2"><strong>Totali</strong></td><td><strong>${euro(tot.ord)}</strong></td><td><strong>${euro(tot.ddt)}</strong></td><td><strong>${euro(tot.fatt)}</strong></td><td></td></tr></tfoot>` : ''}
       </table>
     </div>
+  `;
+  attachAcquistiSubNav();
+}
+
+// ---------- 5. Storico costi (ferro / cemento / contratti di appalto) ----------
+// Costo sostenuto di un ordine: se collegato a una fattura usa il totale della
+// fattura, altrimenti l'importo ordinato. Le categorie del computo determinano il
+// bucket (ferro, cemento); i contratti di appalto sono lo speso sui subappalti.
+function costoSostenutoOrdine(o) {
+  const f = DATA.finanziario.fatture.find((x) => String(x.id) === String(o.fatturaId));
+  if (f) return Number(f.importo) || Number(f.imponibile) || Number(o.importo) || 0;
+  return Number(o.importo) || 0;
+}
+function bucketMateriale(catNome) {
+  if (/ferro|acciaio/i.test(catNome || '')) return 'ferro';
+  if (/cemento|calcestruzz/i.test(catNome || '')) return 'cemento';
+  return 'altro';
+}
+function renderAcquistiStorico() {
+  const buckets = { ferro: [], cemento: [], altro: [] };
+  allOrdiniFlat().forEach(({ catNome, o }) => {
+    const costo = costoSostenutoOrdine(o);
+    if (!costo && !o.numeroOrdine) return;
+    buckets[bucketMateriale(catNome)].push({ catNome, o, costo });
+  });
+  const somma = (arr) => arr.reduce((s, x) => s + x.costo, 0);
+  const totFerro = somma(buckets.ferro), totCemento = somma(buckets.cemento), totAltro = somma(buckets.altro);
+  const subs = elencoSubappalti().map((s) => ({ s, speso: subSpeso(s.id), importo: subImporto(s.id) })).filter((x) => x.speso || x.importo);
+  const totContratti = subs.reduce((s, x) => s + x.speso, 0);
+  const totGen = totFerro + totCemento + totAltro + totContratti;
+
+  const tabellaMat = (items) => items.length ? `<table class="row-table"><thead><tr><th>Fornitore</th><th>Ordine</th><th>Ordinato da</th><th>Costo sostenuto</th></tr></thead><tbody>${items.map(({ catNome, o, costo }) => `<tr><td><strong>${o.fornitore || '-'}</strong><br><span class="empty-note">${catNome}</span></td><td class="empty-note">Ord. ${o.numeroOrdine || '-'}${o.dataOrdine ? ' &middot; ' + dataBreve(o.dataOrdine) : ''}</td><td>${ordinatoDaChip(o)}</td><td><strong>${euro(costo)}</strong></td></tr>`).join('')}</tbody></table>` : '<p class="empty-note">Nessun costo registrato in questa categoria.</p>';
+  const tabellaContratti = subs.length ? `<table class="row-table"><thead><tr><th>Subappaltatore</th><th>Importo contratto</th><th>Speso ad oggi</th></tr></thead><tbody>${subs.map(({ s, speso, importo }) => `<tr><td><strong>${s.lavorazione}</strong><br><span class="empty-note">${DATA.subappalti[s.id].ragioneSociale || 'da definire'}</span></td><td class="empty-note">${euro(importo)}</td><td><strong>${euro(speso)}</strong></td></tr>`).join('')}</tbody></table>` : '<p class="empty-note">Nessun costo di subappalto registrato (compila lo "speso" in Finanziario &rarr; Costi).</p>';
+
+  document.getElementById('main').innerHTML = `
+    <div class="panel">
+      <h2>5. Storico costi sostenuti</h2>
+      <p class="sub">Riepilogo dei costi sostenuti divisi tra <strong>ferro</strong>, <strong>cemento</strong> e <strong>contratti di appalto</strong>. Per gli acquisti il costo &egrave; il totale della fattura collegata (o l'importo ordinato se non ancora fatturato); per i contratti &egrave; lo "speso" registrato sui subappaltatori.</p>
+      ${acquistiSubNav('storico')}
+      <div class="grid-stats">
+        <div class="stat-card blue"><div class="num">${euro(totFerro)}</div><div class="label">Ferro</div></div>
+        <div class="stat-card gray"><div class="num">${euro(totCemento)}</div><div class="label">Cemento</div></div>
+        <div class="stat-card amber"><div class="num">${euro(totContratti)}</div><div class="label">Contratti di appalto</div></div>
+        <div class="stat-card teal"><div class="num">${euro(totGen)}</div><div class="label">Totale costi sostenuti</div></div>
+      </div>
+    </div>
+    <div class="panel"><h2>Ferro &mdash; ${euro(totFerro)}</h2>${tabellaMat(buckets.ferro)}</div>
+    <div class="panel"><h2>Cemento &mdash; ${euro(totCemento)}</h2>${tabellaMat(buckets.cemento)}</div>
+    <div class="panel"><h2>Contratti di appalto (subappaltatori) &mdash; ${euro(totContratti)}</h2>${tabellaContratti}</div>
+    ${totAltro ? `<div class="panel"><h2>Altri materiali &mdash; ${euro(totAltro)}</h2>${tabellaMat(buckets.altro)}</div>` : ''}
   `;
   attachAcquistiSubNav();
 }
