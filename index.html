@@ -176,10 +176,10 @@
 </header>
 <nav class="area-tabs" id="areaTabs">
   <button data-area="home" class="active">Home</button>
-  <button data-area="anagrafica">Anagrafica</button>
-  <button data-area="documentazione">Documentazione</button>
-  <button data-area="acquisti">Ufficio acquisti</button>
-  <button data-area="finanziario">Finanziario</button>
+  <button data-area="anagrafica">Attori e ruoli</button>
+  <button data-area="documentazione">Documenti e sicurezza</button>
+  <button data-area="economica">Gestione economica</button>
+  <button data-area="finanziaria">Gestione finanziaria</button>
   <button data-area="cronoprogramma">Cronoprogramma</button>
 </nav>
 <nav class="tabs" id="subTabs"></nav>
@@ -546,7 +546,7 @@ function normalizzaData(data) {
     if (s.tipoAccordo === undefined) s.tipoAccordo = '';
     if (s.dataConversioneSubappalto === undefined) s.dataConversioneSubappalto = '';
   });
-  data.finanziario.sal.forEach((s) => { if (s.bloccato === undefined) s.bloccato = false; });
+  data.finanziario.sal.forEach((s) => { if (s.bloccato === undefined) s.bloccato = false; if (s.fornitore === undefined) s.fornitore = ''; if (s.tipoLavoro === undefined) s.tipoLavoro = 'FIR'; });
   data.finanziario.pianificazione.forEach((p) => {
     if (p.bloccato === undefined) p.bloccato = false;
     if (p.iva === undefined) p.iva = '';
@@ -774,10 +774,10 @@ function dbToRigaFerro(r) {
 
 // ---- mapper: finanziario + cronoprogramma ----
 function salToDb(s) {
-  return { id: s.id, numero: orNull(s.numero), data: orNull(s.data), importo_lavori_eseguiti: orNullNum(s.importoLavoriEseguiti), importo_da_liquidare: orNullNum(s.importoDaLiquidare), ritenuta_garanzia: orNullNum(s.ritenutaGaranzia), note: orNull(s.note), bloccato: !!s.bloccato };
+  return { id: s.id, numero: orNull(s.numero), data: orNull(s.data), fornitore: orNull(s.fornitore), tipo_lavoro: s.tipoLavoro || 'FIR', importo_lavori_eseguiti: orNullNum(s.importoLavoriEseguiti), importo_da_liquidare: orNullNum(s.importoDaLiquidare), ritenuta_garanzia: orNullNum(s.ritenutaGaranzia), note: orNull(s.note), bloccato: !!s.bloccato };
 }
 function dbToSal(r) {
-  return { id: r.id, numero: orEmpty(r.numero), data: orEmpty(r.data), importoLavoriEseguiti: orEmpty(r.importo_lavori_eseguiti), importoDaLiquidare: orEmpty(r.importo_da_liquidare), ritenutaGaranzia: orEmpty(r.ritenuta_garanzia), note: orEmpty(r.note), bloccato: !!r.bloccato };
+  return { id: r.id, numero: orEmpty(r.numero), data: orEmpty(r.data), fornitore: orEmpty(r.fornitore), tipoLavoro: r.tipo_lavoro || 'FIR', importoLavoriEseguiti: orEmpty(r.importo_lavori_eseguiti), importoDaLiquidare: orEmpty(r.importo_da_liquidare), ritenutaGaranzia: orEmpty(r.ritenuta_garanzia), note: orEmpty(r.note), bloccato: !!r.bloccato };
 }
 function fatturaToDb(f) {
   return { id: f.id, tipo: f.tipo || null, numero: orNull(f.numero), controparte: orNull(f.controparte), data: orNull(f.data), imponibile: orNullNum(f.imponibile), iva: orNullNum(f.iva), importo: orNullNum(f.importo), scadenza_pagamento: orNull(f.scadenzaPagamento), pagata: !!f.pagata, bloccato: !!f.bloccato };
@@ -2689,6 +2689,112 @@ function rataTotale(p) { return rataImponibile(p) + rataIva(p); }
 function subImporto(id) { return Number(DATA.subappalti[id].importo) || 0; }
 function subSpeso(id) { return Number(DATA.subappalti[id].speso) || 0; }
 
+// ---------- GESTIONE ECONOMICA: Quadro economico di commessa ----------
+// Cruscotto unico: ricavi (verso committente) − costi (materiali + subappalti)
+// = margine. Aggrega i dati gia' presenti in Acquisti, Subappalti e Fatture.
+// Manodopera/noli non sono tracciati (lavoro dato in subappalto): predisposto
+// per aggiungerli in futuro come ulteriori voci di costo.
+function renderQuadroEconomico() {
+  const importoAppalto = Number(DATA.cantiere.importoTotale) || 0;
+  // RICAVI verso committente (dal fatturato emesso al committente)
+  const fattureEmesse = DATA.finanziario.fatture.filter((f) => f.tipo === 'emessa');
+  const fatturatoEmesso = fattureEmesse.reduce((s, f) => s + (Number(f.imponibile) || Number(f.importo) || 0), 0);
+  const ricaviMaturati = fatturatoEmesso;
+  const avanzamento = importoAppalto > 0 ? (ricaviMaturati / importoAppalto * 100) : 0;
+  // COSTI materiali (acquisti) per bucket
+  let matFerro = 0, matCemento = 0, matAltro = 0;
+  allOrdiniFlat().forEach(({ catNome, o }) => {
+    const c = costoSostenutoOrdine(o); const b = bucketMateriale(catNome);
+    if (b === 'ferro') matFerro += c; else if (b === 'cemento') matCemento += c; else matAltro += c;
+  });
+  const materiali = matFerro + matCemento + matAltro;
+  // COSTI subappalti
+  const subs = elencoSubappalti();
+  const subImpegnato = subs.reduce((s, x) => s + subImporto(x.id), 0);
+  const subSpesoTot = subs.reduce((s, x) => s + subSpeso(x.id), 0);
+  // COSTI lavori/noli fornitori (registro SAL lavori -> Contabilità di cantiere)
+  const contabFir = DATA.finanziario.sal.filter((s) => s.tipoLavoro !== 'NOLEGGIO MEZZI').reduce((a, s) => a + (Number(s.importoLavoriEseguiti) || 0), 0);
+  const contabNol = DATA.finanziario.sal.filter((s) => s.tipoLavoro === 'NOLEGGIO MEZZI').reduce((a, s) => a + (Number(s.importoLavoriEseguiti) || 0), 0);
+  const contabTot = contabFir + contabNol;
+  // totali
+  const costiSostenuti = materiali + subSpesoTot + contabTot;
+  const costiImpegnati = materiali + subImpegnato + contabTot;
+  const margineAtteso = importoAppalto - costiImpegnati;
+  const marginePct = importoAppalto > 0 ? (margineAtteso / importoAppalto * 100) : 0;
+  const margineOggi = ricaviMaturati - costiSostenuti;
+  // CASSA (sintesi; il dettaglio e' in Gestione finanziaria)
+  const incassato = DATA.finanziario.pianificazione.filter((p) => p.incassato).reduce((s, p) => s + rataTotale(p), 0);
+  const pagato = DATA.finanziario.fatture.filter((f) => f.tipo === 'ricevuta' && f.pagata).reduce((s, f) => s + (Number(f.importo) || 0), 0)
+    + DATA.finanziario.salFornitori.filter((t) => t.stato === 'pagato').reduce((s, t) => s + (Number(t.importo) || 0), 0);
+  const cassa = incassato - pagato;
+
+  const rigaCosto = (nome, sostenuto, impegnato) => `<tr><td>${nome}</td><td>${euro(sostenuto)}</td><td class="empty-note">${impegnato === null ? '-' : euro(impegnato)}</td></tr>`;
+
+  document.getElementById('main').innerHTML = `
+    <div class="panel">
+      <h2>Quadro economico di commessa</h2>
+      <p class="sub">Situazione economica del cantiere aggiornata al ${oggiStr()}: ricavi verso il committente, costi sostenuti e margine. Aggrega automaticamente Acquisti, Subappalti e Fatture.</p>
+      <div class="grid-stats">
+        <div class="stat-card blue"><div class="num">${euro(importoAppalto)}</div><div class="label">Importo appalto (contratto)</div></div>
+        <div class="stat-card gray"><div class="num">${euro(costiImpegnati)}</div><div class="label">Costi impegnati (materiali + subappalti)</div></div>
+        <div class="stat-card ${margineAtteso >= 0 ? 'teal' : 'red'}"><div class="num">${euro(margineAtteso)}</div><div class="label">Margine atteso (${marginePct.toFixed(1)}%)</div></div>
+        <div class="stat-card amber"><div class="num">${avanzamento.toFixed(0)}%</div><div class="label">Avanzamento economico</div></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>Ricavi verso il committente</h2>
+      <table class="row-table">
+        <tbody>
+          <tr><td>Importo contrattuale appalto (imponibile)</td><td><strong>${euro(importoAppalto)}</strong></td></tr>
+          <tr><td>Fatturato emesso al committente</td><td>${euro(fatturatoEmesso)}</td></tr>
+          <tr><td>Ricavi maturati ad oggi</td><td><strong>${euro(ricaviMaturati)}</strong> <span class="empty-note">(${avanzamento.toFixed(1)}% dell'appalto)</span></td></tr>
+        </tbody>
+      </table>
+      <p class="sub" style="margin-top:6px;">Le fatture emesse al committente si registrano nel <a href="#" class="qe-goto-fin" data-sub="fatture">Registro fatture</a>.</p>
+    </div>
+
+    <div class="panel">
+      <h2>Costi della commessa</h2>
+      <table class="row-table">
+        <thead><tr><th>Voce di costo</th><th>Sostenuto ad oggi</th><th>Impegnato (a contratto/ordine)</th></tr></thead>
+        <tbody>
+          ${rigaCosto('Ferro', matFerro, null)}
+          ${rigaCosto('Cemento', matCemento, null)}
+          ${matAltro ? rigaCosto('Altri materiali', matAltro, null) : ''}
+          ${rigaCosto('Subappalti', subSpesoTot, subImpegnato)}
+          ${rigaCosto('Lavori fornitori — FIR', contabFir, null)}
+          ${rigaCosto('Noleggio mezzi', contabNol, null)}
+        </tbody>
+        <tfoot><tr><td><strong>Totale costi</strong></td><td><strong>${euro(costiSostenuti)}</strong></td><td><strong>${euro(costiImpegnati)}</strong></td></tr></tfoot>
+      </table>
+      <p class="sub" style="margin-top:6px;">Materiali dagli <a href="#" class="qe-goto" data-sub="acquisti">Acquisti</a>; FIR e noleggio mezzi dalla <a href="#" class="qe-goto" data-sub="contabilita">Contabilità di cantiere</a> (registro SAL lavori).</p>
+    </div>
+
+    <div class="panel">
+      <h2>Margine</h2>
+      <div class="grid-stats cols-3">
+        <div class="stat-card ${margineAtteso >= 0 ? 'teal' : 'red'}"><div class="num">${euro(margineAtteso)}</div><div class="label">Margine atteso a fine commessa</div></div>
+        <div class="stat-card ${margineOggi >= 0 ? 'teal' : 'red'}"><div class="num">${euro(margineOggi)}</div><div class="label">Margine sui lavori maturati ad oggi</div></div>
+        <div class="stat-card gray"><div class="num">${marginePct.toFixed(1)}%</div><div class="label">Margine % sull'appalto</div></div>
+      </div>
+      <p class="sub" style="margin-top:6px;">Margine atteso = importo appalto − costi impegnati. Margine ad oggi = ricavi maturati − costi sostenuti.</p>
+    </div>
+
+    <div class="panel">
+      <h2>Cassa (sintesi)</h2>
+      <div class="grid-stats cols-3">
+        <div class="stat-card teal"><div class="num">${euro(incassato)}</div><div class="label">Incassato ad oggi</div></div>
+        <div class="stat-card red"><div class="num">${euro(pagato)}</div><div class="label">Pagato ad oggi</div></div>
+        <div class="stat-card ${cassa >= 0 ? 'teal' : 'red'}"><div class="num">${euro(cassa)}</div><div class="label">Saldo di cassa</div></div>
+      </div>
+      <p class="sub" style="margin-top:6px;">Il dettaglio di incassi, pagamenti e scadenze &egrave; in <a href="#" class="qe-goto-fin" data-sub="confronto">Gestione finanziaria</a>.</p>
+    </div>
+  `;
+  document.querySelectorAll('.qe-goto').forEach((a) => { a.onclick = (e) => { e.preventDefault(); CURRENT_SUBTAB = a.getAttribute('data-sub'); renderSubTabsNav(); renderMain(); }; });
+  document.querySelectorAll('.qe-goto-fin').forEach((a) => { a.onclick = (e) => { e.preventDefault(); vaiA('finanziaria', a.getAttribute('data-sub')); }; });
+}
+
 function renderFinPanoramica() {
   const importoTotale = Number(DATA.cantiere.importoTotale) || 0;
   const totaleSubappalti = elencoSubappalti().reduce((s, x) => s + subImporto(x.id), 0);
@@ -3008,45 +3114,74 @@ function renderFinPianificazione() {
   }
 }
 
+const TIPI_LAVORO_SAL = ['FIR', 'NOLEGGIO MEZZI'];
+// Solo Movisud fornisce FIR / Noleggio mezzi: per gli altri fornitori la
+// descrizione lavori e' testo libero (la fase, es. "Ferro", "Cemento armato").
+function isMovisud(f) { return /movis[iu]d/i.test((f || '').trim()); }
 function renderFinSal() {
-  const rows = DATA.finanziario.sal.map((s, i) => {
+  // ordina per data (piu' recenti in alto), mantenendo l'indice reale
+  const items = DATA.finanziario.sal.map((s, i) => ({ s, i })).sort((a, b) => (b.s.data || '').localeCompare(a.s.data || ''));
+  const rows = items.map(({ s, i }) => {
     const bl = !!s.bloccato; const dis = bl ? 'disabled' : '';
+    const isMov = isMovisud(s.fornitore);
+    const selVal = s.tipoLavoro === 'NOLEGGIO MEZZI' ? 'NOLEGGIO MEZZI' : 'FIR';
+    const testoVal = isMov ? '' : (s.tipoLavoro || '');
     return `
     <tr data-idx="${i}">
-      <td><input type="text" class="f-numero" value="${s.numero || ''}" style="width:60px;" ${dis} /></td>
       <td><input type="date" class="f-data" value="${s.data || ''}" ${dis} /></td>
+      <td><input type="text" class="f-fornitore" value="${s.fornitore || ''}" placeholder="Fornitore" ${dis} /></td>
       <td><input type="number" class="f-eseguiti" value="${s.importoLavoriEseguiti || ''}" placeholder="€" ${dis} /></td>
-      <td><input type="number" class="f-liquidare" value="${s.importoDaLiquidare || ''}" placeholder="€" ${dis} /></td>
-      <td><input type="number" class="f-ritenuta" value="${s.ritenutaGaranzia || ''}" placeholder="€" ${dis} /></td>
-      <td><input type="text" class="f-note" value="${s.note || ''}" ${dis} /></td>
+      <td>
+        <select class="f-tipo" ${dis} style="${isMov ? '' : 'display:none;'}">${TIPI_LAVORO_SAL.map((t) => `<option value="${t}" ${selVal === t ? 'selected' : ''}>${t}</option>`).join('')}</select>
+        <input type="text" class="f-descr" value="${testoVal}" placeholder="Descrizione / fase (es. Ferro)" ${dis} style="${isMov ? 'display:none;' : ''}" />
+      </td>
       <td>${bl ? '<button class="btn btn-outline btn-sm sal-unlock">&#128274; Sblocca</button>' : '<button class="btn btn-primary btn-sm sal-save">Salva</button> <button class="btn btn-outline btn-sm sal-del">Elimina</button>'}</td>
     </tr>`;
   }).join('');
+  const totFir = DATA.finanziario.sal.filter((s) => s.tipoLavoro !== 'NOLEGGIO MEZZI').reduce((a, s) => a + (Number(s.importoLavoriEseguiti) || 0), 0);
+  const totNol = DATA.finanziario.sal.filter((s) => s.tipoLavoro === 'NOLEGGIO MEZZI').reduce((a, s) => a + (Number(s.importoLavoriEseguiti) || 0), 0);
   document.getElementById('main').innerHTML = `
     <div class="panel">
-      <h2>Stati avanzamento lavori (SAL)</h2>
-      <p class="sub">Un rigo per ogni SAL certificato dal Direttore Lavori. Gli importi sono quelli indicati nel certificato, non cumulativi.</p>
+      <h2>SAL lavori &mdash; registro giornaliero</h2>
+      <p class="sub">Da compilare ogni giorno: data, fornitore, importo dei lavori eseguiti e tipo di lavoro (<strong>FIR</strong> o <strong>NOLEGGIO MEZZI</strong>). Questi dati alimentano la <a href="#" class="sal-goto-contab">Contabilità di cantiere</a>.</p>
+      <div class="grid-stats cols-3">
+        <div class="stat-card blue"><div class="num">${euro(totFir)}</div><div class="label">Totale FIR</div></div>
+        <div class="stat-card amber"><div class="num">${euro(totNol)}</div><div class="label">Totale noleggio mezzi</div></div>
+        <div class="stat-card teal"><div class="num">${euro(totFir + totNol)}</div><div class="label">Totale lavori eseguiti</div></div>
+      </div>
+      <p class="sub" style="margin-top:-2px;">La descrizione &egrave; a scelta FIR / Noleggio mezzi solo per <strong>Movisud</strong>; per gli altri fornitori scrivi tu la fase (es. "Ferro", "Cemento armato").</p>
       <table class="row-table">
-        <thead><tr><th>N.</th><th>Data</th><th>Lavori eseguiti</th><th>Da liquidare</th><th>Ritenuta garanzia</th><th>Note</th><th></th></tr></thead>
-        <tbody id="salBody">${rows}</tbody>
+        <thead><tr><th>Data</th><th>Fornitore</th><th>Importo lavori eseguiti</th><th>Descrizione lavori</th><th></th></tr></thead>
+        <tbody id="salBody">${rows || '<tr><td colspan="5" class="empty-note">Nessuna riga ancora. Aggiungi la prima qui sotto.</td></tr>'}</tbody>
       </table>
-      <button class="btn btn-outline add-row-btn" id="addSal">+ Aggiungi SAL</button>
+      <button class="btn btn-outline add-row-btn" id="addSal">+ Aggiungi riga</button>
     </div>
   `;
+  // La descrizione si adatta al fornitore: menu FIR/Noleggio per Movisud, testo libero per gli altri.
+  document.querySelectorAll('.f-fornitore').forEach((inp) => {
+    inp.oninput = () => {
+      const tr = inp.closest('tr'); const isMov = isMovisud(inp.value);
+      const sel = tr.querySelector('.f-tipo'); const txt = tr.querySelector('.f-descr');
+      if (sel) sel.style.display = isMov ? '' : 'none';
+      if (txt) txt.style.display = isMov ? 'none' : '';
+    };
+  });
+  const goto = document.querySelector('.sal-goto-contab');
+  if (goto) goto.onclick = (e) => { e.preventDefault(); CURRENT_SUBTAB = 'contabilita'; renderSubTabsNav(); renderMain(); };
   document.getElementById('addSal').onclick = () => {
-    DATA.finanziario.sal.push({ id: nextId('sal'), numero: DATA.finanziario.sal.length + 1, data: '', importoLavoriEseguiti: '', importoDaLiquidare: '', ritenutaGaranzia: '', note: '', bloccato: false });
+    DATA.finanziario.sal.push({ id: nextId('sal'), numero: DATA.finanziario.sal.length + 1, data: new Date().toISOString().slice(0, 10), fornitore: '', tipoLavoro: 'FIR', importoLavoriEseguiti: '', importoDaLiquidare: '', ritenutaGaranzia: '', note: '', bloccato: false });
     saveData(); renderFinSal();
   };
   document.querySelectorAll('.sal-save').forEach((btn) => {
     btn.onclick = () => {
       const tr = btn.closest('tr'); const idx = Number(tr.dataset.idx);
+      const forn = tr.querySelector('.f-fornitore').value;
+      const descr = isMovisud(forn) ? tr.querySelector('.f-tipo').value : tr.querySelector('.f-descr').value;
       Object.assign(DATA.finanziario.sal[idx], {
-        numero: tr.querySelector('.f-numero').value,
         data: tr.querySelector('.f-data').value,
+        fornitore: forn,
         importoLavoriEseguiti: tr.querySelector('.f-eseguiti').value,
-        importoDaLiquidare: tr.querySelector('.f-liquidare').value,
-        ritenutaGaranzia: tr.querySelector('.f-ritenuta').value,
-        note: tr.querySelector('.f-note').value,
+        tipoLavoro: descr,
         bloccato: true
       });
       saveData(); renderFinSal();
@@ -3062,10 +3197,71 @@ function renderFinSal() {
   document.querySelectorAll('.sal-del').forEach((btn) => {
     btn.onclick = () => {
       const tr = btn.closest('tr'); const idx = Number(tr.dataset.idx);
-      if (!confirm('Eliminare questo SAL?')) return;
+      if (!confirm('Eliminare questa riga?')) return;
       DATA.finanziario.sal.splice(idx, 1); saveData(); renderFinSal();
     };
   });
+}
+
+// ---------- GESTIONE ECONOMICA: Contabilità di cantiere ----------
+// Elabora il registro "SAL lavori": i lavori FIR sono contabilizzati a fine mese
+// del mese di consegna (una riga per fornitore/mese); il NOLEGGIO MEZZI resta
+// giorno per giorno come compilato nel registro.
+function fineMese(dataStr) {
+  const d = new Date(dataStr); return new Date(d.getFullYear(), d.getMonth() + 1, 0).toISOString().slice(0, 10);
+}
+function renderContabilitaCantiere() {
+  const sal = DATA.finanziario.sal.filter((s) => (s.fornitore || Number(s.importoLavoriEseguiti)) && s.data);
+  // Panoramica: raggruppa per fornitore (case-insensitive) + fase/descrizione + mese.
+  // I lavori FIR (Movisud) sono contabilizzati a fine mese del mese di consegna.
+  const map = {};
+  sal.forEach((s) => {
+    const forn = (s.fornitore || '(senza fornitore)').trim();
+    const fase = (s.tipoLavoro || '-').trim();
+    const mese = s.data.slice(0, 7);
+    const key = forn.toLowerCase() + '|' + fase.toLowerCase() + '|' + mese;
+    map[key] = map[key] || { forn, fase, mese, importo: 0, dataContab: fineMese(s.data) };
+    map[key].importo += Number(s.importoLavoriEseguiti) || 0;
+  });
+  const righe = Object.values(map);
+  const totGen = righe.reduce((a, r) => a + r.importo, 0);
+  const totNol = righe.filter((r) => r.fase.toUpperCase() === 'NOLEGGIO MEZZI').reduce((a, r) => a + r.importo, 0);
+  const totLav = totGen - totNol;
+  // raggruppa per fornitore per la panoramica
+  const perForn = {};
+  righe.forEach((r) => {
+    const k = r.forn.toLowerCase();
+    perForn[k] = perForn[k] || { forn: r.forn, items: [], tot: 0 };
+    perForn[k].items.push(r); perForn[k].tot += r.importo;
+  });
+  const fornBlocchi = Object.values(perForn).sort((a, b) => a.forn.toLowerCase().localeCompare(b.forn.toLowerCase()));
+  fornBlocchi.forEach((b) => b.items.sort((a, c) => a.mese.localeCompare(c.mese) || a.fase.localeCompare(c.fase)));
+
+  const corpo = fornBlocchi.map((b) => `
+    <tr style="background:var(--bg);"><td colspan="3"><strong>${b.forn}</strong></td><td><strong>${euro(b.tot)}</strong></td></tr>
+    ${b.items.map((r) => `<tr><td style="padding-left:18px;">${r.fase}</td><td>${meseAnno(r.mese + '-15')}</td><td class="empty-note">${dataBreve(r.dataContab)}</td><td>${euro(r.importo)}</td></tr>`).join('')}
+  `).join('');
+
+  document.getElementById('main').innerHTML = `
+    <div class="panel">
+      <h2>Contabilità di cantiere</h2>
+      <p class="sub">Panoramica generale dei lavori dei fornitori (dal registro <a href="#" class="contab-goto-sal">SAL lavori</a>), divisa <strong>per fornitore</strong> e <strong>per fase/mese</strong>. Per Movisud le fasi sono FIR / Noleggio mezzi; per gli altri fornitori la fase &egrave; quella che scrivi tu (es. Ferro, Cemento armato). I lavori sono contabilizzati a fine mese del mese di consegna.</p>
+      <div class="grid-stats cols-3">
+        <div class="stat-card blue"><div class="num">${euro(totLav)}</div><div class="label">Lavori fornitori</div></div>
+        <div class="stat-card amber"><div class="num">${euro(totNol)}</div><div class="label">Noleggio mezzi</div></div>
+        <div class="stat-card teal"><div class="num">${euro(totGen)}</div><div class="label">Totale contabilità di cantiere</div></div>
+      </div>
+    </div>
+    <div class="panel">
+      <h2>Panoramica per fornitore e fase</h2>
+      <table class="row-table">
+        <thead><tr><th>Fornitore / fase</th><th>Mese</th><th>Contabilizzato il</th><th>Importo</th></tr></thead>
+        <tbody>${corpo || '<tr><td colspan="4" class="empty-note">Nessun lavoro registrato in SAL lavori.</td></tr>'}</tbody>
+        ${righe.length ? `<tfoot><tr><td colspan="3"><strong>Totale generale</strong></td><td><strong>${euro(totGen)}</strong></td></tr></tfoot>` : ''}
+      </table>
+    </div>
+  `;
+  document.querySelectorAll('.contab-goto-sal').forEach((a) => { a.onclick = (e) => { e.preventDefault(); CURRENT_SUBTAB = 'sal'; renderSubTabsNav(); renderMain(); }; });
 }
 
 // ---------- FINANZIARIO: SAL fornitori ----------
@@ -3732,10 +3928,10 @@ function renderHome() {
   const box = (items, riga) => `<div class="panel">${items.map(riga).join('')}</div>`;
   const rigaDoc = (d) => `<div class="doc-row" style="grid-template-columns:2fr 1fr auto; cursor:pointer;" onclick="vaiA('documentazione','scadenzario')"><div class="name">${d.tipoNome}</div><div class="empty-note">${d.ctx}</div>${chip(d.stato)}</div>`;
   const rigaFase = (f) => `<div class="doc-row" style="grid-template-columns:2fr 1fr auto; cursor:pointer;" onclick="vaiA('cronoprogramma',null)"><div class="name">${f.nome}</div><div class="empty-note">${f.sezione}</div>${faseChip('in_ritardo')}</div>`;
-  const rigaFatt = (f) => `<div class="doc-row" style="grid-template-columns:2fr 1fr 1.2fr auto; cursor:pointer;" onclick="vaiA('finanziario','fatture')"><div class="name">${f.controparte || 'Fattura ' + (f.numero || '')}</div><div class="empty-note">${euro(f.importo)}</div><div class="empty-note">Scad. ${dataBreve(f.scadenzaPagamento)}</div>${chip(f.stato === 'scaduto' ? 'scaduto' : 'in_scadenza', f.stato === 'scaduto' ? 'Scaduta' : 'In scadenza')}</div>`;
-  const rigaRata = (p) => `<div class="doc-row" style="grid-template-columns:2fr 1fr auto; cursor:pointer;" onclick="vaiA('finanziario','scadenzario')"><div class="name">Rata ${p.numero || ''} — incasso previsto</div><div class="empty-note">${euro(rataTotale(p))}</div><span class="chip ${p.gg <= 7 ? 'amber' : 'blue'}">tra ${p.gg} gg &middot; ${dataBreve(p.data)}</span></div>`;
-  const rigaEmett = (p) => `<div class="doc-row" style="grid-template-columns:2fr 1fr auto; cursor:pointer;" onclick="vaiA('finanziario','scadenzario')"><div class="name">Rata ${p.numero || ''}${p.dataIncasso ? ' — incassata ' + dataBreve(p.dataIncasso) : ''}</div><div class="empty-note">${euro(rataTotale(p))}</div>${chip('scaduto', 'Emetti fattura')}</div>`;
-  const rigaSalForn = (t) => `<div class="doc-row" style="grid-template-columns:2fr 1fr auto; cursor:pointer;" onclick="vaiA('finanziario','salfornitori')"><div class="name">${salFornChi(t)}${t.descrizione ? ' — ' + t.descrizione : ''}</div><div class="empty-note">${euro(t.importo)}</div>${salFornStatoChip(t)}</div>`;
+  const rigaFatt = (f) => `<div class="doc-row" style="grid-template-columns:2fr 1fr 1.2fr auto; cursor:pointer;" onclick="vaiA('finanziaria','fatture')"><div class="name">${f.controparte || 'Fattura ' + (f.numero || '')}</div><div class="empty-note">${euro(f.importo)}</div><div class="empty-note">Scad. ${dataBreve(f.scadenzaPagamento)}</div>${chip(f.stato === 'scaduto' ? 'scaduto' : 'in_scadenza', f.stato === 'scaduto' ? 'Scaduta' : 'In scadenza')}</div>`;
+  const rigaRata = (p) => `<div class="doc-row" style="grid-template-columns:2fr 1fr auto; cursor:pointer;" onclick="vaiA('finanziaria','scadenzario')"><div class="name">Rata ${p.numero || ''} — incasso previsto</div><div class="empty-note">${euro(rataTotale(p))}</div><span class="chip ${p.gg <= 7 ? 'amber' : 'blue'}">tra ${p.gg} gg &middot; ${dataBreve(p.data)}</span></div>`;
+  const rigaEmett = (p) => `<div class="doc-row" style="grid-template-columns:2fr 1fr auto; cursor:pointer;" onclick="vaiA('finanziaria','scadenzario')"><div class="name">Rata ${p.numero || ''}${p.dataIncasso ? ' — incassata ' + dataBreve(p.dataIncasso) : ''}</div><div class="empty-note">${euro(rataTotale(p))}</div>${chip('scaduto', 'Emetti fattura')}</div>`;
+  const rigaSalForn = (t) => `<div class="doc-row" style="grid-template-columns:2fr 1fr auto; cursor:pointer;" onclick="vaiA('finanziaria','salfornitori')"><div class="name">${salFornChi(t)}${t.descrizione ? ' — ' + t.descrizione : ''}</div><div class="empty-note">${euro(t.importo)}</div>${salFornStatoChip(t)}</div>`;
   const rigaAccordo = (x) => `<div class="doc-row" style="grid-template-columns:2fr 1fr auto; cursor:pointer;" onclick="apriDocSub('${x.id}')"><div class="name">${x.a.ragioneSociale || x.lavorazione}</div><div class="empty-note">${x.a.tipoAccordo || 'accordo'} &middot; ${x.lavorazione}</div>${x.conv.chipHtml}</div>`;
   const sezione = (titolo, items, riga) => items.length ? `<h2 style="font-size:15px; margin:18px 0 8px;">${titolo}</h2>${box(items, riga)}` : '';
 
@@ -3744,9 +3940,9 @@ function renderHome() {
       <div class="stat-card scaduto" style="cursor:pointer;" onclick="vaiA('documentazione','scadenzario')"><div class="num">${s.docsScaduti.length}</div><div class="label">Documenti scaduti</div></div>
       <div class="stat-card in_scadenza" style="cursor:pointer;" onclick="vaiA('documentazione','scadenzario')"><div class="num">${s.docsInScadenza.length}</div><div class="label">Documenti in scadenza</div></div>
       <div class="stat-card red" style="cursor:pointer;" onclick="vaiA('cronoprogramma',null)"><div class="num">${s.fasiRitardo.length}</div><div class="label">Fasi in ritardo</div></div>
-      <div class="stat-card amber" style="cursor:pointer;" onclick="vaiA('finanziario','fatture')"><div class="num">${s.fattureScadute.length + s.fattureInScadenza.length}</div><div class="label">Fatture da pagare</div></div>
-      <div class="stat-card ${s.fattureDaEmettere.length ? 'red' : 'gray'}" style="cursor:pointer;" onclick="vaiA('finanziario','scadenzario')"><div class="num">${s.fattureDaEmettere.length}</div><div class="label">Fatture da emettere</div></div>
-      <div class="stat-card blue" style="cursor:pointer;" onclick="vaiA('finanziario','scadenzario')"><div class="num">${s.rateImminenti.length}</div><div class="label">Incassi in scadenza</div></div>
+      <div class="stat-card amber" style="cursor:pointer;" onclick="vaiA('finanziaria','fatture')"><div class="num">${s.fattureScadute.length + s.fattureInScadenza.length}</div><div class="label">Fatture da pagare</div></div>
+      <div class="stat-card ${s.fattureDaEmettere.length ? 'red' : 'gray'}" style="cursor:pointer;" onclick="vaiA('finanziaria','scadenzario')"><div class="num">${s.fattureDaEmettere.length}</div><div class="label">Fatture da emettere</div></div>
+      <div class="stat-card blue" style="cursor:pointer;" onclick="vaiA('finanziaria','scadenzario')"><div class="num">${s.rateImminenti.length}</div><div class="label">Incassi in scadenza</div></div>
     </div>
     <div class="panel">
       <h2>Benvenuta nel cantiere Studentato Calvanico</h2>
@@ -3779,10 +3975,10 @@ function esportaBackup() {
 // ---------- NAV / ROUTER ----------
 const SUBTABS = {
   home: [],
-  anagrafica: [ ['appalto', 'Appalto'], ['azienda', 'Appaltatore'], ['ente', 'Stazione appaltante'], ['subappaltatori', 'Subappaltatori'], ['referenti', 'Referenti e ruoli'] ],
-  documentazione: [ ['scadenzario', 'Scadenzario'], ['cantiere', 'Checklist appalto'], ['subappalti', 'Subappaltatori'] ],
-  acquisti: [],
-  finanziario: [ ['panoramica', 'Panoramica'], ['scadenzario', 'Scadenzario'], ['pianificazione', 'Pianificazione'], ['salfornitori', 'SAL fornitori'], ['confronto', 'Incassi vs pagamenti'], ['sal', 'SAL lavori'], ['costi', 'Costi per subappalto'], ['fatture', 'Fatture'] ],
+  anagrafica: [ ['appalto', 'Appalto'], ['azienda', 'Appaltatrice'], ['ente', 'Committente'], ['subappaltatori', 'Subappaltatrici'], ['referenti', 'Referenti e ruoli'] ],
+  documentazione: [ ['scadenzario', 'Scadenzario'], ['cantiere', 'Checklist appaltatrice'], ['subappalti', 'Subappaltatrici'] ],
+  economica: [ ['quadro', 'Quadro economico'], ['acquisti', 'Acquisti'], ['sal', 'SAL lavori'], ['contabilita', 'Contabilità di cantiere'] ],
+  finanziaria: [ ['pianificazione', 'Piano incassi'], ['scadenzario', 'Scadenzario'], ['confronto', 'Cassa: incassi vs pagamenti'], ['salfornitori', 'SAL fornitori'], ['fatture', 'Registro fatture'] ],
   cronoprogramma: []
 };
 let CURRENT_AREA = 'home';
@@ -3817,16 +4013,17 @@ function renderMain() {
     if (CURRENT_SUBTAB === 'scadenzario') renderScadenzario();
     else if (CURRENT_SUBTAB === 'cantiere') renderCantiereDoc();
     else if (CURRENT_SUBTAB === 'subappalti') renderSubappaltiDoc();
-  } else if (CURRENT_AREA === 'acquisti') {
-    renderAcquisti();
-  } else if (CURRENT_AREA === 'finanziario') {
-    if (CURRENT_SUBTAB === 'panoramica') renderFinPanoramica();
-    else if (CURRENT_SUBTAB === 'scadenzario') renderFinScadenzario();
-    else if (CURRENT_SUBTAB === 'pianificazione') renderFinPianificazione();
-    else if (CURRENT_SUBTAB === 'salfornitori') renderFinSalFornitori();
-    else if (CURRENT_SUBTAB === 'confronto') renderFinConfronto();
+  } else if (CURRENT_AREA === 'economica') {
+    if (CURRENT_SUBTAB === 'quadro') renderQuadroEconomico();
+    else if (CURRENT_SUBTAB === 'acquisti') renderAcquisti();
     else if (CURRENT_SUBTAB === 'sal') renderFinSal();
-    else if (CURRENT_SUBTAB === 'costi') renderFinCosti();
+    else if (CURRENT_SUBTAB === 'contabilita') renderContabilitaCantiere();
+    else if (CURRENT_SUBTAB === 'costi') { CURRENT_SUBTAB = 'contabilita'; renderContabilitaCantiere(); }
+  } else if (CURRENT_AREA === 'finanziaria') {
+    if (CURRENT_SUBTAB === 'pianificazione') renderFinPianificazione();
+    else if (CURRENT_SUBTAB === 'scadenzario') renderFinScadenzario();
+    else if (CURRENT_SUBTAB === 'confronto') renderFinConfronto();
+    else if (CURRENT_SUBTAB === 'salfornitori') renderFinSalFornitori();
     else if (CURRENT_SUBTAB === 'fatture') renderFinFatture();
   } else if (CURRENT_AREA === 'cronoprogramma') {
     renderCronoprogramma();
