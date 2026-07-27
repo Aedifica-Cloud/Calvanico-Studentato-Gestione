@@ -221,6 +221,7 @@
   @media(max-width:520px){.task-form-grid{grid-template-columns:1fr}.task-filters select{width:100%}.activity-summary{grid-template-columns:1fr}.activity-area-head{align-items:flex-start}.activity-area-count{justify-content:flex-end}}
   .safety-summary{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px}.safety-company{border:1px solid var(--border);border-radius:14px;padding:14px;background:#fff}.safety-company.blocked{border-color:#fecaca;background:#fffafa}.safety-company h3{font-size:13px;margin:0 0 8px}.safety-company p{font-size:11.5px;color:var(--gray);margin:5px 0}.safety-toolbar{display:flex;gap:9px;flex-wrap:wrap;margin-bottom:14px}.safety-toolbar select{width:auto;min-width:180px}.safety-row{display:grid;grid-template-columns:minmax(220px,1.5fr) 1fr 1fr 1.4fr auto;gap:9px;align-items:center;padding:11px 0;border-bottom:1px solid var(--border)}.safety-row:last-child{border-bottom:0}.safety-doc-title{font-size:12.5px;font-weight:700}.safety-doc-sub{font-size:11px;color:var(--gray);margin-top:3px}.safety-actions{display:flex;gap:6px;flex-wrap:wrap}.safety-actions button{white-space:nowrap}@media(max-width:900px){.safety-summary{grid-template-columns:1fr 1fr}.safety-row{grid-template-columns:1fr 1fr}.safety-actions{grid-column:1/-1}}@media(max-width:560px){.safety-summary{grid-template-columns:1fr}.safety-row{grid-template-columns:1fr}.safety-toolbar select{width:100%}}
   .diary-form{display:none}.diary-form.open{display:block}.diary-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}.diary-grid.two{grid-template-columns:1fr 1fr}.diary-card{border:1px solid var(--border);border-radius:15px;background:#fff;margin-bottom:12px;overflow:hidden}.diary-card-head{display:flex;justify-content:space-between;gap:12px;align-items:center;padding:14px 16px;background:#fbfdff;border-bottom:1px solid var(--border);flex-wrap:wrap}.diary-card-body{padding:15px 16px}.diary-facts{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px}.diary-fact{background:var(--bg);border-radius:10px;padding:9px 11px}.diary-fact span{display:block;color:var(--gray);font-size:10.5px;text-transform:uppercase;font-weight:700}.diary-fact strong{display:block;font-size:12.5px;margin-top:3px}.diary-text{font-size:12.5px;line-height:1.5;margin:9px 0}.diary-text b{color:var(--navy)}.diary-alert{border-left:4px solid var(--red);background:var(--red-light);padding:10px 12px;border-radius:8px;font-size:12px;margin-top:9px}.diary-actions{display:flex;gap:7px;flex-wrap:wrap}@media(max-width:850px){.diary-grid,.diary-grid.two,.diary-facts{grid-template-columns:1fr 1fr}}@media(max-width:540px){.diary-grid,.diary-grid.two,.diary-facts{grid-template-columns:1fr}}
+  .diary-upload{display:flex;align-items:center;gap:10px;flex-wrap:wrap}.diary-photo-list{display:flex;gap:7px;flex-wrap:wrap}.diary-photo-list a{display:block;width:54px;height:54px;border-radius:9px;overflow:hidden;border:1px solid var(--border);background:var(--bg)}.diary-photo-list img{width:100%;height:100%;object-fit:cover;display:block}.diary-photo-count{font-size:12px;color:var(--gray)}
   .treasury-settings{display:grid;grid-template-columns:1fr 1fr auto;gap:12px;align-items:end}.treasury-form{display:grid;grid-template-columns:1fr 1fr 1.5fr 1fr auto;gap:10px;align-items:end}.cash-negative{background:#fff1f2}.cash-warning{background:#fffbeb}.cash-source{font-size:10.5px;color:var(--gray)}@media(max-width:800px){.treasury-settings,.treasury-form{grid-template-columns:1fr 1fr}}@media(max-width:520px){.treasury-settings,.treasury-form{grid-template-columns:1fr}}
 
   /* v3 - interfaccia anagrafica, documenti e cronoprogramma */
@@ -952,6 +953,18 @@ let TAPPE_DISPONIBILI = false;
 let SYNC_LOCK_DISPONIBILE = false;
 let VERSIONE_LOCALE = 0;
 let EMAIL_UTENTE = '';
+let RUOLO_UTENTE = 'tecnico';
+const AREE_RISERVATE_PM = ['economica','finanziaria'];
+function puoAprireArea(area){return RUOLO_UTENTE==='pm'||!AREE_RISERVATE_PM.includes(area)}
+function applicaPermessiInterfaccia(){
+  document.querySelectorAll('#areaTabs button[data-area]').forEach((b)=>{b.style.display=puoAprireArea(b.getAttribute('data-area'))?'':'none'});
+}
+async function caricaRuoloUtente(user){
+  if(!user){RUOLO_UTENTE='tecnico';return}
+  const r=await supa.from('app_utenti').select('ruolo,attivo').eq('user_id',user.id).maybeSingle();
+  if(!r.error&&r.data&&r.data.attivo!==false){RUOLO_UTENTE=r.data.ruolo||'tecnico';return}
+  RUOLO_UTENTE=String(user.email||'').toLowerCase()==='n.communara@aedificabuild.com'?'pm':'tecnico';
+}
 // true quando subappalti ha le colonne tipo_accordo / data_conversione_subappalto
 // (patch_06): si rileva dalle righe caricate, per non rompere i salvataggi se
 // la patch non e' ancora stata eseguita.
@@ -2265,6 +2278,7 @@ function salvaAcquistoExtra(o){const tutti=caricaAcquistiExtra();tutti[String(o.
 function nuovaScadenzaAcquisto(){return {id:String(Date.now())+Math.random().toString(16).slice(2),dataScadenza:'',modalita:'BB',riferimento:'',importo:'',importoPagato:'',dataPagamento:''}}
 function statoScadenzaAcquisto(r){const dovuto=Number(r.importo)||0,pagato=Number(r.importoPagato)||0;if(dovuto>0&&pagato>=dovuto)return {key:'pagata',label:'Pagata'};if(pagato>0)return {key:'in_scadenza',label:'Pagata parzialmente'};if(!r.dataScadenza)return {key:'mancante',label:'Data mancante'};const gg=Math.ceil((new Date(r.dataScadenza+'T12:00:00')-new Date())/86400000);if(gg<0)return {key:'scaduto',label:'Scaduta'};if(gg<=30)return {key:'in_scadenza',label:'In scadenza'};return {key:'da_pagare',label:'Da pagare'}}
 let ACQ_ORDINI_FILTRI={fornitore:'',dal:'',al:''};
+let ACQ_DDT_FORNITORE='';
 let ACQ_DDT_ORDER_ID='';
 let ACQ_FATTURA_MODE='';
 let ACQ_FATTURA_FORNITORE='';
@@ -2277,7 +2291,7 @@ function renderAcquisti() {
   if (['panoramica', 'preventivi', 'controllo', 'storico'].indexOf(ACQUISTI_SUBTAB) !== -1) ACQUISTI_SUBTAB = 'menu';
   if (ACQUISTI_SUBTAB === 'menu') renderAcquistiMenu();
   else if (ACQUISTI_SUBTAB === 'ordine') renderAcquistiOrdine();
-  else if (ACQUISTI_SUBTAB === 'ddt') renderAcquistiDDT();
+  else if (ACQUISTI_SUBTAB === 'ddt') renderAcquistiDDTSemplice();
   else if (ACQUISTI_SUBTAB === 'fattura') renderAcquistiFattura();
 }
 
@@ -2775,13 +2789,69 @@ function renderAcquistiDDTLegacy() {
 
 function renderAcquistiDDT() {
   const flat=allOrdiniFlat();flat.forEach(({o})=>integraAcquistoExtra(o));
+  const fornitori=[...new Set(flat.map(x=>String(x.o.fornitore||'').trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'it'));
+  if(ACQ_DDT_FORNITORE&&!fornitori.includes(ACQ_DDT_FORNITORE)){ACQ_DDT_FORNITORE='';ACQ_DDT_ORDER_ID=''}
+  const ordiniFornitore=ACQ_DDT_FORNITORE?flat.filter(({o})=>String(o.fornitore||'').toLowerCase()===ACQ_DDT_FORNITORE.toLowerCase()):[];
+  if(ACQ_DDT_ORDER_ID&&!ordiniFornitore.some(({o})=>String(o.id)===String(ACQ_DDT_ORDER_ID)))ACQ_DDT_ORDER_ID='';
+  if(!ACQ_DDT_ORDER_ID&&ordiniFornitore.length){
+    const candidato=ordiniFornitore.slice().sort((a,b)=>(a.o.ddtMultipli.length?1:0)-(b.o.ddtMultipli.length?1:0)||(b.o.dataOrdine||'').localeCompare(a.o.dataOrdine||''))[0];
+    ACQ_DDT_ORDER_ID=String(candidato.o.id);
+  }
   const selezionato=flat.find(({o})=>String(o.id)===String(ACQ_DDT_ORDER_ID));
-  const options='<option value="">Seleziona un ordine</option>'+flat.filter(({o})=>o.numeroOrdine||o.fornitore).map(({o})=>`<option value="${escAtt(o.id)}" ${String(o.id)===String(ACQ_DDT_ORDER_ID)?'selected':''}>${escAtt(o.numeroOrdine||'Senza numero')} · ${escAtt(o.fornitore||'Fornitore da inserire')}</option>`).join('');
-  let dettaglio='<div class="panel"><p class="empty-note" style="padding:20px 0">Seleziona un ordine per visualizzare la merce ordinata e collegare uno o più DDT.</p></div>';
-  if(selezionato){const {o,catNome}=selezionato,righe=o.ddtMultipli||[];dettaglio=`<div class="panel"><div class="section-hero" style="margin-bottom:16px"><div><span class="empty-note">ORDINE RICHIAMATO</span><h2 style="margin-top:4px">${escAtt(o.numeroOrdine||'Senza numero')} · ${escAtt(o.fornitore||'Fornitore da inserire')}</h2><p>${escAtt(catNome)} · ${o.dataOrdine?dataBreve(o.dataOrdine):'Data ordine mancante'}</p></div><span class="chip ${righe.length?'teal':'amber'}">${righe.length} DDT collegati</span></div><div class="info-strip" style="grid-template-columns:1fr"><div class="info-chip"><span>Merce ordinata</span><strong>${escAtt(o.descrizioneOrdine||'Descrizione non presente nell’ordine')}</strong></div></div><div class="table-wrap"><table class="row-table"><thead><tr><th>N. ordine</th><th>N. DDT</th><th>Merce ordinata</th><th>Merce consegnata</th><th>Confronto</th><th></th></tr></thead><tbody>${righe.map((d,i)=>`<tr data-ddt-idx="${i}"><td><strong>${escAtt(o.numeroOrdine||'-')}</strong></td><td><strong>${escAtt(d.numero||'-')}</strong></td><td style="white-space:normal">${escAtt(o.descrizioneOrdine||'-')}</td><td style="white-space:normal">${escAtt(d.merceConsegnata||'-')}</td><td>${d.corrisponde?'<span class="chip valido">Corrisponde</span>':'<span class="chip in_scadenza">Differenza</span>'}</td><td><button class="btn btn-outline btn-sm ddt-remove">Elimina</button></td></tr>`).join('')||'<tr><td colspan="6" class="empty-note">Nessun DDT collegato a questo ordine.</td></tr>'}</tbody></table></div><form id="newDdtForm" style="margin-top:18px;padding-top:18px;border-top:1px solid var(--border)"><h3 style="font-size:14px;margin:0 0 12px">Aggiungi DDT</h3><div class="form-grid"><div class="field"><label>Numero DDT *</label><input id="newDdtNumber" required></div><div class="field"><label>Merce consegnata *</label><input id="newDdtDelivered" required placeholder="Descrizione e quantità consegnata"></div><div class="field" style="align-self:end"><label style="display:flex;align-items:center;gap:7px;font-weight:500"><input type="checkbox" id="newDdtMatches" style="width:auto"> Corrisponde alla merce ordinata</label></div><div style="align-self:end"><button class="btn btn-primary" type="submit">Collega DDT all’ordine</button></div></div></form></div>`}
-  document.getElementById('main').innerHTML=`<div class="section-hero"><div><h2>Consegne e DDT</h2><p>Richiama l’ordine e confronta esclusivamente la merce ordinata con quella consegnata.</p></div></div>${acquistiSubNav('ddt')}<div class="panel"><div class="field" style="max-width:620px"><label>Richiama ordine</label><select id="ddtOrderSelect">${options}</select></div></div>${dettaglio}`;
-  attachAcquistiSubNav();document.getElementById('ddtOrderSelect').onchange=e=>{ACQ_DDT_ORDER_ID=e.target.value;renderAcquistiDDT()};
-  if(selezionato){const o=selezionato.o;const aggiornaLegacy=()=>{o.numeroDDT=o.ddtMultipli.map(x=>x.numero).filter(Boolean).join(', ');o.descrizioneArrivo=o.ddtMultipli.map(x=>x.merceConsegnata).filter(Boolean).join(' | ');o.quantitaConfermata=o.ddtMultipli.length>0&&o.ddtMultipli.every(x=>x.corrisponde)};document.getElementById('newDdtForm').onsubmit=e=>{e.preventDefault();o.ddtMultipli.push({id:String(Date.now()),numero:document.getElementById('newDdtNumber').value.trim(),merceConsegnata:document.getElementById('newDdtDelivered').value.trim(),corrisponde:document.getElementById('newDdtMatches').checked});aggiornaLegacy();salvaAcquistoExtra(o);saveData();renderAcquistiDDT()};document.querySelectorAll('[data-ddt-idx]').forEach(row=>row.querySelector('.ddt-remove').onclick=()=>{if(!confirm('Eliminare questo DDT?'))return;o.ddtMultipli.splice(Number(row.dataset.ddtIdx),1);aggiornaLegacy();salvaAcquistoExtra(o);saveData();renderAcquistiDDT()})}
+  const elencoOrdini=ACQ_DDT_FORNITORE?(selezionato?`<div class="panel"><div class="section-title" style="margin-top:0"><div><h2>Ordine individuato automaticamente</h2><p>È stato proposto l’ordine aperto più recente di ${escAtt(ACQ_DDT_FORNITORE)}.</p></div><span class="chip teal">Ord. ${escAtt(selezionato.o.numeroOrdine||'senza numero')}</span></div>${ordiniFornitore.length>1?`<details><summary style="cursor:pointer;font-weight:700;color:var(--teal)">Il DDT riguarda un altro ordine?</summary><div class="field" style="max-width:620px;margin-top:12px"><label>Cambia eccezionalmente l’ordine collegato</label><select id="ddtOrderOverride">${ordiniFornitore.map(({o})=>`<option value="${escAtt(o.id)}" ${String(o.id)===String(ACQ_DDT_ORDER_ID)?'selected':''}>Ord. ${escAtt(o.numeroOrdine||'senza numero')} · ${o.dataOrdine?dataBreve(o.dataOrdine):'data mancante'}</option>`).join('')}</select></div></details>`:''}</div>`:'<div class="panel"><p class="empty-note">Non risultano ordini per questo fornitore.</p></div>'):'<div class="panel"><p class="empty-note">Seleziona il fornitore: l’app individuerà automaticamente l’ordine da collegare.</p></div>';
+  const storicoDDT=flat.flatMap(({o,catNome})=>(o.ddtMultipli||[]).map(d=>({d,o,catNome}))).sort((a,b)=>((b.d.data||b.o.dataConsegnaEffettiva||b.o.dataOrdine||'').localeCompare(a.d.data||a.o.dataConsegnaEffettiva||a.o.dataOrdine||'')));
+  const storicoHtml=`<div class="panel" style="margin-top:20px"><div class="section-title" style="margin-top:0"><div><h2>Storico DDT</h2><p>Tutti i documenti di trasporto registrati, ordinati dal più recente.</p></div><span class="chip blue">${storicoDDT.length} DDT</span></div><div class="table-wrap"><table class="row-table"><thead><tr><th>Data</th><th>Fornitore</th><th>N. DDT</th><th>Ordine collegato</th><th>Merce consegnata</th><th>Esito</th></tr></thead><tbody>${storicoDDT.map(({d,o,catNome})=>`<tr><td><strong>${d.data?dataBreve(d.data):(o.dataConsegnaEffettiva?dataBreve(o.dataConsegnaEffettiva):'-')}</strong></td><td><strong>${escAtt(o.fornitore||'-')}</strong><br><span class="empty-note">${escAtt(catNome)}</span></td><td><strong>${escAtt(d.numero||'-')}</strong></td><td>Ord. ${escAtt(o.numeroOrdine||'-')}</td><td style="white-space:normal">${escAtt(d.merceConsegnata||'-')}</td><td>${d.corrisponde?'<span class="chip valido">Conforme</span>':'<span class="chip in_scadenza">Con differenze</span>'}</td></tr>`).join('')||'<tr><td colspan="6" class="empty-note">Nessun DDT registrato.</td></tr>'}</tbody></table></div></div>`;
+  let dettaglio='';
+  if(selezionato){const {o,catNome}=selezionato,righe=o.ddtMultipli||[];dettaglio=`<div class="panel"><div class="section-hero" style="margin-bottom:16px"><div><span class="empty-note">NUOVO DDT</span><h2 style="margin-top:4px">${escAtt(o.fornitore||'-')}</h2><p>Collegamento automatico: ordine ${escAtt(o.numeroOrdine||'senza numero')} · ${escAtt(catNome)}</p></div><span class="chip teal">Ordine già individuato</span></div><div class="info-strip" style="grid-template-columns:1fr"><div class="info-chip"><span>Merce prevista dall’ordine</span><strong>${escAtt(o.descrizioneOrdine||'Descrizione non presente nell’ordine')}</strong></div></div><form id="newDdtForm" style="margin-top:18px"><div class="form-grid"><div class="field"><label>Data DDT *</label><input type="date" id="newDdtDate" value="${oggiIsoAttivita()}" required></div><div class="field"><label>Numero DDT *</label><input id="newDdtNumber" required></div><div class="field"><label>Merce consegnata *</label><input id="newDdtDelivered" required placeholder="Descrizione e quantità consegnata"></div><div class="field" style="align-self:end"><label style="display:flex;align-items:center;gap:7px;font-weight:500"><input type="checkbox" id="newDdtMatches" style="width:auto"> Merce conforme all’ordine</label></div><div style="grid-column:1/-1"><button class="btn btn-primary" type="submit">Salva DDT nello storico</button></div></div></form></div>`}
+  document.getElementById('main').innerHTML=`<div class="section-hero"><div><h2>Consegne e DDT</h2><p>Scegli il fornitore e registra il DDT: l’ordine viene individuato automaticamente. Lo storico resta sempre visibile.</p></div></div>${acquistiSubNav('ddt')}<div class="panel"><div class="field" style="max-width:620px"><label>Cerca fornitore</label><select id="ddtSupplierSelect"><option value="">Seleziona un fornitore</option>${fornitori.map(f=>`<option ${f===ACQ_DDT_FORNITORE?'selected':''}>${escAtt(f)}</option>`).join('')}</select></div></div>${elencoOrdini}${dettaglio}${storicoHtml}`;
+  attachAcquistiSubNav();document.getElementById('ddtSupplierSelect').onchange=e=>{ACQ_DDT_FORNITORE=e.target.value;ACQ_DDT_ORDER_ID='';renderAcquistiDDT()};const override=document.getElementById('ddtOrderOverride');if(override)override.onchange=e=>{ACQ_DDT_ORDER_ID=e.target.value;renderAcquistiDDT()};
+  if(selezionato){const o=selezionato.o;const aggiornaLegacy=()=>{o.numeroDDT=o.ddtMultipli.map(x=>x.numero).filter(Boolean).join(', ');o.descrizioneArrivo=o.ddtMultipli.map(x=>x.merceConsegnata).filter(Boolean).join(' | ');o.quantitaConfermata=o.ddtMultipli.length>0&&o.ddtMultipli.every(x=>x.corrisponde)};document.getElementById('newDdtForm').onsubmit=e=>{e.preventDefault();o.ddtMultipli.push({id:String(Date.now()),data:document.getElementById('newDdtDate').value,numero:document.getElementById('newDdtNumber').value.trim(),merceConsegnata:document.getElementById('newDdtDelivered').value.trim(),corrisponde:document.getElementById('newDdtMatches').checked});aggiornaLegacy();salvaAcquistoExtra(o);saveData();renderAcquistiDDT()}}
+}
+
+function renderAcquistiDDTSemplice(){
+  const flat=allOrdiniFlat();flat.forEach(({o})=>integraAcquistoExtra(o));
+  const fornitori=[...new Set(flat.map(x=>String(x.o.fornitore||'').trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'it'));
+  const ordiniFornitore=ACQ_DDT_FORNITORE?flat.filter(({o})=>String(o.fornitore||'').toLowerCase()===ACQ_DDT_FORNITORE.toLowerCase()):[];
+  const ordineAutomatico=ordiniFornitore.slice().sort((a,b)=>(a.o.ddtMultipli.length?1:0)-(b.o.ddtMultipli.length?1:0)||(b.o.dataOrdine||'').localeCompare(a.o.dataOrdine||''))[0]||null;
+  const storico=flat.flatMap(({o,catNome})=>(o.ddtMultipli||[]).map(d=>({d,o,catNome}))).sort((a,b)=>(b.d.data||b.o.dataConsegnaEffettiva||b.o.dataOrdine||'').localeCompare(a.d.data||a.o.dataConsegnaEffettiva||a.o.dataOrdine||''));
+  const storicoRighe=storico.map(({d,o,catNome})=>`<tr><td><strong>${d.data?dataBreve(d.data):(o.dataConsegnaEffettiva?dataBreve(o.dataConsegnaEffettiva):'-')}</strong></td><td><strong>${escAtt(o.fornitore||'-')}</strong><br><span class="empty-note">${escAtt(catNome)}</span></td><td><strong>${escAtt(d.numero||'-')}</strong></td><td style="white-space:normal">${escAtt(d.merceConsegnata||'-')}</td><td>${d.corrisponde?'<span class="chip valido">Conforme</span>':'<span class="chip in_scadenza">Con differenze</span>'}</td><td><span class="empty-note">Ord. ${escAtt(o.numeroOrdine||'-')}</span></td></tr>`).join('');
+  document.getElementById('main').innerHTML=`
+    <div class="section-hero"><div><h2>Consegne e DDT</h2><p>Registra il documento ricevuto dal fornitore. Il collegamento con l’ordine viene gestito automaticamente.</p></div><span class="chip blue">${storico.length} DDT registrati</span></div>
+    ${acquistiSubNav('ddt')}
+    <div class="panel">
+      <h2>Registra nuovo DDT</h2>
+      <p class="sub">Compila soltanto i dati presenti sul documento di trasporto.</p>
+      <form id="simpleDdtForm">
+        <div class="form-grid">
+          <div class="field"><label>Fornitore *</label><select id="simpleDdtSupplier" required><option value="">Seleziona fornitore</option>${fornitori.map(f=>`<option ${f===ACQ_DDT_FORNITORE?'selected':''}>${escAtt(f)}</option>`).join('')}</select></div>
+          <div class="field"><label>Data DDT *</label><input type="date" id="simpleDdtDate" value="${oggiIsoAttivita()}" required></div>
+          <div class="field"><label>Numero DDT *</label><input id="simpleDdtNumber" required placeholder="Numero riportato sul DDT"></div>
+          <div class="field"><label>Merce consegnata *</label><input id="simpleDdtGoods" required placeholder="Descrizione sintetica della merce"></div>
+          <div class="field" style="grid-column:1/-1"><label style="display:flex;align-items:center;gap:8px;font-weight:600"><input type="checkbox" id="simpleDdtMatches" style="width:auto"> La merce ricevuta corrisponde a quella ordinata</label></div>
+          <div style="grid-column:1/-1"><button class="btn btn-primary" type="submit">Salva DDT</button></div>
+        </div>
+      </form>
+      ${ACQ_DDT_FORNITORE&&!ordineAutomatico?'<div class="diary-alert">Per questo fornitore non risulta ancora registrato un ordine. Inserisci prima l’ordine nella sezione Ordini.</div>':''}
+    </div>
+    <div class="panel" style="margin-top:20px">
+      <div class="section-title" style="margin-top:0"><div><h2>Storico DDT</h2><p>Tutti i DDT registrati, dal più recente.</p></div></div>
+      <div class="table-wrap"><table class="row-table"><thead><tr><th>Data</th><th>Fornitore</th><th>N. DDT</th><th>Merce consegnata</th><th>Esito</th><th>Collegamento</th></tr></thead><tbody>${storicoRighe||'<tr><td colspan="6" class="empty-note">Nessun DDT registrato.</td></tr>'}</tbody></table></div>
+    </div>`;
+  attachAcquistiSubNav();
+  document.getElementById('simpleDdtSupplier').onchange=e=>{ACQ_DDT_FORNITORE=e.target.value;renderAcquistiDDTSemplice()};
+  document.getElementById('simpleDdtForm').onsubmit=e=>{
+    e.preventDefault();
+    const fornitore=document.getElementById('simpleDdtSupplier').value;
+    const ordini=flat.filter(({o})=>String(o.fornitore||'').toLowerCase()===fornitore.toLowerCase());
+    const collegato=ordini.slice().sort((a,b)=>(a.o.ddtMultipli.length?1:0)-(b.o.ddtMultipli.length?1:0)||(b.o.dataOrdine||'').localeCompare(a.o.dataOrdine||''))[0];
+    if(!collegato){alert('Non risulta alcun ordine per questo fornitore. Registra prima l’ordine.');return}
+    const o=collegato.o;
+    o.ddtMultipli.push({id:String(Date.now()),data:document.getElementById('simpleDdtDate').value,numero:document.getElementById('simpleDdtNumber').value.trim(),merceConsegnata:document.getElementById('simpleDdtGoods').value.trim(),corrisponde:document.getElementById('simpleDdtMatches').checked});
+    o.numeroDDT=o.ddtMultipli.map(x=>x.numero).filter(Boolean).join(', ');
+    o.descrizioneArrivo=o.ddtMultipli.map(x=>x.merceConsegnata).filter(Boolean).join(' | ');
+    o.quantitaConfermata=o.ddtMultipli.length>0&&o.ddtMultipli.every(x=>x.corrisponde);
+    salvaAcquistoExtra(o);saveData();renderAcquistiDDTSemplice();
+  };
 }
 
 function renderAcquistiFatturaLegacy() {
@@ -2822,9 +2892,12 @@ function renderAcquistiFattura(){
   const flat=allOrdiniFlat();flat.forEach(({o})=>integraAcquistoExtra(o));
   const fornitori=[...new Set(flat.map(x=>String(x.o.fornitore||'').trim()).filter(Boolean))].sort();
   const ordiniFornitore=ACQ_FATTURA_FORNITORE?flat.filter(x=>(x.o.fornitore||'').toLowerCase()===ACQ_FATTURA_FORNITORE.toLowerCase()):[];
+  const fattureExtraStorico=caricaFattureExtra();
+  const fattureStorico=(DATA.finanziario.fatture||[]).filter(f=>f.tipo==='ricevuta').slice().sort((a,b)=>(b.data||'').localeCompare(a.data||''));
+  const storicoHtml=`<div class="panel" style="margin-top:20px"><div class="section-title" style="margin-top:0"><div><h2>Storico fatture acquisti</h2><p>Tutte le fatture registrate, comprese quelle manuali e quelle collegate a ordini e DDT.</p></div><span class="chip blue">${fattureStorico.length} fatture</span></div><div class="table-wrap"><table class="row-table"><thead><tr><th>Data</th><th>Fornitore</th><th>N. fattura</th><th>Ordini / DDT collegati</th><th>Totale</th><th>Stato</th><th>File</th></tr></thead><tbody>${fattureStorico.map(f=>{const x=fattureExtraStorico[String(f.id)]||{},ordini=(x.ordini||[]).map(id=>flat.find(y=>String(y.o.id)===String(id))).filter(Boolean);return `<tr><td><strong>${f.data?dataBreve(f.data):'-'}</strong></td><td><strong>${escAtt(f.controparte||'Fornitore non indicato')}</strong></td><td>${escAtt(f.numero||'-')}</td><td style="white-space:normal">${ordini.length?ordini.map(({o})=>`<div><strong>Ord. ${escAtt(o.numeroOrdine||'-')}</strong> · DDT ${escAtt(o.numeroDDT||'non presente')}</div>`).join(''):'<span class="empty-note">Fattura manuale, senza ordine/DDT</span>'}</td><td><strong>${euro(f.importo)}</strong></td><td>${f.pagata?'<span class="chip teal">Pagata</span>':'<span class="chip amber">Da pagare</span>'}</td><td>${x.file&&x.file.dati?`<a class="btn btn-outline btn-sm" href="${x.file.dati}" download="${escAtt(x.file.nome||'fattura')}">Apri</a>`:'<span class="empty-note">Non allegato</span>'}</td></tr>`}).join('')||'<tr><td colspan="7" class="empty-note">Nessuna fattura registrata.</td></tr>'}</tbody></table></div></div>`;
   const form=ACQ_FATTURA_MODE?`<div class="panel"><div class="section-hero" style="margin-bottom:14px"><div><h2>${ACQ_FATTURA_MODE==='collegata'?'Fattura collegata a ordine e DDT':'Fattura manuale'}</h2><p>${ACQ_FATTURA_MODE==='collegata'?'Seleziona il fornitore: l’app propone automaticamente ordini e DDT compatibili.':'Registra una fattura che non deriva da ordini o DDT.'}</p></div><button class="btn btn-outline btn-sm" id="afiBack">Cambia percorso</button></div>${ACQ_FATTURA_MODE==='collegata'?`<div class="field" style="max-width:520px;margin-bottom:14px"><label>Fornitore *</label><select id="afiSupplierSelect"><option value="">Seleziona fornitore</option>${fornitori.map(f=>`<option ${f===ACQ_FATTURA_FORNITORE?'selected':''}>${escAtt(f)}</option>`).join('')}</select></div>${ACQ_FATTURA_FORNITORE?`<div style="margin-bottom:16px"><strong>Ordini e DDT trovati</strong><div class="missing-list" style="margin-top:8px">${ordiniFornitore.map(({o,catNome})=>`<label class="missing-item" style="cursor:pointer"><div><input type="checkbox" class="afi-order" value="${escAtt(o.id)}" style="width:auto;margin-right:8px"><strong>Ord. ${escAtt(o.numeroOrdine||'-')}</strong> · ${escAtt(catNome)}<br><span>DDT: ${escAtt(o.numeroDDT||'nessun DDT collegato')} · ${euro(o.importo)}</span></div></label>`).join('')||'<p class="empty-note">Nessun ordine disponibile per questo fornitore.</p>'}</div></div>`:''}`:''}<form id="afiForm"><div class="form-grid">${ACQ_FATTURA_MODE==='manuale'?`<div class="field"><label>Fornitore *</label><input id="afiSupplier" required list="afiSuppliers"><datalist id="afiSuppliers">${fornitori.map(f=>`<option value="${escAtt(f)}">`).join('')}</datalist></div><div class="field"><label>P.IVA / Codice fiscale</label><input id="afiVatNumber"></div>`:''}<div class="field"><label>Numero fattura *</label><input id="afiNumber" required></div><div class="field"><label>Data fattura *</label><input type="date" id="afiDate" required></div><div class="field"><label>Imponibile *</label><input type="number" step="0.01" id="afiTaxable" required></div><div class="field"><label>Aliquota IVA %</label><input type="number" step="0.01" id="afiVatRate" value="22"></div><div class="field"><label>IVA</label><input type="number" step="0.01" id="afiVat" readonly></div><div class="field"><label>Totale fattura</label><input type="number" step="0.01" id="afiTotal" readonly></div><div class="field" style="grid-column:1/-1"><label>Descrizione / causale *</label><input id="afiDescription" required></div><div class="field"><label>Categoria di costo</label><input id="afiCategory" placeholder="es. materiali, trasporto, consulenza"></div><div class="field"><label>File fattura</label><input type="file" id="afiFile" accept=".pdf,.jpg,.jpeg,.png"></div></div><div style="display:flex;justify-content:space-between;align-items:center;margin:18px 0 8px"><strong>Piano pagamenti</strong><button type="button" class="btn btn-outline btn-sm" id="afiAddRate">+ Scadenza</button></div><div class="table-wrap"><table class="row-table"><thead><tr><th>Scadenza</th><th>Modalità</th><th>Riferimento</th><th>Importo</th><th></th></tr></thead><tbody id="afiRates">${fatturaScadenzaHtml(0)}</tbody></table></div><div style="margin-top:16px"><button class="btn btn-primary" type="submit">Salva fattura</button></div></form></div>`:'';
-  document.getElementById('main').innerHTML=`<div class="section-hero"><div><h2>Fatture acquisti</h2><p>Scegli il percorso corretto: i dati confluiscono sempre nello stesso registro fatture.</p></div><button class="btn btn-outline" id="openInvoiceRegister">Apri registro fatture</button></div>${acquistiSubNav('fattura')}<div class="sub-overview-grid" style="margin-bottom:20px"><article class="sub-overview-card" id="afiLinked"><div class="sub-overview-top"><div class="sub-overview-title"><span class="sub-overview-status"></span><div><h3>Collega fattura a ordine/DDT</h3><p>Ricerca automatica tramite fornitore</p></div></div></div><div class="sub-overview-open"><span>Avvia percorso collegato</span><span>→</span></div></article><article class="sub-overview-card" id="afiManual"><div class="sub-overview-top"><div class="sub-overview-title"><span class="sub-overview-status warning"></span><div><h3>Registra fattura manuale</h3><p>Per costi senza ordine o DDT</p></div></div></div><div class="sub-overview-open"><span>Avvia inserimento manuale</span><span>→</span></div></article></div>${form}`;
-  attachAcquistiSubNav();document.getElementById('openInvoiceRegister').onclick=()=>vaiA('finanziaria','fatture');document.getElementById('afiLinked').onclick=()=>{ACQ_FATTURA_MODE='collegata';renderAcquistiFattura()};document.getElementById('afiManual').onclick=()=>{ACQ_FATTURA_MODE='manuale';renderAcquistiFattura()};
+  document.getElementById('main').innerHTML=`<div class="section-hero"><div><h2>Fatture acquisti</h2><p>Registra una fattura collegata scegliendo prima il fornitore, oppure inseriscila manualmente. Lo storico resta sempre visibile.</p></div></div>${acquistiSubNav('fattura')}<div class="sub-overview-grid" style="margin-bottom:20px"><article class="sub-overview-card" id="afiLinked"><div class="sub-overview-top"><div class="sub-overview-title"><span class="sub-overview-status"></span><div><h3>Fattura di un fornitore registrato</h3><p>Gli ordini e i DDT vengono proposti automaticamente</p></div></div></div><div class="sub-overview-open"><span>Seleziona fornitore</span><span>→</span></div></article><article class="sub-overview-card" id="afiManual"><div class="sub-overview-top"><div class="sub-overview-title"><span class="sub-overview-status warning"></span><div><h3>Fattura senza ordine/DDT</h3><p>Inserimento manuale per altri costi</p></div></div></div><div class="sub-overview-open"><span>Inserisci manualmente</span><span>→</span></div></article></div>${form}${storicoHtml}`;
+  attachAcquistiSubNav();document.getElementById('afiLinked').onclick=()=>{ACQ_FATTURA_MODE='collegata';renderAcquistiFattura()};document.getElementById('afiManual').onclick=()=>{ACQ_FATTURA_MODE='manuale';renderAcquistiFattura()};
   if(!ACQ_FATTURA_MODE)return;document.getElementById('afiBack').onclick=()=>{ACQ_FATTURA_MODE='';ACQ_FATTURA_FORNITORE='';renderAcquistiFattura()};const supplierSelect=document.getElementById('afiSupplierSelect');if(supplierSelect)supplierSelect.onchange=e=>{ACQ_FATTURA_FORNITORE=e.target.value;renderAcquistiFattura()};
   const calc=()=>{const imponibile=Number(document.getElementById('afiTaxable').value)||0,aliquota=Number(document.getElementById('afiVatRate').value)||0,iva=imponibile*aliquota/100;document.getElementById('afiVat').value=iva.toFixed(2);document.getElementById('afiTotal').value=(imponibile+iva).toFixed(2)};document.getElementById('afiTaxable').oninput=calc;document.getElementById('afiVatRate').oninput=calc;
   const bindRateDel=()=>document.querySelectorAll('.afi-rate-del').forEach(btn=>btn.onclick=()=>{if(document.querySelectorAll('.afi-rate').length>1)btn.closest('tr').remove()});bindRateDel();document.getElementById('afiAddRate').onclick=()=>{document.getElementById('afiRates').insertAdjacentHTML('beforeend',fatturaScadenzaHtml(Date.now()));bindRateDel()};
@@ -4200,6 +4273,7 @@ function scadenzeImminenti() {
 
 // Naviga verso un'altra area/scheda (usato dai clic nel cruscotto e nel banner).
 function vaiA(area, subtab) {
+  if(!puoAprireArea(area)){alert('Questa sezione è riservata alla Project Manager.');return}
   CURRENT_AREA = area;
   CURRENT_SUBTAB = subtab || (SUBTABS[area] && SUBTABS[area].length ? SUBTABS[area][0][0] : null);
   document.querySelectorAll('#areaTabs button').forEach((b) => b.classList.toggle('active', b.getAttribute('data-area') === area));
@@ -4248,6 +4322,27 @@ function salvaSalOlimpo(v){localStorage.setItem(SAL_OLIMPO_LS_KEY,JSON.stringify
 let GIORNALE_FILTRO='';
 function caricaGiornaleLocale(){try{const v=JSON.parse(localStorage.getItem(GIORNALE_LS_KEY)||'[]');return Array.isArray(v)?v:[]}catch(e){return []}}
 function salvaGiornaleLocale(v){localStorage.setItem(GIORNALE_LS_KEY,JSON.stringify(v));salvaStatoEstesoCloud('giornale',v)}
+function comprimiFotoGiornale(file){
+  return new Promise((resolve,reject)=>{
+    if(!file||!String(file.type||'').startsWith('image/')){reject(new Error('Seleziona soltanto immagini o fotografie.'));return}
+    if(file.size>12*1024*1024){reject(new Error(`La foto ${file.name} supera 12 MB.`));return}
+    const reader=new FileReader();
+    reader.onerror=()=>reject(new Error(`Non riesco a leggere ${file.name}.`));
+    reader.onload=()=>{
+      const img=new Image();
+      img.onerror=()=>reject(new Error(`Il file ${file.name} non è un’immagine valida.`));
+      img.onload=()=>{
+        const max=1600,scala=Math.min(1,max/Math.max(img.width,img.height));
+        const canvas=document.createElement('canvas');
+        canvas.width=Math.max(1,Math.round(img.width*scala));canvas.height=Math.max(1,Math.round(img.height*scala));
+        canvas.getContext('2d').drawImage(img,0,0,canvas.width,canvas.height);
+        resolve({nome:file.name,tipo:'image/jpeg',dati:canvas.toDataURL('image/jpeg',.78)});
+      };
+      img.src=reader.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
 function fineMeseDopo(data,mesi){
   if(!data)return '';
   const p=String(data).split('-').map(Number),d=new Date(Date.UTC(p[0],p[1]-1+mesi+1,0));
@@ -4278,15 +4373,16 @@ function renderGiornale(vista){
     </div>
     ${!vista?'<div class="panel"><p class="empty-note" style="padding:18px 0">Seleziona una delle due schede per visualizzare il contenuto.</p></div>':''}
     <div id="journalDiaryArea" style="display:${vista==='diario'?'block':'none'}"><div class="section-hero"><div><h2>Giornale di cantiere</h2><p>Una registrazione essenziale della giornata: chi ha compilato e cosa è stato fatto.</p></div><button class="btn btn-primary" id="diaryNew">+ Nuova giornata</button></div>
-    <div class="panel diary-form" id="diaryFormPanel"><h2>Nuova registrazione</h2><form id="diaryForm"><div class="form-grid"><div class="field"><label>Data *</label><input type="date" id="diaryDate" value="${oggiIsoAttivita()}" required /></div><div class="field"><label>Compilato da *</label><select id="diaryRole"><option value="amministrazione">Amministrazione</option><option value="tecnico">Tecnico di cantiere</option><option value="pm">Project manager</option></select></div><div class="field" style="grid-column:1/-1"><label>Cosa è stato fatto *</label><textarea id="diaryWorks" rows="4" required placeholder="Descrivi sinteticamente le attività svolte nella giornata"></textarea></div><div style="grid-column:1/-1;display:flex;gap:8px"><button class="btn btn-primary" type="submit">Salva giornata</button><button class="btn btn-outline" type="button" id="diaryCancel">Annulla</button></div></div></form></div>
-    <div class="panel"><h2>Giornate registrate</h2><div class="table-wrap"><table class="row-table"><thead><tr><th>Data</th><th>Compilato da</th><th>Cosa è stato fatto</th><th></th></tr></thead><tbody>${tutti.length?tutti.map(g=>`<tr data-diary-id="${escAtt(g.id)}"><td><strong>${dataBreve(g.data)}</strong></td><td>${escAtt(labelDaElenco(ATTIVITA_RESPONSABILI,g.ruolo)||g.compilatoDa||'-')}</td><td style="white-space:normal">${escAtt(g.lavorazioni||'-')}</td><td><button class="btn btn-outline btn-sm diary-delete">Elimina</button></td></tr>`).join(''):'<tr><td colspan="4" class="empty-note">Nessuna giornata registrata.</td></tr>'}</tbody></table></div></div></div>
+    <div class="panel diary-form" id="diaryFormPanel"><h2>Nuova registrazione</h2><form id="diaryForm"><div class="form-grid"><div class="field"><label>Data *</label><input type="date" id="diaryDate" value="${oggiIsoAttivita()}" required /></div><div class="field"><label>Compilato da *</label><select id="diaryRole"><option value="amministrazione">Amministrazione</option><option value="tecnico">Tecnico di cantiere</option><option value="pm">Project manager</option></select></div><div class="field" style="grid-column:1/-1"><label>Cosa è stato fatto *</label><textarea id="diaryWorks" rows="4" required placeholder="Descrivi sinteticamente le attività svolte nella giornata"></textarea></div><div class="field" style="grid-column:1/-1"><label>Foto della giornata</label><div class="diary-upload"><label class="btn btn-outline" for="diaryPhotos">📷 Allega foto</label><input type="file" id="diaryPhotos" accept="image/*" capture="environment" multiple hidden /><span class="diary-photo-count" id="diaryPhotoStatus">Nessuna foto selezionata</span></div><p class="empty-note" style="margin-top:7px">Puoi allegare fino a 6 fotografie. Le immagini vengono ottimizzate automaticamente.</p></div><div style="grid-column:1/-1;display:flex;gap:8px"><button class="btn btn-primary" type="submit">Salva giornata</button><button class="btn btn-outline" type="button" id="diaryCancel">Annulla</button></div></div></form></div>
+    <div class="panel"><h2>Giornate registrate</h2><div class="table-wrap"><table class="row-table"><thead><tr><th>Data</th><th>Compilato da</th><th>Cosa è stato fatto</th><th>Foto</th><th></th></tr></thead><tbody>${tutti.length?tutti.map(g=>`<tr data-diary-id="${escAtt(g.id)}"><td><strong>${dataBreve(g.data)}</strong></td><td>${escAtt(labelDaElenco(ATTIVITA_RESPONSABILI,g.ruolo)||g.compilatoDa||'-')}</td><td style="white-space:normal">${escAtt(g.lavorazioni||'-')}</td><td>${Array.isArray(g.foto)&&g.foto.length?`<div class="diary-photo-list">${g.foto.map((f,i)=>`<a href="${escAtt(f.dati)}" download="${escAtt(f.nome||`foto-${i+1}.jpg`)}" title="Apri o scarica ${escAtt(f.nome||`foto ${i+1}`)}"><img src="${escAtt(f.dati)}" alt="Foto ${i+1} del ${escAtt(g.data)}" /></a>`).join('')}</div>`:'<span class="empty-note">Nessuna</span>'}</td><td><button class="btn btn-outline btn-sm diary-delete">Elimina</button></td></tr>`).join(''):'<tr><td colspan="5" class="empty-note">Nessuna giornata registrata.</td></tr>'}</tbody></table></div></div></div>
     <div id="journalMovisudArea" style="display:${vista==='movisud'?'block':'none'}"><div class="section-hero" style="margin-top:22px"><div><h2>Contabilità giornaliera MOVISUD</h2><p>Registra ogni giorno le lavorazioni comunicate da MOVISUD e il relativo importo. Questi dati alimentano direttamente il SAL lavori.</p></div><button class="btn btn-outline" id="journalOpenSal">Apri SAL lavori</button></div>
     <div class="panel"><h2>Nuova voce contabile</h2><form id="journalSalForm"><div class="form-grid"><div class="field"><label>Data *</label><input type="date" id="journalSalDate" value="${oggiIsoAttivita()}" required /></div><div class="field"><label>Tipo *</label><select id="journalSalType" required><option value="FIR">FIR</option><option value="NOLEGGIO MEZZI">Noleggio mezzi</option><option value="LAVORI">Lavori</option></select></div><div class="field"><label>Importo lavori (€) *</label><input type="number" id="journalSalAmount" min="0" step="0.01" required placeholder="0,00" /></div><div class="field" style="grid-column:1/-1"><label>Cosa è stato fatto *</label><textarea id="journalSalNote" rows="3" required placeholder="Descrivi le lavorazioni comunicate da MOVISUD"></textarea></div><div style="grid-column:1/-1"><button class="btn btn-primary" type="submit">Registra nella contabilità e nel SAL</button></div></div></form></div>
     <div class="panel"><div style="display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap"><div><h2 style="margin-bottom:4px">Voci MOVISUD registrate</h2><p class="muted" style="margin:0">Un unico archivio condiviso con SAL lavori.</p></div><div style="text-align:right"><div class="muted">Totale lavori registrati</div><strong style="font-size:1.3rem">${euro(totaleMovisud)}</strong></div></div><div class="table-wrap" style="margin-top:16px"><table class="row-table"><thead><tr><th>Data</th><th>Cosa è stato fatto</th><th>Tipo</th><th>Importo</th><th>Stato</th></tr></thead><tbody>${salMovisud.length?salMovisud.map(({s})=>`<tr><td><strong>${dataBreve(s.data)}</strong></td><td style="white-space:normal">${escAtt(s.note||'-')}</td><td>${escAtt(s.tipoLavoro||'-')}</td><td><strong>${euro(Number(s.importoLavoriEseguiti)||0)}</strong></td><td>${s.bloccato?'<span class="chip chip-green">Verificato</span>':'<span class="chip chip-amber">Da verificare</span>'}</td></tr>`).join(''):'<tr><td colspan="5" class="empty-note">Nessuna voce contabile MOVISUD registrata.</td></tr>'}</tbody></table></div></div></div>`;
   document.getElementById('journalCardDiary').onclick=()=>renderGiornale('diario');
   document.getElementById('journalCardMovisud').onclick=()=>renderGiornale('movisud');
   const panel=document.getElementById('diaryFormPanel');document.getElementById('diaryNew').onclick=()=>{panel.classList.add('open');document.getElementById('diaryDate').focus()};document.getElementById('diaryCancel').onclick=()=>panel.classList.remove('open');
-  document.getElementById('diaryForm').onsubmit=e=>{e.preventDefault();const v=caricaGiornaleLocale();v.push({id:String(Date.now()),data:document.getElementById('diaryDate').value,ruolo:document.getElementById('diaryRole').value,lavorazioni:document.getElementById('diaryWorks').value.trim(),stato:'validato',compilatoDa:EMAIL_UTENTE||'utente locale',creatoIl:new Date().toISOString()});salvaGiornaleLocale(v);renderGiornale('diario')};
+  document.getElementById('diaryPhotos').onchange=e=>{const n=Math.min((e.target.files||[]).length,6);document.getElementById('diaryPhotoStatus').textContent=n?`${n} ${n===1?'foto selezionata':'foto selezionate'}`:'Nessuna foto selezionata'};
+  document.getElementById('diaryForm').onsubmit=async e=>{e.preventDefault();const submit=e.submitter,files=[...(document.getElementById('diaryPhotos').files||[])];if(files.length>6){alert('Puoi allegare al massimo 6 fotografie per giornata.');return}if(submit){submit.disabled=true;submit.textContent=files.length?'Preparazione foto…':'Salvataggio…'}try{const foto=await Promise.all(files.map(comprimiFotoGiornale));const v=caricaGiornaleLocale();v.push({id:String(Date.now()),data:document.getElementById('diaryDate').value,ruolo:document.getElementById('diaryRole').value,lavorazioni:document.getElementById('diaryWorks').value.trim(),foto,stato:'validato',compilatoDa:EMAIL_UTENTE||'utente locale',creatoIl:new Date().toISOString()});salvaGiornaleLocale(v);renderGiornale('diario')}catch(err){alert(err.message||'Non è stato possibile allegare le fotografie.');if(submit){submit.disabled=false;submit.textContent='Salva giornata'}}};
   document.querySelectorAll('[data-diary-id]').forEach(row=>row.querySelector('.diary-delete').onclick=()=>{if(!confirm('Eliminare questa registrazione giornaliera?'))return;salvaGiornaleLocale(caricaGiornaleLocale().filter(x=>x.id!==row.dataset.diaryId));renderGiornale('diario')});
   document.getElementById('journalOpenSal').onclick=()=>vaiA('sal',null);
   document.getElementById('journalSalForm').onsubmit=async e=>{e.preventDefault();const importo=Number(document.getElementById('journalSalAmount').value);DATA.finanziario.sal.push({id:nextId('sal'),numero:DATA.finanziario.sal.length+1,data:document.getElementById('journalSalDate').value,fornitore:'MOVISUD',tipoLavoro:document.getElementById('journalSalType').value,importoLavoriEseguiti:importo,importoDaLiquidare:'',ritenutaGaranzia:'',note:document.getElementById('journalSalNote').value.trim(),bloccato:false});await saveData();renderGiornale('movisud')};
@@ -4411,57 +4507,31 @@ function proiezioneTesoreriaAutomatica() {
   });
 }
 function attivitaAutomaticheCentro() {
-  const att=[], statoAuto=caricaStatoAutomazioni(), verifiche=caricaVerificheSicurezza(), oggi=oggiIsoAttivita();
+  const att=[], oggi=oggiIsoAttivita();
   const aggiungi=(x)=>att.push(Object.assign({automatica:true,priorita:'media',responsabile:'amministrazione',scadenza:oggi},x));
 
-  elencoSubappalti().forEach((s)=>{
-    const anag=DATA.subappalti[s.id]||{};
-    const attivo=!!anag.ragioneSociale || !subappaltoFisso(s.id);
-    if (!attivo) return;
-    const nome=anag.ragioneSociale||s.lavorazione;
-    const chiaveRichiesta=`sub:${s.id}:richiesta-documenti`;
-    const chiaveConsulente=`sub:${s.id}:consulente-lavoro`;
-    if (!statoAuto[chiaveRichiesta]) aggiungi({chiave:chiaveRichiesta,titolo:`Inviare la checklist di sicurezza a ${nome}`,area:'Sicurezza e documenti',priorita:'alta',note:`Nuovo subappaltatore: inviare l'elenco completo dei ${TIPI_SUBAPPALTO.length} documenti obbligatori prima dell'accesso in cantiere.`,pagina:'documentazione',sottopagina:'subappalti',azione:'segna',azioneLabel:'Segna richiesta inviata'});
-    if (!statoAuto[chiaveConsulente]) aggiungi({chiave:chiaveConsulente,titolo:`Informare il consulente del lavoro: ${nome}`,area:'Amministrazione',priorita:'alta',note:'Inviare l’e-mail prevista dalla procedura interna per ogni nuovo subappaltatore.',pagina:'anagrafica',sottopagina:'subappaltatori',azione:'segna',azioneLabel:'Segna e-mail inviata'});
-    (DATA.subappaltiDocs[s.id]||[]).forEach((d)=>{
-      const keyDoc=`sub:${s.id}:${d.id}`, compilato=docCompilato(d), esito=(verifiche[keyDoc]||{}).esito||'da_verificare';
-      if (!compilato) aggiungi({chiave:`doc-mancante:${s.id}:${d.id}`,titolo:`Richiedere ${d.tipoNome} a ${nome}`,area:'Sicurezza e documenti',priorita:'alta',note:'Documento obbligatorio non ancora caricato o collegato a Drive.',pagina:'documentazione',sottopagina:'subappalti'});
-      else if (d.dataScadenza && statoDocumento(d)==='scaduto') aggiungi({chiave:`doc-scaduto:${s.id}:${d.id}`,titolo:`Rinnovare ${d.tipoNome} di ${nome}`,area:'Sicurezza e documenti',priorita:'alta',scadenza:d.dataScadenza,note:`Documento scaduto il ${dataBreve(d.dataScadenza)}.`,pagina:'documentazione',sottopagina:'subappalti'});
-      else if (d.dataScadenza && statoDocumento(d)==='in_scadenza') aggiungi({chiave:`doc-scadenza:${s.id}:${d.id}`,titolo:`Programmare rinnovo ${d.tipoNome} di ${nome}`,area:'Sicurezza e documenti',priorita:'media',scadenza:d.dataScadenza,note:'Avviso generato soltanto perché il documento ha una data di scadenza.',pagina:'documentazione',sottopagina:'subappalti'});
-      if (compilato && statoDocumento(d)!=='scaduto' && esito!=='regolare') aggiungi({chiave:`doc-approva:${s.id}:${d.id}`,titolo:`Verificare e approvare ${d.tipoNome} di ${nome}`,area:'Sicurezza e documenti',responsabile:'pm',priorita:'alta',note:'Il documento è presente ma l’approvazione finale spetta esclusivamente alla Project Manager.',pagina:'documentazione',sottopagina:'controllo'});
-    });
+  allDocsFlat().forEach((d,indice)=>{
+    const nome=d.tipoNome||d.nome||'Documento';
+    const contesto=d.ctx||'Cantiere';
+    const sottopagina=d.ambito==='sub'?'subappalti':'cantiere';
+    const idDoc=d.id!=null?d.id:indice;
+    if (!docCompilato(d)) {
+      aggiungi({chiave:`doc-mancante:${d.ambito}:${contesto}:${idDoc}`,titolo:`Documento mancante: ${nome}`,area:'Documenti mancanti',priorita:'alta',note:contesto,pagina:'documentazione',sottopagina});
+    } else if (d.dataScadenza && statoDocumento(d)==='scaduto') {
+      aggiungi({chiave:`doc-scaduto:${d.ambito}:${contesto}:${idDoc}`,titolo:`Documento scaduto: ${nome}`,area:'Documenti scaduti',priorita:'alta',scadenza:d.dataScadenza,note:`${contesto} · scaduto il ${dataBreve(d.dataScadenza)}.`,pagina:'documentazione',sottopagina});
+    } else if (d.dataScadenza && statoDocumento(d)==='in_scadenza' && /visura/i.test(nome)) {
+      aggiungi({chiave:`visura-scadenza:${d.ambito}:${contesto}:${idDoc}`,titolo:`Visura in scadenza: ${contesto}`,area:'Documenti in scadenza',priorita:'media',scadenza:d.dataScadenza,note:`La visura scadrà il ${dataBreve(d.dataScadenza)}. L’avviso compare 30 giorni prima.`,pagina:'documentazione',sottopagina});
+    }
   });
 
   DATA.finanziario.pianificazione.forEach((p)=>{
-    if (p.bloccato && p.data && p.data<=oggi && !p.fatturaEmessa) aggiungi({chiave:`fattura-sal:${p.id}`,titolo:`Emettere fattura per rata/SAL ${p.numero||p.id}`,area:'Contabilita',priorita:'alta',scadenza:p.data,note:'La rata/SAL risulta confermata e ha raggiunto la propria scadenza, ma non è collegato un numero di fattura.',pagina:'finanziaria',sottopagina:'pianificazione'});
+    if (p.bloccato && p.data && p.data<=oggi && !p.fatturaEmessa) {
+      aggiungi({chiave:`fattura-sal:${p.id}`,titolo:`Fattura non emessa: rata/SAL ${p.numero||p.id}`,area:'Fatture non emesse',priorita:'alta',scadenza:p.data,note:'La rata/SAL è confermata e scaduta, ma non risulta emessa la fattura.',pagina:'finanziaria',sottopagina:'pianificazione'});
+    }
+    if (p.data && p.data<oggi && !p.incassato) {
+      aggiungi({chiave:`incasso-mancante:${p.id}`,titolo:`Pagamento non incassato: rata/SAL ${p.numero||p.id}`,area:'Pagamenti non incassati',priorita:'alta',scadenza:p.data,note:`Scadenza del pagamento: ${dataBreve(p.data)}.`,pagina:'finanziaria',sottopagina:'pianificazione'});
+    }
   });
-
-  allOrdiniFlat().forEach(({catNome,o})=>{
-    integraAcquistoExtra(o);
-    const rif=o.numeroOrdine||o.fornitore||catNome;
-    const riferimentoCompleto=[o.numeroOrdine?'Ord. '+o.numeroOrdine:'Ordine senza numero',o.dataOrdine?dataBreve(o.dataOrdine):'data non inserita'].join(' · ');
-    if (!String(o.fornitore||'').trim()) aggiungi({chiave:`ordine-fornitore:${o.id}`,titolo:`Inserire il fornitore: ${riferimentoCompleto}`,area:'Acquisti',responsabile:'amministrazione',priorita:'alta',note:'L’ordine è stato creato ma non è stato indicato il fornitore.',pagina:'acquisti',sottopagina:'ordine'});
-    if (!(Number(o.importo)>0)) aggiungi({chiave:`ordine-importo:${o.id}`,titolo:`Inserire l’importo: ${rif}`,area:'Acquisti',responsabile:'amministrazione',priorita:'alta',note:`Importo mancante per ${riferimentoCompleto}.`,pagina:'acquisti',sottopagina:'ordine'});
-    if (o.dataConsegnaEffettiva && !o.numeroDDT) aggiungi({chiave:`ddt-mancante:${o.id}`,titolo:`Registrare il DDT: ${rif}`,area:'Acquisti',responsabile:'tecnico',priorita:'alta',scadenza:o.dataConsegnaEffettiva,note:'La merce risulta arrivata, ma il DDT non è stato registrato.',pagina:'acquisti'});
-    if (o.numeroDDT && !o.quantitaConfermata) aggiungi({chiave:`ddt-verifica:${o.id}`,titolo:`Verificare materiale e quantità del DDT ${o.numeroDDT}`,area:'Acquisti',responsabile:'tecnico',priorita:'alta',note:'Il tecnico deve confrontare quanto consegnato con l’ordine.',pagina:'acquisti'});
-    if (o.numeroDDT && !o.fatturaId) aggiungi({chiave:`fattura-acquisto:${o.id}`,titolo:`Collegare la fattura al DDT ${o.numeroDDT}`,area:'Contabilita',priorita:'media',note:'È presente il DDT, ma non risulta collegata una fattura ricevuta.',pagina:'acquisti'});
-  });
-
-  const fattExtra=caricaFattureExtra();
-  DATA.finanziario.fatture.filter(f=>f.tipo==='ricevuta').forEach((f)=>{
-    const extra=fattExtra[String(f.id)]||{},rif=`${f.numero||'senza numero'} · ${f.controparte||'fornitore mancante'}`;
-    if(!String(f.controparte||'').trim())aggiungi({chiave:`fattura-fornitore:${f.id}`,titolo:`Inserire il fornitore della fattura ${f.numero||f.id}`,area:'Contabilita',priorita:'alta',note:'La fattura ricevuta non contiene il fornitore.',pagina:'acquisti',sottopagina:'fattura'});
-    if(!(Number(f.imponibile)>0))aggiungi({chiave:`fattura-imponibile:${f.id}`,titolo:`Inserire l’imponibile della fattura ${rif}`,area:'Contabilita',priorita:'alta',note:'Imponibile mancante o pari a zero.',pagina:'acquisti',sottopagina:'fattura'});
-    if(!extra.scadenze||!extra.scadenze.length||extra.scadenze.some(x=>!x.modalita||!x.data))aggiungi({chiave:`fattura-pagamento:${f.id}`,titolo:`Completare il pagamento della fattura ${rif}`,area:'Contabilita',priorita:'media',note:'Manca almeno una data di scadenza o la modalità BB, Cambiali o Assegni.',pagina:'acquisti',sottopagina:'fattura'});
-    (extra.ordini||[]).forEach(oid=>{const item=allOrdiniFlat().find(x=>String(x.o.id)===String(oid));if(item&&!item.o.numeroDDT)aggiungi({chiave:`fattura-senza-ddt:${f.id}:${oid}`,titolo:`Verificare fattura senza DDT: ${rif}`,area:'Contabilita',priorita:'alta',note:`La fattura è collegata all’ordine ${item.o.numeroOrdine||oid}, ma l’ordine non ha un DDT.`,pagina:'acquisti',sottopagina:'fattura'})});
-  });
-
-  DATA.cronoprogramma.forEach((f)=>{
-    const ritardo=giorniDaScadenza(f.dataFinePrevista);
-    if (!f.dataFineEffettiva && ritardo!==null && ritardo>=5) aggiungi({chiave:`fase-ritardo:${f.id}`,titolo:`Predisporre recupero della fase: ${f.nome}`,area:'Tecnico e avanzamento',responsabile:'tecnico',priorita:'alta',scadenza:f.dataFinePrevista,note:`La fase è in ritardo di ${ritardo} giorni rispetto al cronoprogramma.`,pagina:'cronoprogramma'});
-  });
-
-  proiezioneTesoreriaAutomatica().filter((r)=>r.saldo<0).forEach((r)=>aggiungi({chiave:`saldo-negativo:${r.mese}`,titolo:`Definire copertura finanziaria per ${meseAnno(r.mese+'-15')}`,area:'Finanza',responsabile:'pm',priorita:'alta',scadenza:r.mese+'-01',note:`Il saldo previsionale diventa negativo: ${euro(r.saldo)}.`,pagina:'finanziaria',sottopagina:'tesoreria'}));
   return att.sort((a,b)=>({alta:0,media:1,bassa:2}[a.priorita]-({alta:0,media:1,bassa:2}[b.priorita])||(a.scadenza||'9999').localeCompare(b.scadenza||'9999')));
 }
 function renderCentroAttivita() {
@@ -4477,20 +4547,20 @@ function renderCentroAttivita() {
     <div class="task-actions"><button class="btn btn-outline btn-sm auto-open">Apri sezione</button>${a.azione==='segna'?`<button class="btn btn-primary btn-sm auto-resolve">${escAtt(a.azioneLabel)}</button>`:''}</div>
   </div>`;
   const gruppiDef=[
-    {id:'documenti',titolo:'Documentazione e sicurezza',aree:['Sicurezza e documenti']},
-    {id:'acquisti',titolo:'Acquisti e forniture',aree:['Acquisti']},
-    {id:'contabilita',titolo:'Contabilità e fatturazione',aree:['Contabilita','Amministrazione']},
-    {id:'lavori',titolo:'Lavori e avanzamento',aree:['Tecnico e avanzamento']},
-    {id:'finanza',titolo:'Finanza e cassa',aree:['Finanza']}
+    {id:'documenti',titolo:'Documenti mancanti',aree:['Documenti mancanti']},
+    {id:'documenti',titolo:'Documenti scaduti',aree:['Documenti scaduti']},
+    {id:'documenti',titolo:'Visure in scadenza',aree:['Documenti in scadenza']},
+    {id:'contabilita',titolo:'Fatture non emesse',aree:['Fatture non emesse']},
+    {id:'finanza',titolo:'Pagamenti non incassati',aree:['Pagamenti non incassati']}
   ];
   let primaUrgenteAperta=false;
   const gruppiHtml=gruppiDef.map((g)=>{const v=filtrate.filter(a=>g.aree.includes(a.area));if(!v.length)return'';const critiche=v.filter(a=>a.priorita==='alta').length;const aperta=critiche>0&&!primaUrgenteAperta;if(aperta)primaUrgenteAperta=true;return `<details class="activity-area ${g.id}" ${aperta?'open':''}><summary class="activity-area-head"><div class="activity-area-title"><span class="activity-area-dot"></span><h3>${g.titolo}</h3></div><div class="activity-area-count"><span class="chip gray">${v.length}</span>${critiche?`<span class="chip red">${critiche} critiche</span>`:''}</div></summary><div class="activity-area-body"><div class="task-list">${v.map(schedaAttivita).join('')}</div></div></details>`;}).join('');
   document.getElementById('main').innerHTML=`
-    <div class="section-hero"><div><h2>Cosa bisogna fare</h2><p>Attività generate automaticamente dai dati della commessa. Risolvi la causa e l’avviso scompare.</p></div></div>
+    <div class="section-hero"><div><h2>Verifica attività</h2><p>Il sistema mostra soltanto anomalie oggettive già rilevate nei documenti, nella fatturazione e negli incassi.</p></div></div>
     <div class="activity-summary">
-      <div class="activity-summary-card critical"><strong>${automatiche.filter(a=>a.priorita==='alta').length}</strong><span>Critiche</span></div>
-      <div class="activity-summary-card today"><strong>${automatiche.filter(a=>a.scadenza===oggiIsoAttivita()).length}</strong><span>Da fare oggi</span></div>
-      <div class="activity-summary-card planned"><strong>${automatiche.filter(a=>a.priorita!=='alta').length}</strong><span>Da programmare</span></div>
+      <div class="activity-summary-card critical"><strong>${automatiche.filter(a=>a.area==='Documenti mancanti').length}</strong><span>Documenti mancanti</span></div>
+      <div class="activity-summary-card today"><strong>${automatiche.filter(a=>a.area==='Documenti scaduti'||a.area==='Documenti in scadenza').length}</strong><span>Scaduti / in scadenza</span></div>
+      <div class="activity-summary-card planned"><strong>${automatiche.filter(a=>a.area==='Fatture non emesse'||a.area==='Pagamenti non incassati').length}</strong><span>Anomalie economiche</span></div>
     </div>
     <div class="panel" style="margin-bottom:18px;">
       <div class="task-toolbar"><div><strong>Filtra le attività</strong></div>
@@ -4500,13 +4570,13 @@ function renderCentroAttivita() {
         </div>
       </div>
     </div>
-    <div class="activity-areas">${gruppiHtml||'<div class="panel"><p class="empty-note">Nessuna attività automatica corrisponde ai filtri. I dati controllati non presentano azioni aperte.</p></div>'}</div>
-    ${manualiConservate.length?`<details class="panel"><summary style="cursor:pointer;font-weight:700;">Attività manuali precedenti conservate (${manualiConservate.length})</summary><p class="sub">Non sono state cancellate, ma non alimentano più il Centro attività automatico.</p></details>`:''}`;
+    <div class="activity-areas">${gruppiHtml||'<div class="panel"><p class="empty-note">Nessuna anomalia rilevata: non risultano documenti mancanti o scaduti, fatture da emettere o pagamenti scaduti da incassare.</p></div>'}</div>`;
   [['taskFilterResp','responsabile'],['taskFilterArea','area']].forEach(([id,k])=>document.getElementById(id).onchange=(e)=>{ATTIVITA_FILTRI[k]=e.target.value;renderCentroAttivita();});
   document.querySelectorAll('[data-auto-key]').forEach((row)=>{const a=automatiche.find(x=>x.chiave===row.dataset.autoKey);row.querySelector('.auto-open').onclick=()=>{if(a.pagina==='acquisti'&&a.sottopagina)ACQUISTI_SUBTAB=a.sottopagina;vaiA(a.pagina,a.sottopagina||null)};const risolvi=row.querySelector('.auto-resolve');if(risolvi)risolvi.onclick=()=>{const s=caricaStatoAutomazioni();s[a.chiave]={completata:true,data:oggiIsoAttivita(),utente:EMAIL_UTENTE||'utente locale'};salvaStatoAutomazioni(s);renderCentroAttivita();};});
 }
 
 function renderHome() {
+  const accessoPM=RUOLO_UTENTE==='pm';
   const s = scadenzeImminenti();
   const att = riepilogoAttivita();
   const importo = Number(DATA.cantiere.importoTotale) || 0;
@@ -4526,19 +4596,19 @@ function renderHome() {
   const ordini=DATA.acquisti.categorie.reduce((a,c)=>a+c.ordini.length,0);
   const acquistiCritici=allOrdiniFlat().filter(x=>criticitaOrdine(x.o).length).length;
   const subAttivi=elencoSubappalti().filter(x=>DATA.subappalti[x.id] && DATA.subappalti[x.id].ragioneSociale).length;
-  const criticita=s.docsScaduti.length+s.fasiRitardo.length+s.fattureScadute.length+s.salFornScadute.length+att.scadute.length+acquistiCritici+(tesoreria.primoSotto?1:0);
+  const criticita=s.docsScaduti.length+s.fasiRitardo.length+att.scadute.length+acquistiCritici+(accessoPM?s.fattureScadute.length+s.salFornScadute.length+(tesoreria.primoSotto?1:0):0);
   const pct=(n)=>Math.max(0,Math.min(100,n||0));
   document.getElementById('main').innerHTML = `
     <div class="dashboard-hero">
       <section class="hero-main">
         <div style="display:flex;justify-content:space-between;gap:15px;align-items:start;flex-wrap:wrap">
-          <div><h2>Studentato Calvanico</h2><p>Cruscotto di controllo amministrativo, economico e finanziario · aggiornato al ${oggiStr()}</p></div>
+          <div><h2>Studentato Calvanico</h2><p>${accessoPM?'Cruscotto di controllo amministrativo, economico e finanziario':'Cruscotto di controllo operativo e documentale'} · aggiornato al ${oggiStr()}</p></div>
           <span class="chip ${criticita?'red':'teal'}">${criticita ? criticita+' criticità' : 'Commessa sotto controllo'}</span>
         </div>
         <div class="hero-progress">
           <div class="hero-kpi"><strong>${avanzamentoFasi}%</strong><span>Avanzamento fisico reale (atteso ${metricheFasi.atteso}%)</span><div class="progress-line"><i style="width:${pct(avanzamentoFasi)}%"></i></div></div>
-          <div class="hero-kpi"><strong>${avanzamento}%</strong><span>Avanzamento SAL</span><div class="progress-line"><i style="width:${pct(avanzamento)}%"></i></div></div>
-          <div class="hero-kpi"><strong>${budgetUsato}%</strong><span>Budget utilizzato</span><div class="progress-line"><i style="width:${pct(budgetUsato)}%"></i></div></div>
+          ${accessoPM?`<div class="hero-kpi"><strong>${avanzamento}%</strong><span>Avanzamento SAL</span><div class="progress-line"><i style="width:${pct(avanzamento)}%"></i></div></div>
+          <div class="hero-kpi"><strong>${budgetUsato}%</strong><span>Budget utilizzato</span><div class="progress-line"><i style="width:${pct(budgetUsato)}%"></i></div></div>`:''}
         </div>
       </section>
       <aside class="action-panel">
@@ -4546,17 +4616,17 @@ function renderHome() {
         <div class="quick-action" onclick="vaiA('attivita')"><div><b>Centro attivit&agrave;</b><br><span>Azioni aperte, scadute e da validare</span></div><span class="chip ${att.scadute.length?'red':'blue'}">${att.aperte.length}</span></div>
         <div class="quick-action" onclick="vaiA('giornale')"><div><b>Giornale di cantiere</b><br><span>Registrazioni in attesa di validazione</span></div><span class="chip ${caricaGiornaleLocale().some(g=>g.stato==='inviato')?'amber':'gray'}">${caricaGiornaleLocale().filter(g=>g.stato==='inviato').length}</span></div>
         <div class="quick-action" onclick="ACQUISTI_SUBTAB='controllo';vaiA('acquisti')"><div><b>Controllo acquisti</b><br><span>Ordini, consegne, DDT e fatture da verificare</span></div><span class="chip ${acquistiCritici?'red':'gray'}">${acquistiCritici}</span></div>
-        <div class="quick-action" onclick="vaiA('finanziaria','tesoreria')"><div><b>Tesoreria</b><br><span>Primo mese sotto la soglia di sicurezza</span></div><span class="chip ${tesoreria.primoSotto?'red':'teal'}">${tesoreria.primoSotto?meseAnno(tesoreria.primoSotto.mese+'-15'):'OK'}</span></div>
+        ${accessoPM?`<div class="quick-action" onclick="vaiA('finanziaria','tesoreria')"><div><b>Tesoreria</b><br><span>Primo mese sotto la soglia di sicurezza</span></div><span class="chip ${tesoreria.primoSotto?'red':'teal'}">${tesoreria.primoSotto?meseAnno(tesoreria.primoSotto.mese+'-15'):'OK'}</span></div>`:''}
         <div class="quick-action" onclick="vaiA('documentazione','scadenzario')"><div><b>Documenti mancanti</b><br><span>File o dati ancora da caricare</span></div><span class="chip ${s.docsScaduti.length?'red':'gray'}">${allDocsFlat().filter(d=>!docCompilato(d)).length}</span></div>
-        <div class="quick-action" onclick="vaiA('finanziaria','salfornitori')"><div><b>Pagamenti fornitori</b><br><span>Scaduti o entro 30 giorni</span></div><span class="chip ${s.salFornScadute.length?'red':'amber'}">${s.salFornScadute.length+s.salFornImminenti.length}</span></div>
-        <div class="quick-action" onclick="vaiA('finanziaria','scadenzario')"><div><b>Fatture da emettere</b><br><span>Incassi ricevuti da fatturare</span></div><span class="chip ${s.fattureDaEmettere.length?'red':'gray'}">${s.fattureDaEmettere.length}</span></div>
+        ${accessoPM?`<div class="quick-action" onclick="vaiA('finanziaria','salfornitori')"><div><b>Pagamenti fornitori</b><br><span>Scaduti o entro 30 giorni</span></div><span class="chip ${s.salFornScadute.length?'red':'amber'}">${s.salFornScadute.length+s.salFornImminenti.length}</span></div>
+        <div class="quick-action" onclick="vaiA('finanziaria','scadenzario')"><div><b>Fatture da emettere</b><br><span>Incassi ricevuti da fatturare</span></div><span class="chip ${s.fattureDaEmettere.length?'red':'gray'}">${s.fattureDaEmettere.length}</span></div>`:''}
         <div class="quick-action" onclick="vaiA('cronoprogramma')"><div><b>Fasi in ritardo</b><br><span>Attività oltre il termine previsto</span></div><span class="chip ${s.fasiRitardo.length?'red':'gray'}">${s.fasiRitardo.length}</span></div>
       </aside>
     </div>
     <div class="kpi-strip">
-      <div class="kpi-mini"><div class="v">${euro(importo)}</div><div class="l">Valore appalto</div></div>
+      ${accessoPM?`<div class="kpi-mini"><div class="v">${euro(importo)}</div><div class="l">Valore appalto</div></div>
       <div class="kpi-mini"><div class="v">${euro(incassato)}</div><div class="l">Incassato</div></div>
-      <div class="kpi-mini"><div class="v">${euro(liquidita)}</div><div class="l">Saldo disponibile inserito</div></div>
+      <div class="kpi-mini"><div class="v">${euro(liquidita)}</div><div class="l">Saldo disponibile inserito</div></div>`:''}
       <div class="kpi-mini"><div class="v">${compliance}%</div><div class="l">Compliance documentale</div></div>
       <div class="kpi-mini"><div class="v">${ordini}</div><div class="l">Ordini registrati</div></div>
       <div class="kpi-mini"><div class="v">${subAttivi}</div><div class="l">Subappaltatori attivi</div></div>
@@ -4566,8 +4636,8 @@ function renderHome() {
       <div class="process-card" onclick="vaiA('documentazione','scadenzario')"><div class="icon">D</div><h3>Documentazione</h3><p>Completezza dei documenti di appaltatore e subappaltatori.</p></div>
       <div class="process-card" onclick="ACQUISTI_SUBTAB='menu';vaiA('acquisti')"><div class="icon">A</div><h3>Ciclo acquisti</h3><p>Ordini, consegne e DDT, fatture.</p></div>
       <div class="process-card" onclick="vaiA('sal')"><div class="icon">S</div><h3>SAL lavori</h3><p>Stati di avanzamento, lavorazioni, importi ed emissione.</p></div>
-      <div class="process-card" onclick="vaiA('finanziaria','tesoreria')"><div class="icon">F</div><h3>Cash flow</h3><p>Incassi, pagamenti, scadenze e fabbisogno finanziario.</p></div>
-      <div class="process-card" onclick="vaiA('economica','quadro')"><div class="icon">€</div><h3>Controllo economico</h3><p>Budget, consuntivi, margine e scostamenti di commessa.</p></div>
+      ${accessoPM?`<div class="process-card" onclick="vaiA('finanziaria','tesoreria')"><div class="icon">F</div><h3>Cash flow</h3><p>Incassi, pagamenti, scadenze e fabbisogno finanziario.</p></div>
+      <div class="process-card" onclick="vaiA('economica','quadro')"><div class="icon">€</div><h3>Controllo economico</h3><p>Budget, consuntivi, margine e scostamenti di commessa.</p></div>`:''}
       <div class="process-card" onclick="vaiA('subappalti')"><div class="icon">SU</div><h3>Subappalti</h3><p>Anagrafiche, contratti, costi, documenti e autorizzazioni.</p></div>
       <div class="process-card" onclick="vaiA('cronoprogramma')"><div class="icon">G</div><h3>Cronoprogramma</h3><p>Fasi, date previste, ritardi e collegamento alle imprese.</p></div>
       <div class="process-card" onclick="vaiA('report')"><div class="icon">R</div><h3>Report direzionali</h3><p>Stampa riepiloghi per direzione, proprietà e istituti finanziari.</p></div>
@@ -4576,15 +4646,16 @@ function renderHome() {
 
 function renderReport() {
   const printAction = (area, subtab) => `vaiA('${area}'${subtab?`, '${subtab}'`:''}); setTimeout(()=>window.print(),250)`;
+  const reportPM=RUOLO_UTENTE==='pm';
   document.getElementById('main').innerHTML = `
     <div class="section-title"><div><h2>Report direzionali</h2><p>Apri il prospetto desiderato e utilizza la stampa del browser per salvarlo in PDF.</p></div></div>
     <div class="process-grid">
       <div class="process-card" onclick="${printAction('home')}"><div class="icon">01</div><h3>Executive dashboard</h3><p>KPI generali, criticità, avanzamento, liquidità e scadenze.</p></div>
-      <div class="process-card" onclick="${printAction('economica','quadro')}"><div class="icon">02</div><h3>Report economico</h3><p>Valore appalto, costi, budget e quadro economico di commessa.</p></div>
-      <div class="process-card" onclick="${printAction('finanziaria','confronto')}"><div class="icon">03</div><h3>Report finanziario</h3><p>Confronto tra incassi, pagamenti e fabbisogno di cassa.</p></div>
+      ${reportPM?`<div class="process-card" onclick="${printAction('economica','quadro')}"><div class="icon">02</div><h3>Report economico</h3><p>Valore appalto, costi, budget e quadro economico di commessa.</p></div>
+      <div class="process-card" onclick="${printAction('finanziaria','confronto')}"><div class="icon">03</div><h3>Report finanziario</h3><p>Confronto tra incassi, pagamenti e fabbisogno di cassa.</p></div>`:''}
       <div class="process-card" onclick="${printAction('cronoprogramma')}"><div class="icon">04</div><h3>Stato avanzamento</h3><p>Cronoprogramma, fasi concluse e lavorazioni in ritardo.</p></div>
       <div class="process-card" onclick="${printAction('documentazione','scadenzario')}"><div class="icon">05</div><h3>Compliance documentale</h3><p>Documenti mancanti, scaduti e in scadenza.</p></div>
-      <div class="process-card" onclick="${printAction('finanziaria','salfornitori')}"><div class="icon">06</div><h3>Scadenziario fornitori</h3><p>SAL fornitori, importi da pagare e pagamenti effettuati.</p></div>
+      ${reportPM?`<div class="process-card" onclick="${printAction('finanziaria','salfornitori')}"><div class="icon">06</div><h3>Scadenziario fornitori</h3><p>SAL fornitori, importi da pagare e pagamenti effettuati.</p></div>`:''}
     </div>`;
 }
 
@@ -4719,6 +4790,9 @@ function renderSubTabsNav() {
 }
 
 function renderMain() {
+  if(!puoAprireArea(CURRENT_AREA)){
+    CURRENT_AREA='home';CURRENT_SUBTAB=null;applicaPermessiInterfaccia();
+  }
   if (CURRENT_AREA === 'home') {
     renderHome();
   } else if (CURRENT_AREA === 'attivita') {
@@ -4764,6 +4838,7 @@ function renderMain() {
 document.getElementById('areaTabs').addEventListener('click', (e) => {
   const btn = e.target.closest('button[data-area]');
   if (!btn) return;
+  if(!puoAprireArea(btn.getAttribute('data-area'))){alert('Questa sezione è riservata alla Project Manager.');return}
   document.querySelectorAll('#areaTabs button').forEach((b) => b.classList.remove('active'));
   btn.classList.add('active');
   CURRENT_AREA = btn.getAttribute('data-area');
@@ -4781,7 +4856,10 @@ async function avviaApp() {
   aggiornaStatoSync('Caricamento…');
   try {
     const sess = await supa.auth.getSession();
-    EMAIL_UTENTE = (sess.data.session && sess.data.session.user && sess.data.session.user.email) || '';
+    const user=(sess.data.session&&sess.data.session.user)||null;
+    EMAIL_UTENTE = (user&&user.email)||'';
+    await caricaRuoloUtente(user);
+    applicaPermessiInterfaccia();
   } catch (err) { EMAIL_UTENTE = ''; }
   try {
     await caricaStatoEstesoCloud();
