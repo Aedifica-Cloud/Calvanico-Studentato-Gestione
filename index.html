@@ -1633,7 +1633,6 @@ function renderControlloSicurezza(){
 function renderScadenzario() {
   const nomeAppaltatrice=(DATA.appaltatore&&DATA.appaltatore.ragioneSociale)||'AEDIFICA S.r.l.';
   const cantiere = [...DATA.cantiereDocs, ...DATA.cantiereDocsAmministrativi]
-    .filter((d) => d.tipoNome !== 'Contratto di appalto generale')
     .map((d) => ({...d, ctx:nomeAppaltatrice, tipoSoggetto:'appaltatrice', lavorazione:'Impresa appaltatrice'}));
   const subs = [];
   elencoSubappalti().filter((sub)=>String(sub.id)!=='ferro'&&!/^ferro\s*\(/i.test(sub.lavorazione||'')).forEach((sub) => {
@@ -1669,10 +1668,16 @@ function renderScadenzario() {
 function renderCantiereDoc() {
   document.getElementById('main').innerHTML = `
     <div class="panel">
-      <h2>Checklist documenti generali di appalto</h2>
+      <h2>Checklist documenti dell'impresa appaltatrice</h2>
       <p class="sub">Dati anagrafici (CIG, CUP, importi, appaltatore, referenti di ruolo) si trovano nell'area "Anagrafica".</p>
       ${docListHead()}
       ${DATA.cantiereDocs.map((d, i) => docRow(d, 'cantiere', null, i)).join('')}
+    </div>
+    <div class="panel" style="margin-top:20px">
+      <h2>Documentazione a supporto</h2>
+      <p class="sub">Documenti generali collegati all'appalto, compreso il contratto di appalto.</p>
+      ${docListHead()}
+      ${DATA.cantiereDocsAmministrativi.map((d, i) => docRow(d, 'cantiere-amm', null, i)).join('')}
     </div>
   `;
   attachDocRowHandlers(renderCantiereDoc);
