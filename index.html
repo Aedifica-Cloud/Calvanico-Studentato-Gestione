@@ -2652,7 +2652,7 @@ function ordineEditor(catId, catNome, idx, o) {
 function renderAcquistiOrdine() {
   const flat = allOrdiniFlat();
   flat.forEach(({o})=>integraAcquistoExtra(o));
-  const filtrati=flat.filter(({o})=>(!ACQ_ORDINI_FILTRI.fornitore||(o.fornitore||'').toLowerCase().includes(ACQ_ORDINI_FILTRI.fornitore.toLowerCase()))&&(!ACQ_ORDINI_FILTRI.dal||o.dataOrdine>=ACQ_ORDINI_FILTRI.dal)&&(!ACQ_ORDINI_FILTRI.al||o.dataOrdine<=ACQ_ORDINI_FILTRI.al));
+  const filtrati=flat.filter(({o})=>(!ACQ_ORDINI_FILTRI.fornitore||(o.fornitore||'').toLowerCase().includes(ACQ_ORDINI_FILTRI.fornitore.toLowerCase()))&&(!ACQ_ORDINI_FILTRI.dal||o.dataOrdine>=ACQ_ORDINI_FILTRI.dal)&&(!ACQ_ORDINI_FILTRI.al||o.dataOrdine<=ACQ_ORDINI_FILTRI.al)).sort((a,b)=>(b.o.dataOrdine||'').localeCompare(a.o.dataOrdine||'')||String(b.o.id||'').localeCompare(String(a.o.id||''),undefined,{numeric:true}));
   const cards = filtrati.map(({ catId, catNome, idx, o }) => {
     const key = catId + ':' + idx;
     const aperto = ACQ_OPEN === key;
