@@ -2614,6 +2614,31 @@ function fatturaInfoOrdine(o) {
   return { n: f.numero || '&mdash;', importo: Number(f.importo) || 0, statoChip: chip(st, st === 'pagata' ? 'Pagata' : 'Da pagare') };
 }
 
+function fattureCollegateOrdine(o){
+  const extra=caricaFattureExtra(),idOrdine=String(o.id);
+  return (DATA.finanziario.fatture||[]).filter(f=>f.tipo==='ricevuta'&&(String(f.id)===String(o.fatturaId)||(extra[String(f.id)]?.ordini||[]).some(id=>String(id)===idOrdine)));
+}
+function storicoCicloOrdineHtml(o){
+  const ddt=(o.ddtMultipli||[]).slice().sort((a,b)=>(a.data||'').localeCompare(b.data||''));
+  const fatture=fattureCollegateOrdine(o).slice().sort((a,b)=>(a.data||'').localeCompare(b.data||''));
+  const extra=caricaFattureExtra(),scadenze=fatture.flatMap(f=>{const x=extra[String(f.id)]||{},rate=Array.isArray(x.scadenze)&&x.scadenze.length?x.scadenze:(f.scadenzaPagamento?[{data:f.scadenzaPagamento,modalita:'',riferimento:'',importo:f.importo}]:[]);return rate.map(r=>({...r,fattura:f}))}).sort((a,b)=>(a.data||a.dataScadenza||'').localeCompare(b.data||b.dataScadenza||''));
+  const ordineCompleto=!!(o.dataOrdine&&o.fornitore&&o.numeroOrdine),scadenzeAperte=scadenze.filter(r=>!r.pagata&&!(r.importoPagato&&Number(r.importoPagato)>=Number(r.importo))).length;
+  const anomalie=[];
+  if(fatture.length&&!ddt.length)anomalie.push({classe:'red',testo:'Fattura presente, ma nessun DDT è associato a questo ordine.'});
+  if(scadenze.length&&!fatture.length)anomalie.push({classe:'red',testo:'Sono presenti scadenze, ma manca la fattura associata.'});
+  if(fatture.length&&!scadenze.length)anomalie.push({classe:'amber',testo:'Fattura collegata, ma le scadenze di pagamento non sono state inserite.'});
+  if(ddt.length&&!fatture.length)anomalie.push({classe:'amber',testo:'DDT presente: la fattura non è ancora collegata.'});
+  if(!ordineCompleto)anomalie.push({classe:'amber',testo:'I dati principali dell’ordine non sono completi.'});
+  const passi=[['Ordine',ordineCompleto?'Completato':'Da completare',ordineCompleto?'teal':'amber'],['Consegne / DDT',ddt.length?`${ddt.length} ${ddt.length===1?'DDT':'DDT'}`:'Mancante',ddt.length?'teal':'amber'],['Fattura',fatture.length?`${fatture.length} ${fatture.length===1?'collegata':'collegate'}`:'Non collegata',fatture.length?'teal':'amber'],['Scadenze',scadenze.length?(scadenzeAperte?`${scadenzeAperte} aperte`:'Completate'):'Da inserire',scadenze.length?(scadenzeAperte?'amber':'teal'):'gray']];
+  const eventi=[];
+  eventi.push({data:o.dataOrdine||'',fase:'Ordine',titolo:`Ordine ${o.numeroOrdine||'senza numero'}`,dettaglio:`${o.fornitore||'Fornitore da inserire'} · ${euro(o.importo)}`,stato:ordineCompleto?'Registrato':'Da completare',classe:ordineCompleto?'teal':'amber'});
+  ddt.forEach(d=>eventi.push({data:d.data||o.dataConsegnaEffettiva||'',fase:'DDT',titolo:`DDT ${d.numero||'senza numero'}`,dettaglio:d.merceConsegnata||o.descrizioneArrivo||'Merce consegnata',stato:d.corrisponde?'Conforme':'Da verificare',classe:d.corrisponde?'teal':'amber'}));
+  fatture.forEach(f=>eventi.push({data:f.data||'',fase:'Fattura',titolo:`Fattura ${f.numero||'senza numero'}`,dettaglio:`${f.controparte||o.fornitore||'Fornitore'} · ${euro(f.importo)}`,stato:f.pagata?'Pagata':'Da pagare',classe:f.pagata?'teal':'amber',file:(extra[String(f.id)]||{}).file}));
+  scadenze.forEach(r=>{const data=r.data||r.dataScadenza||'',pagata=!!r.pagata||(Number(r.importo)>0&&Number(r.importoPagato)>=Number(r.importo));eventi.push({data,fase:'Scadenza',titolo:`${r.modalita||'Pagamento'} · ${euro(r.importo)}`,dettaglio:`Fattura ${r.fattura.numero||'-'}${r.riferimento?' · '+r.riferimento:''}`,stato:pagata?'Pagata':(data&&data<oggiIsoAttivita()?'Scaduta':'Aperta'),classe:pagata?'teal':(data&&data<oggiIsoAttivita()?'red':'amber')})});
+  eventi.sort((a,b)=>(a.data||'9999-12-31').localeCompare(b.data||'9999-12-31'));
+  return `<section class="purchase-cycle" style="margin-bottom:18px"><div class="section-title" style="margin-top:0"><div><h2>Storico completo dell’acquisto</h2><p>Ordine, consegne, fatture e scadenze riuniti nella stessa pratica.</p></div></div>${anomalie.length?`<div style="display:grid;gap:8px;margin-bottom:14px">${anomalie.map(a=>`<div class="diary-alert" style="border-color:var(--${a.classe});color:var(--${a.classe})"><strong>Informazioni incomplete:</strong> ${escAtt(a.testo)}</div>`).join('')}</div>`:''}<div class="sub-overview-facts" style="grid-template-columns:repeat(4,minmax(0,1fr));margin-bottom:16px">${passi.map((p,i)=>`<div class="sub-overview-fact" style="border-top:3px solid var(--${p[2]})"><span>0${i+1} · ${p[0]}</span><strong>${p[1]}</strong></div>`).join('')}</div><div class="table-wrap"><table class="row-table"><thead><tr><th>Data</th><th>Passaggio</th><th>Operazione</th><th>Dettaglio</th><th>Stato</th><th>File</th></tr></thead><tbody>${eventi.map(e=>`<tr><td><strong>${e.data?dataBreve(e.data):'-'}</strong></td><td>${e.fase}</td><td><strong>${escAtt(e.titolo)}</strong></td><td style="white-space:normal">${escAtt(e.dettaglio)}</td><td><span class="chip ${e.classe}">${e.stato}</span></td><td>${e.file?.path?`<a class="btn btn-outline btn-sm" href="#" data-invoice-file-path="${escAtt(e.file.path)}" download="${escAtt(e.file.nome||'fattura')}">Apri</a>`:e.file?.dati?`<a class="btn btn-outline btn-sm" href="${e.file.dati}" download="${escAtt(e.file.nome||'fattura')}">Apri</a>`:'-'}</td></tr>`).join('')}</tbody></table></div><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:14px"><button type="button" class="btn btn-outline btn-sm oe-add-ddt">+ Aggiungi DDT</button><button type="button" class="btn btn-outline btn-sm oe-open-invoices">${fatture.length?'Apri fatture':'Collega fattura'}</button></div></section>`;
+}
+
 // Editor a espansione: tutti i campi dell'ordine raggruppati in Ordine / DDT / Fattura.
 function ordineEditor(catId, catNome, idx, o) {
   const ferro = isFerroCategoria(catNome);
@@ -2624,9 +2649,11 @@ function ordineEditor(catId, catNome, idx, o) {
       <div class="righe-ferro-list">${(o.righeFerro && o.righeFerro.length ? o.righeFerro : [nuovaRigaFerro()]).map((r, ri) => rigaFerroHtml(r, ri, '')).join('')}</div>
       <button type="button" class="btn btn-outline btn-sm rf-add">+ Aggiungi voce</button>
     </div>` : '';
+  const cicloHtml=storicoCicloOrdineHtml(o);
   return `
     <div class="oe-editor" data-cat="${catId}" data-idx="${idx}" style="background:var(--bg); border:1px solid var(--border); border-radius:10px; padding:14px; margin-top:10px;">
-      <h3 style="margin:0 0 8px; font-size:13px; color:var(--teal);">Ordine</h3>
+      ${cicloHtml}
+      <h3 style="margin:0 0 8px; font-size:13px; color:var(--teal);">Dati dell’ordine</h3>
       <div class="form-grid">
         <div class="field"><label>Fornitore (ragione sociale)</label><input type="text" class="oe-fornitore" value="${o.fornitore || ''}" /></div>
         <div class="field"><label>Destinato a</label><select class="oe-sub">${destinazioneOptions(o.subappaltoId)}</select></div>
@@ -2657,9 +2684,11 @@ function renderAcquistiOrdine() {
     const key = catId + ':' + idx;
     const aperto = ACQ_OPEN === key;
     const acquistatoDa=o.ordinatoDa==='altri'?(o.ordinatoDaChi||'Altro soggetto'):'AEDIFICA';
-    const stato=o.numeroDDT?'Consegnato':'In attesa di consegna';
+    const haDdt=(o.ddtMultipli||[]).length>0||!!o.numeroDDT,haFatture=fattureCollegateOrdine(o).length>0;
+    const anomaliaFatturaSenzaDdt=haFatture&&!haDdt;
+    const stato=anomaliaFatturaSenzaDdt?'Fattura presente · DDT mancante':(haDdt?'Consegnato':'In attesa di consegna');
     const compact = `
-      <div data-open="${key}" style="cursor:pointer"><div style="display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap"><div><div style="font-size:19px;font-weight:800;color:var(--navy)">${o.dataOrdine?dataBreve(o.dataOrdine):'Data da inserire'}</div><h3 style="font-size:16px;margin:5px 0 2px">${escAtt(o.fornitore||'Fornitore da inserire')}</h3><p class="sub" style="margin:0">${escAtt(catNome)}${o.descrizioneOrdine?' · '+escAtt(o.descrizioneOrdine):''}</p></div><span class="chip ${o.numeroDDT?'teal':'amber'}">${stato}</span></div><div class="sub-overview-facts" style="grid-template-columns:repeat(4,minmax(0,1fr));margin-top:18px"><div class="sub-overview-fact"><span>Numero ordine</span><strong>${escAtt(o.numeroOrdine||'Da inserire')}</strong></div><div class="sub-overview-fact"><span>Importo</span><strong>${euro(o.importo)}</strong></div><div class="sub-overview-fact"><span>Consegna prevista</span><strong>${o.dataConsegnaPrevista?dataBreve(o.dataConsegnaPrevista):'Da inserire'}</strong></div><div class="sub-overview-fact"><span>Condizioni pagamento</span><strong>${escAtt(o.condizioniPagamento||'Da inserire')}</strong></div></div><div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-top:14px;padding-top:12px;border-top:1px solid var(--border)"><div style="font-size:12px"><strong>Acquisto effettuato da:</strong> ${escAtt(acquistatoDa)}${o.fileOrdine&&o.fileOrdine.dati?` · <a href="${o.fileOrdine.dati}" download="${escAtt(o.fileOrdine.nome||'ordine')}" onclick="event.stopPropagation()">Apri file ordine ↗</a>`:' · <span class="empty-note">File non caricato</span>'}</div><span style="font-size:12px;font-weight:700;color:var(--teal)">${aperto?'Chiudi':'Modifica ordine'} →</span></div></div>`;
+      <div data-open="${key}" style="cursor:pointer"><div style="display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap"><div><div style="font-size:19px;font-weight:800;color:var(--navy)">${o.dataOrdine?dataBreve(o.dataOrdine):'Data da inserire'}</div><h3 style="font-size:16px;margin:5px 0 2px">${escAtt(o.fornitore||'Fornitore da inserire')}</h3><p class="sub" style="margin:0">${escAtt(catNome)}${o.descrizioneOrdine?' · '+escAtt(o.descrizioneOrdine):''}</p></div><span class="chip ${anomaliaFatturaSenzaDdt?'red':(haDdt?'teal':'amber')}">${stato}</span></div>${anomaliaFatturaSenzaDdt?'<div class="diary-alert" style="margin-top:12px;border-color:var(--red);color:var(--red)"><strong>Informazioni incomplete:</strong> la fattura è collegata, ma manca il DDT.</div>':''}<div class="sub-overview-facts" style="grid-template-columns:repeat(4,minmax(0,1fr));margin-top:18px"><div class="sub-overview-fact"><span>Numero ordine</span><strong>${escAtt(o.numeroOrdine||'Da inserire')}</strong></div><div class="sub-overview-fact"><span>Importo</span><strong>${euro(o.importo)}</strong></div><div class="sub-overview-fact"><span>Consegna prevista</span><strong>${o.dataConsegnaPrevista?dataBreve(o.dataConsegnaPrevista):'Da inserire'}</strong></div><div class="sub-overview-fact"><span>Condizioni pagamento</span><strong>${escAtt(o.condizioniPagamento||'Da inserire')}</strong></div></div><div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-top:14px;padding-top:12px;border-top:1px solid var(--border)"><div style="font-size:12px"><strong>Acquisto effettuato da:</strong> ${escAtt(acquistatoDa)}${o.fileOrdine&&o.fileOrdine.dati?` · <a href="${o.fileOrdine.dati}" download="${escAtt(o.fileOrdine.nome||'ordine')}" onclick="event.stopPropagation()">Apri file ordine ↗</a>`:' · <span class="empty-note">File non caricato</span>'}</div><span style="font-size:12px;font-weight:700;color:var(--teal)">${aperto?'Chiudi':'Modifica ordine'} →</span></div></div>`;
     return `<div class="ordine-card" data-key="${key}">${compact}${aperto ? ordineEditor(catId, catNome, idx, o) : ''}</div>`;
   }).join('');
   const catExists = DATA.acquisti.categorie.length > 0;
@@ -2668,7 +2697,7 @@ function renderAcquistiOrdine() {
   document.getElementById('main').innerHTML = `
     <div class="panel">
       <h2>Ordini</h2>
-      <p class="sub">La data e il fornitore identificano subito ogni ordine. Clicca una scheda per completare numero, importo, consegna, pagamento e file dell'ordine. DDT e fatture si gestiscono nelle sezioni dedicate.</p>
+      <p class="sub">Gli ordini sono mostrati dal più recente. Apri una scheda per consultare insieme ordine, DDT, fatture e relative scadenze; le sezioni dedicate restano disponibili come archivi generali.</p>
       ${acquistiSubNav('ordine')}
       <form id="acqOrderFilters" style="display:grid;grid-template-columns:2fr 1fr 1fr auto auto;gap:10px;align-items:end;margin-bottom:16px;padding:14px;background:var(--bg);border:1px solid var(--border);border-radius:14px"><div class="field"><label>Cerca fornitore</label><input id="acqFilterSupplier" value="${escAtt(ACQ_ORDINI_FILTRI.fornitore)}" placeholder="Scrivi il nome del fornitore"></div><div class="field"><label>Data ordine dal</label><input type="date" id="acqFilterFrom" value="${ACQ_ORDINI_FILTRI.dal}"></div><div class="field"><label>Data ordine al</label><input type="date" id="acqFilterTo" value="${ACQ_ORDINI_FILTRI.al}"></div><button class="btn btn-primary btn-sm" type="submit">Cerca</button><button class="btn btn-outline btn-sm" type="button" id="acqFilterReset">Azzera</button></form>
       ${catExists ? `
@@ -2720,6 +2749,11 @@ function attachOrdineEditor() {
   if (ferro) attachRigheFerroHandlers(catId, idx, renderAcquistiOrdine);
   const gotoFatt = ed.querySelector('.oe-goto-fatture');
   if (gotoFatt) gotoFatt.onclick = (e) => { e.preventDefault(); vaiA('finanziaria', 'fatture'); };
+  const addDdt=ed.querySelector('.oe-add-ddt');
+  if(addDdt)addDdt.onclick=()=>{ACQ_DDT_FORNITORE=o.fornitore||'';ACQ_DDT_ORDER_ID=String(o.id);ACQUISTI_SUBTAB='ddt';renderAcquisti()};
+  const openInvoices=ed.querySelector('.oe-open-invoices');
+  if(openInvoices)openInvoices.onclick=()=>{ACQ_FATTURA_MODE='collegata';ACQ_FATTURA_FORNITORE=o.fornitore||'';ACQUISTI_SUBTAB='fattura';renderAcquisti()};
+  collegaFileFatture();
   ed.querySelector('.oe-save').onclick = async () => {
     const g = (c) => { const el = ed.querySelector(c); return el ? (el.type === 'checkbox' ? el.checked : el.value) : undefined; };
     const patch = {
@@ -3024,13 +3058,14 @@ function chipScostamento(valore, riferimento) {
 
 function criticitaOrdine(o) {
   integraAcquistoExtra(o);
-  const problemi=[],ord=Number(o.importo)||null,ddt=valoreDdtOrdine(o),fatt=fatturatoOrdine(o);
+  const problemi=[],ord=Number(o.importo)||null,ddt=valoreDdtOrdine(o),fatt=fatturatoOrdine(o),haDdt=(o.ddtMultipli||[]).length>0||!!o.numeroDDT,haFatture=fattureCollegateOrdine(o).length>0;
   const fuori=(v,rif)=>v!==null&&rif!==null&&rif>0&&Math.abs((v-rif)/rif*100)>3;
   if(!o.numeroOrdine)problemi.push('Ordine incompleto o senza numero');
   if(!String(o.fornitore||'').trim())problemi.push('Fornitore mancante');
   if(!(Number(o.importo)>0))problemi.push('Importo ordine mancante');
   if(o.dataConsegnaPrevista&&o.dataConsegnaPrevista<oggiStr()&&!o.dataConsegnaEffettiva)problemi.push('Consegna in ritardo');
   if(o.dataConsegnaEffettiva&&!o.numeroDDT)problemi.push('Merce arrivata senza DDT registrato');
+  if(haFatture&&!haDdt)problemi.push('Fattura presente senza DDT associato');
   if(o.numeroDDT&&!o.quantitaConfermata)problemi.push('Quantita del DDT da verificare');
   if(fuori(ddt,ord))problemi.push('Scostamento DDT/ordine oltre il 3%');
   if(fuori(fatt,ddt!==null?ddt:ord))problemi.push('Scostamento fattura/DDT oltre il 3%');
