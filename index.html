@@ -2289,7 +2289,7 @@ function acquistiSubNav(active) {
 function attachAcquistiSubNav() {
   document.querySelectorAll('.acq-home').forEach((btn)=>{btn.onclick=()=>{ACQUISTI_SUBTAB='menu';renderAcquisti()}});
   document.querySelectorAll('.acq-subtab').forEach((btn) => {
-    btn.onclick = () => { ACQUISTI_SUBTAB = btn.getAttribute('data-acqsub'); renderAcquisti(); };
+    btn.onclick = () => { const destinazione=btn.getAttribute('data-acqsub'); if(destinazione==='ddt'){ACQ_DDT_FORNITORE='';ACQ_DDT_ORDER_ID=''} ACQUISTI_SUBTAB = destinazione; renderAcquisti(); };
   });
 }
 
@@ -2778,7 +2778,7 @@ function attachOrdineEditor() {
   const gotoFatt = ed.querySelector('.oe-goto-fatture');
   if (gotoFatt) gotoFatt.onclick = (e) => { e.preventDefault(); vaiA('finanziaria', 'fatture'); };
   const addDdt=ed.querySelector('.oe-add-ddt');
-  if(addDdt)addDdt.onclick=()=>{ACQ_DDT_FORNITORE=o.fornitore||'';ACQ_DDT_ORDER_ID=String(o.id);ACQUISTI_SUBTAB='ddt';renderAcquisti()};
+  if(addDdt)addDdt.onclick=()=>{ACQ_DDT_FORNITORE='';ACQ_DDT_ORDER_ID='';ACQUISTI_SUBTAB='ddt';renderAcquisti()};
   const openInvoices=ed.querySelector('.oe-open-invoices');
   if(openInvoices)openInvoices.onclick=()=>{ACQ_FATTURA_MODE='collegata';ACQ_FATTURA_FORNITORE=o.fornitore||'';ACQUISTI_SUBTAB='fattura';renderAcquisti()};
   collegaFileFatture();
@@ -2944,9 +2944,11 @@ function renderAcquistiDDT() {
 
 function renderAcquistiDDTSemplice(){
   const flat=allOrdiniFlat();flat.forEach(({o})=>integraAcquistoExtra(o));
-  const fornitori=[...new Set(flat.map(x=>String(x.o.fornitore||'').trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'it'));
+  const fornitori=[...new Map(flat.map(x=>String(x.o.fornitore||'').trim()).concat((DATA.finanziario.fatture||[]).filter(f=>f.tipo==='ricevuta').map(f=>String(f.controparte||'').trim())).filter(Boolean).map(nome=>[nome.toLowerCase(),nome])).values()].sort((a,b)=>a.localeCompare(b,'it'));
   const ordiniFornitore=ACQ_DDT_FORNITORE?flat.filter(({o})=>String(o.fornitore||'').toLowerCase()===ACQ_DDT_FORNITORE.toLowerCase()):[];
-  const ordineAutomatico=ordiniFornitore.slice().sort((a,b)=>(a.o.ddtMultipli.length?1:0)-(b.o.ddtMultipli.length?1:0)||(b.o.dataOrdine||'').localeCompare(a.o.dataOrdine||''))[0]||null;
+  if(ACQ_DDT_ORDER_ID&&!ordiniFornitore.some(({o})=>String(o.id)===String(ACQ_DDT_ORDER_ID)))ACQ_DDT_ORDER_ID='';
+  const ordineSelezionato=ordiniFornitore.find(({o})=>String(o.id)===String(ACQ_DDT_ORDER_ID))||null;
+  const fattureFornitore=ACQ_DDT_FORNITORE?(DATA.finanziario.fatture||[]).filter(f=>f.tipo==='ricevuta'&&String(f.controparte||'').trim().toLowerCase()===ACQ_DDT_FORNITORE.toLowerCase()):[];
   const storico=flat.flatMap(({o,catNome})=>(o.ddtMultipli||[]).map(d=>({d,o,catNome}))).sort((a,b)=>(b.d.data||b.o.dataConsegnaEffettiva||b.o.dataOrdine||'').localeCompare(a.d.data||a.o.dataConsegnaEffettiva||a.o.dataOrdine||''));
   const storicoRighe=storico.map(({d,o,catNome})=>`<tr><td><strong>${d.data?dataBreve(d.data):(o.dataConsegnaEffettiva?dataBreve(o.dataConsegnaEffettiva):'-')}</strong></td><td><strong>${escAtt(o.fornitore||'-')}</strong><br><span class="empty-note">${escAtt(catNome)}</span></td><td><strong>${escAtt(d.numero||'-')}</strong></td><td style="white-space:normal">${escAtt(d.merceConsegnata||'-')}</td><td>${d.corrisponde?'<span class="chip valido">Conforme</span>':'<span class="chip in_scadenza">Con differenze</span>'}</td><td><span class="empty-note">Ord. ${escAtt(o.numeroOrdine||'-')}</span></td></tr>`).join('');
   document.getElementById('main').innerHTML=`
@@ -2954,10 +2956,11 @@ function renderAcquistiDDTSemplice(){
     ${acquistiSubNav('ddt')}
     <div class="panel">
       <h2>Registra nuovo DDT</h2>
-      <p class="sub">Compila soltanto i dati presenti sul documento di trasporto.</p>
+      <p class="sub">Procedi a cascata: scegli prima il fornitore e poi l’ordine al quale collegare il documento.</p>
       <form id="simpleDdtForm">
         <div class="form-grid">
-          <div class="field"><label>Fornitore *</label><select id="simpleDdtSupplier" required><option value="">Seleziona fornitore</option>${fornitori.map(f=>`<option ${f===ACQ_DDT_FORNITORE?'selected':''}>${escAtt(f)}</option>`).join('')}</select></div>
+          <div class="field"><label>1. Fornitore *</label><select id="simpleDdtSupplier" required><option value="">Seleziona liberamente un fornitore</option>${fornitori.map(f=>`<option ${f===ACQ_DDT_FORNITORE?'selected':''}>${escAtt(f)}</option>`).join('')}</select><span class="empty-note">Elenco ricavato da ordini e fatture già registrati.</span></div>
+          <div class="field"><label>2. Ordine da collegare *</label><select id="simpleDdtOrder" required ${ACQ_DDT_FORNITORE&&ordiniFornitore.length?'':'disabled'}><option value="">${!ACQ_DDT_FORNITORE?'Scegli prima il fornitore':ordiniFornitore.length?'Seleziona un ordine':'Nessun ordine disponibile'}</option>${ordiniFornitore.slice().sort((a,b)=>(b.o.dataOrdine||'').localeCompare(a.o.dataOrdine||'')).map(({o})=>`<option value="${escAtt(o.id)}" ${String(o.id)===String(ACQ_DDT_ORDER_ID)?'selected':''}>Ord. ${escAtt(o.numeroOrdine||'senza numero')} · ${o.dataOrdine?dataBreve(o.dataOrdine):'data mancante'} · ${euro(o.importo)}</option>`).join('')}</select></div>
           <div class="field"><label>Data DDT *</label><input type="date" id="simpleDdtDate" value="${oggiIsoAttivita()}" required></div>
           <div class="field"><label>Numero DDT *</label><input id="simpleDdtNumber" required placeholder="Numero riportato sul DDT"></div>
           <div class="field"><label>Merce consegnata *</label><input id="simpleDdtGoods" required placeholder="Descrizione sintetica della merce"></div>
@@ -2965,20 +2968,20 @@ function renderAcquistiDDTSemplice(){
           <div style="grid-column:1/-1"><button class="btn btn-primary" type="submit">Salva DDT</button></div>
         </div>
       </form>
-      ${ACQ_DDT_FORNITORE&&!ordineAutomatico?'<div class="diary-alert">Per questo fornitore non risulta ancora registrato un ordine. Inserisci prima l’ordine nella sezione Ordini.</div>':''}
+      ${ACQ_DDT_FORNITORE&&!ordiniFornitore.length?`<div class="diary-alert">Il fornitore compare in ${fattureFornitore.length} ${fattureFornitore.length===1?'fattura':'fatture'}, ma non ha ancora un ordine registrato. Per collegare correttamente il DDT occorre prima inserire l’ordine.</div>`:''}
     </div>
     <div class="panel" style="margin-top:20px">
       <div class="section-title" style="margin-top:0"><div><h2>Storico DDT</h2><p>Tutti i DDT registrati, dal più recente.</p></div></div>
       <div class="table-wrap"><table class="row-table"><thead><tr><th>Data</th><th>Fornitore</th><th>N. DDT</th><th>Merce consegnata</th><th>Esito</th><th>Collegamento</th></tr></thead><tbody>${storicoRighe||'<tr><td colspan="6" class="empty-note">Nessun DDT registrato.</td></tr>'}</tbody></table></div>
     </div>`;
   attachAcquistiSubNav();
-  document.getElementById('simpleDdtSupplier').onchange=e=>{ACQ_DDT_FORNITORE=e.target.value;renderAcquistiDDTSemplice()};
+  document.getElementById('simpleDdtSupplier').onchange=e=>{ACQ_DDT_FORNITORE=e.target.value;ACQ_DDT_ORDER_ID='';renderAcquistiDDTSemplice()};
+  document.getElementById('simpleDdtOrder').onchange=e=>{ACQ_DDT_ORDER_ID=e.target.value};
   document.getElementById('simpleDdtForm').onsubmit=e=>{
     e.preventDefault();
     const fornitore=document.getElementById('simpleDdtSupplier').value;
-    const ordini=flat.filter(({o})=>String(o.fornitore||'').toLowerCase()===fornitore.toLowerCase());
-    const collegato=ordini.slice().sort((a,b)=>(a.o.ddtMultipli.length?1:0)-(b.o.ddtMultipli.length?1:0)||(b.o.dataOrdine||'').localeCompare(a.o.dataOrdine||''))[0];
-    if(!collegato){alert('Non risulta alcun ordine per questo fornitore. Registra prima l’ordine.');return}
+    const collegato=flat.find(({o})=>String(o.id)===String(document.getElementById('simpleDdtOrder').value)&&String(o.fornitore||'').toLowerCase()===fornitore.toLowerCase());
+    if(!collegato){alert('Seleziona l’ordine da collegare al DDT.');return}
     const o=collegato.o;
     o.ddtMultipli.push({id:String(Date.now()),data:document.getElementById('simpleDdtDate').value,numero:document.getElementById('simpleDdtNumber').value.trim(),merceConsegnata:document.getElementById('simpleDdtGoods').value.trim(),corrisponde:document.getElementById('simpleDdtMatches').checked});
     o.numeroDDT=o.ddtMultipli.map(x=>x.numero).filter(Boolean).join(', ');
