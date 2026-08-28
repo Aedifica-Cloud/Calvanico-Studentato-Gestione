@@ -235,6 +235,8 @@
   .missing-list{display:grid;gap:10px}.missing-item{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:14px 16px;border:1px solid var(--border);border-radius:14px;background:#fff}.missing-item b{font-size:13px}.missing-item span{font-size:11.5px;color:var(--gray)}
   .missing-dot{width:10px;height:10px;border-radius:50%;background:var(--red);flex:0 0 auto}.complete-dot{background:var(--teal)}
   .doc-company-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;align-items:start}.doc-company-card{border:1px solid var(--border);border-radius:18px;background:#fff;overflow:hidden;transition:.18s transform,.18s border-color,.18s box-shadow}.doc-company-card:hover{transform:translateY(-2px);border-color:#99f6e4;box-shadow:var(--shadow)}.doc-company-card[open]{grid-column:span 2;border-color:var(--teal);box-shadow:var(--shadow)}.doc-company-card summary{list-style:none;cursor:pointer;padding:18px}.doc-company-card summary::-webkit-details-marker{display:none}.doc-company-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}.doc-company-title{display:flex;gap:11px;align-items:center}.doc-company-title h3{font-size:14px;margin:0}.doc-company-title p{font-size:11.5px;color:var(--gray);margin:3px 0 0}.doc-company-facts{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:16px}.doc-company-fact{background:var(--bg);border-radius:11px;padding:10px}.doc-company-fact span{display:block;color:var(--gray);font-size:10px;font-weight:700;text-transform:uppercase}.doc-company-fact strong{display:block;font-size:13px;margin-top:3px}.doc-company-open{display:flex;justify-content:space-between;align-items:center;margin-top:14px;padding-top:12px;border-top:1px solid var(--border);font-size:12px;font-weight:700;color:var(--teal)}.doc-company-card[open] .doc-company-open .doc-arrow{transform:rotate(180deg)}.doc-arrow{transition:.18s transform}.doc-company-detail{padding:0 18px 18px}.doc-company-actions{display:flex;justify-content:flex-end;margin-top:12px}
+  .computo-group{border:1px solid var(--border);border-radius:14px;background:#fff;margin-top:10px;overflow:hidden}.computo-group[open]{border-color:#99f6e4;box-shadow:0 8px 22px rgba(15,23,42,.06)}.computo-group summary{list-style:none;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:18px;padding:16px 18px}.computo-group summary::-webkit-details-marker{display:none}.computo-group summary:hover{background:#f8fafc}.computo-group summary span{display:flex;flex-direction:column;gap:4px}.computo-group summary small{color:var(--gray);font-weight:500}.computo-group .table-wrap{border-top:1px solid var(--border);margin:0;padding:4px 14px 14px}@media(max-width:700px){.computo-group summary{align-items:flex-start;flex-direction:column;gap:8px}.computo-group summary>strong{color:var(--teal)}}
+  .acq-timeline-day{display:grid;grid-template-columns:118px minmax(0,1fr);gap:16px;margin-top:18px}.acq-timeline-date{font-size:12px;font-weight:800;color:var(--navy);padding-top:13px}.acq-timeline-events{border-left:2px solid var(--border);padding-left:22px}.acq-timeline-event{position:relative;display:grid;grid-template-columns:minmax(220px,1.4fr) minmax(105px,.55fr) minmax(95px,.45fr) auto auto;gap:12px;align-items:center;background:var(--bg);border:1px solid var(--border);border-radius:13px;padding:14px 16px;margin-bottom:10px;transition:.16s border-color,.16s transform}.acq-timeline-event:hover{border-color:#99f6e4;transform:translateY(-1px)}.acq-timeline-event:before{content:"";position:absolute;left:-29px;width:10px;height:10px;border-radius:50%;background:var(--teal);box-shadow:0 0 0 4px var(--card)}.acq-timeline-event.warning:before{background:var(--amber)}.acq-timeline-event.danger:before{background:var(--red)}.acq-timeline-event .event-kind{font-size:10px;font-weight:800;text-transform:uppercase;color:var(--gray)}.acq-timeline-event .event-amount{text-align:right;font-weight:800;white-space:nowrap}.timeline-supplier-link{border:0;background:transparent;padding:0;color:var(--navy);font-weight:800;text-align:left;cursor:pointer}.timeline-supplier-link:hover{color:var(--teal);text-decoration:underline}@media(max-width:760px){.acq-timeline-day{grid-template-columns:1fr;gap:7px}.acq-timeline-date{padding-top:0}.acq-timeline-event{grid-template-columns:1fr auto}.acq-timeline-event .event-kind{grid-column:1}.acq-timeline-event .event-amount{grid-column:2;grid-row:1}.acq-timeline-event .chip{grid-column:1/-1;justify-self:start}.acq-timeline-event .timeline-open-document{grid-column:1/-1;justify-self:start}}
   .sub-overview-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}.sub-overview-card{border:1px solid var(--border);border-radius:17px;background:#fff;padding:18px;cursor:pointer;transition:.15s transform,.15s border-color,.15s box-shadow}.sub-overview-card:hover{transform:translateY(-2px);border-color:#99f6e4;box-shadow:var(--shadow)}
   .sub-overview-top{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}.sub-overview-title{display:flex;gap:11px;align-items:center}.sub-overview-title h3{font-size:14px;margin:0}.sub-overview-title p{font-size:11.5px;color:var(--gray);margin:3px 0 0}.sub-overview-status{width:10px;height:10px;border-radius:50%;background:var(--teal);margin-top:5px;flex:0 0 auto}.sub-overview-status.warning{background:var(--amber)}.sub-overview-status.critical{background:var(--red)}
   .sub-overview-facts{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:16px}.sub-overview-fact{padding:9px 10px;background:var(--bg);border-radius:10px}.sub-overview-fact span{display:block;font-size:10px;text-transform:uppercase;color:var(--gray);font-weight:700}.sub-overview-fact strong{display:block;font-size:12.5px;margin-top:3px}.sub-overview-open{display:flex;justify-content:space-between;align-items:center;margin-top:15px;padding-top:13px;border-top:1px solid var(--border);font-size:12px;font-weight:700;color:var(--teal)}
@@ -243,6 +245,8 @@
   .phase-legend{display:flex;gap:14px;flex-wrap:wrap;margin:10px 0 18px}.phase-legend span{font-size:11.5px;color:var(--gray)}.phase-legend i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px}
   @media(max-width:900px){.sub-overview-grid,.doc-company-grid{grid-template-columns:1fr 1fr}}@media(max-width:760px){.info-strip{grid-template-columns:1fr 1fr}.doc-dashboard{grid-template-columns:1fr}.section-hero{flex-direction:column}.entity-card-head{align-items:flex-start}.sub-overview-grid,.doc-company-grid{grid-template-columns:1fr}.doc-company-card[open]{grid-column:span 1}}
 
+  @media(max-width:760px){.anagrafica-layout{grid-template-columns:1fr!important}.anagrafica-layout aside{position:static!important}.anagrafica-layout #anagraficaSideNav{grid-template-columns:1fr 1fr}}
+  @media(max-width:460px){.anagrafica-layout #anagraficaSideNav{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -431,7 +435,7 @@ const RUOLI_INIZIALI = [
   'RLS - Rappresentante Lavoratori per la Sicurezza'
 ];
 
-const CATEGORIE_ACQUISTI_INIZIALI = ['Ferro/Acciaio', 'Cemento/Calcestruzzo', 'Laterizi e murature', 'Impianti', 'Serramenti', 'Finiture'];
+const CATEGORIE_ACQUISTI_INIZIALI = ['Strutture', 'Muratura e cartongesso', 'Porte e infissi', 'Sottofondi, pavimenti e rivestimenti', 'Finiture', 'Impianti'];
 
 const LS_KEY = 'calvanico_data_v3'; // non piu' usato per i dati (ora su Supabase), tenuto per compatibilita'
 
@@ -1707,9 +1711,17 @@ function renderAnagraficaAppalto() {
   const c = DATA.cantiere; const bl = !!c.bloccato;
   const contratto = DATA.cantiereDocsAmministrativi.find((d)=>d.tipoNome==='Contratto di appalto generale');
   const contrattoIdx = DATA.cantiereDocsAmministrativi.findIndex((d)=>d.tipoNome==='Contratto di appalto generale');
+  const riepilogoAppalto=[
+    c.stazioneAppaltante&&['Descrizione',c.stazioneAppaltante],
+    (c.indirizzoCantiere||c.comuneCantiere||c.provinciaCantiere)&&['Luogo',[c.indirizzoCantiere,c.comuneCantiere,c.provinciaCantiere].filter(Boolean).join(' · ')],
+    Number(c.importoTotale)>0&&['Importo appalto',euro(c.importoTotale)],
+    c.cig&&['CIG',c.cig],c.cup&&['CUP',c.cup],
+    c.dataInizio&&['Inizio lavori',dataBreve(c.dataInizio)],
+    c.dataFinePrevista&&['Fine prevista',dataBreve(c.dataFinePrevista)]
+  ].filter(Boolean);
   document.getElementById('main').innerHTML = `
     <div class="section-hero"><div><h2>Dati generali dell’appalto</h2><p>Riepilogo unico della commessa: riferimenti identificativi, localizzazione, importo, durata e contratto di appalto.</p></div>${bl?'<span class="chip teal">Dati confermati</span>':'<span class="chip amber">In modifica</span>'}</div>
-    <div class="info-strip"><div class="info-chip"><span>Importo appalto</span><strong>${euro(c.importoTotale||0)}</strong></div><div class="info-chip"><span>CIG</span><strong>${c.cig||'—'}</strong></div><div class="info-chip"><span>CUP</span><strong>${c.cup||'—'}</strong></div><div class="info-chip"><span>Fine prevista</span><strong>${c.dataFinePrevista?dataBreve(c.dataFinePrevista):'—'}</strong></div></div>
+    ${riepilogoAppalto.length?`<div class="info-strip" style="grid-template-columns:repeat(auto-fit,minmax(190px,1fr))">${riepilogoAppalto.map(([etichetta,valore])=>`<div class="info-chip"><span>${escAtt(etichetta)}</span><strong>${escAtt(valore)}</strong></div>`).join('')}</div>`:''}
     <div class="entity-card"><div class="entity-card-head"><div class="entity-title"><div class="entity-avatar">AP</div><div><h3>Informazioni dell’appalto</h3><p>Dati generali e tecnici della commessa</p></div></div></div><div class="entity-body">
       <form id="appaltoForm"><div class="form-grid">
         <div class="field"><label>Denominazione / oggetto dell’appalto</label><input name="stazioneAppaltante" value="${c.stazioneAppaltante||''}" placeholder="es. Realizzazione studentato universitario" /></div>
@@ -1718,13 +1730,11 @@ function renderAnagraficaAppalto() {
         <div class="field"><label>Data inizio lavori</label><input name="dataInizio" type="date" value="${c.dataInizio||''}" /></div><div class="field"><label>Data fine prevista</label><input name="dataFinePrevista" type="date" value="${c.dataFinePrevista||''}" /></div>
         <div class="field" style="grid-column:1/-1"><label>Indirizzo del cantiere</label><input name="indirizzoCantiere" value="${c.indirizzoCantiere||''}" /></div>
         <div class="field"><label>Comune</label><input name="comuneCantiere" value="${c.comuneCantiere||''}" /></div><div class="field"><label>Provincia</label><input name="provinciaCantiere" value="${c.provinciaCantiere||''}" /></div>
-        <div class="field"><label>Destinazione d’uso</label><input name="destinazioneUso" value="${c.destinazioneUso||''}" /></div><div class="field"><label>Superficie (mq)</label><input name="superficieMq" type="number" value="${c.superficieMq||''}" /></div>
-        <div class="field"><label>Numero piani</label><input name="numeroPiani" type="number" value="${c.numeroPiani||''}" /></div><div class="field"><label>Numero posti letto</label><input name="numeroPostiLetto" type="number" value="${c.numeroPostiLetto||''}" /></div>
         <div class="field" style="grid-column:1/-1"><label>Note</label><textarea name="note" rows="3">${c.note||''}</textarea></div>
         <div style="grid-column:1/-1">${pulsanteSalvaOSblocca(bl,'appaltoUnlock')}</div>
       </div></form></div></div>
     <div class="entity-card"><div class="entity-card-head"><div class="entity-title"><div class="entity-avatar">CT</div><div><h3>Contratto di appalto</h3><p>Documento contrattuale principale della commessa</p></div></div>${contratto&&docCompilato(contratto)?'<span class="chip teal">Caricato</span>':'<span class="chip red">Mancante</span>'}</div><div class="entity-body">${contratto ? docListHead()+docRow(contratto,'cantiere-amm',null,contrattoIdx) : '<p class="empty-note">Voce contratto non disponibile.</p>'}</div></div>`;
-  if(bl){disabilitaForm('appaltoForm');document.getElementById('appaltoUnlock').onclick=()=>{DATA.cantiere.bloccato=false;saveData();renderAnagraficaAppalto();};}
+  if(bl){document.querySelectorAll('#appaltoForm .field').forEach(campo=>{const controllo=campo.querySelector('input,textarea,select');if(controllo&&!String(controllo.value||'').trim())campo.style.display='none'});disabilitaForm('appaltoForm');document.getElementById('appaltoUnlock').onclick=()=>{DATA.cantiere.bloccato=false;saveData();renderAnagraficaAppalto();};}
   else document.getElementById('appaltoForm').onsubmit=(e)=>{e.preventDefault();DATA.cantiere=Object.assign({},DATA.cantiere,Object.fromEntries(new FormData(e.target).entries()),{bloccato:true});saveData();renderAnagraficaAppalto();};
   attachDocRowHandlers(renderAnagraficaAppalto);
 }
@@ -1835,7 +1845,7 @@ function renderElencoAnagraficaSubappaltatori() {
   const tutte=elencoSubappalti(),attive=tutte.filter(s=>!archiviati.includes(String(s.id))).map(s=>cardHtml(s,false)).join(''),archiviate=tutte.filter(s=>archiviati.includes(String(s.id))).map(s=>cardHtml(s,true)).join('');
   document.getElementById('main').innerHTML=`<div class="section-hero"><div><h2>Subappaltatori</h2><p>Seleziona un'impresa per consultarne anagrafica, documenti e situazione operativa.</p></div><button class="btn btn-primary btn-sm" id="addSubappaltatore">+ Aggiungi subappaltatore</button></div><div class="sub-overview-grid">${attive||'<div class="panel"><p class="empty-note">Nessun subappaltatore attivo.</p></div>'}</div>${archiviate?`<details class="sub-archive-wrap"><summary>Imprese archiviate (${tutte.filter(s=>archiviati.includes(String(s.id))).length})</summary><div class="sub-overview-grid" style="margin-top:12px">${archiviate}</div></details>`:''}`;
   document.getElementById('addSubappaltatore').onclick=aggiungiSubappaltatoreDaAnagrafica;
-  document.querySelectorAll('[data-sub-id]').forEach(card=>{const id=card.dataset.subId;card.querySelector('.sub-card-edit').onclick=()=>{SUB_ANAGRAFICA_SELEZIONATO=id;renderAnagraficaSubappaltatori()};card.querySelector('.sub-card-archive').onclick=()=>{const v=caricaSubArchiviati(),presente=v.includes(String(id));salvaSubArchiviati(presente?v.filter(x=>x!==String(id)):[...v,String(id)]);renderElencoAnagraficaSubappaltatori()};const del=card.querySelector('.sub-card-delete');if(del)del.onclick=()=>eliminaSubappaltatoreVuoto(id)});
+  document.querySelectorAll('[data-sub-id]').forEach(card=>{const id=card.dataset.subId;card.querySelector('.sub-card-edit').onclick=()=>{SUB_ANAGRAFICA_SELEZIONATO=id;renderAnagraficaSubappaltatori()};card.querySelector('.sub-card-archive').onclick=()=>{const v=caricaSubArchiviati(),presente=v.includes(String(id));salvaSubArchiviati(presente?v.filter(x=>x!==String(id)):[...v,String(id)]);renderAnagraficaSubappaltatori()};const del=card.querySelector('.sub-card-delete');if(del)del.onclick=()=>eliminaSubappaltatoreVuoto(id)});
 }
 
 function leggiFileComeDataUrl(file) {
@@ -2073,6 +2083,33 @@ function renderReferenti() {
   });
 }
 
+function applicaLayoutAnagrafica(sezioneAttiva){
+  const main=document.getElementById('main'),contenuto=[...main.childNodes];
+  const subAttivi=elencoSubappalti().filter(s=>String((DATA.subappalti[s.id]||{}).ragioneSociale||'').trim()).length;
+  const nomeAppalto=DATA.cantiere.stazioneAppaltante||'Studentato Calvanico',nomeAzienda=DATA.appaltatore.ragioneSociale||'AEDIFICA S.r.l.',nomeEnte=DATA.enteAppaltante.denominazione||'Committente da completare';
+  const voci=[
+    ['appalto','Dati dell’appalto',nomeAppalto],
+    ['azienda',nomeAzienda,'Impresa appaltatrice'],
+    ['ente',nomeEnte,'Committente'],
+    ['subappaltatori','Subappaltatori',`${subAttivi} imprese registrate`],
+    ['referenti','Referenti e ruoli',`${DATA.referenti.length} figure registrate`]
+  ];
+  main.innerHTML=`<div class="section-hero"><div><h2>Anagrafica e ruoli</h2><p>Soggetti, riferimenti contrattuali e persone della commessa.</p></div></div><div class="anagrafica-layout" style="display:grid;grid-template-columns:minmax(245px,.72fr) minmax(0,2fr);gap:18px;align-items:start"><aside class="panel" style="padding:10px;position:sticky;top:16px"><nav id="anagraficaSideNav" style="display:grid;gap:8px">${voci.map(([key,titolo,sotto])=>`<button type="button" data-anagrafica-section="${key}" aria-pressed="${key===sezioneAttiva?'true':'false'}" style="width:100%;display:flex;justify-content:space-between;align-items:center;gap:12px;text-align:left;padding:13px 14px;border-radius:12px;border:1px solid ${key===sezioneAttiva?'var(--teal)':'var(--border)'};background:${key===sezioneAttiva?'var(--teal-light)':'var(--card)'};color:var(--navy);cursor:pointer"><span><strong style="display:block;font-size:13.5px">${escAtt(titolo)}</strong><span style="display:block;color:var(--gray);font-size:11.5px;margin-top:3px">${escAtt(sotto)}</span></span><span style="color:var(--teal);font-size:18px">›</span></button>`).join('')}</nav></aside><section id="anagraficaDetail" style="min-width:0"></section></div>`;
+  const detail=document.getElementById('anagraficaDetail');contenuto.forEach(n=>detail.appendChild(n));
+  document.querySelectorAll('[data-anagrafica-section]').forEach(btn=>btn.onclick=()=>{const sezione=btn.dataset.anagraficaSection;if(sezione==='subappaltatori')SUB_ANAGRAFICA_SELEZIONATO=null;CURRENT_SUBTAB=sezione;renderMain()});
+}
+
+const renderAnagraficaAppaltoSenzaLayout=renderAnagraficaAppalto;
+renderAnagraficaAppalto=function(){renderAnagraficaAppaltoSenzaLayout();applicaLayoutAnagrafica('appalto')};
+const renderAnagraficaAziendaSenzaLayout=renderAnagraficaAzienda;
+renderAnagraficaAzienda=function(){renderAnagraficaAziendaSenzaLayout();applicaLayoutAnagrafica('azienda')};
+const renderAnagraficaEnteSenzaLayout=renderAnagraficaEnte;
+renderAnagraficaEnte=function(){renderAnagraficaEnteSenzaLayout();applicaLayoutAnagrafica('ente')};
+const renderAnagraficaSubappaltatoriSenzaLayout=renderAnagraficaSubappaltatori;
+renderAnagraficaSubappaltatori=function(){renderAnagraficaSubappaltatoriSenzaLayout();applicaLayoutAnagrafica('subappaltatori')};
+const renderReferentiSenzaLayout=renderReferenti;
+renderReferenti=function(){renderReferentiSenzaLayout();applicaLayoutAnagrafica('referenti')};
+
 let DOC_SUBAPPALTO_SELEZIONATO = null;
 
 // Promemoria conversione accordo -> subappalto (es. Movisud: prima noleggio a
@@ -2257,47 +2294,25 @@ function saveOrdineFromRow(row, fields) {
   saveData();
 }
 
-function attachOrdineRowHandlers(fields, renderFn) {
-  document.querySelectorAll('.ordine-save').forEach((btn) => {
-    btn.onclick = () => { saveOrdineFromRow(btn.closest('tr'), fields); renderFn(); };
-  });
-  document.querySelectorAll('.ordine-unlock').forEach((btn) => {
-    btn.onclick = () => {
-      const row = btn.closest('tr'); const catId = row.dataset.cat; const idx = Number(row.dataset.idx);
-      const cat = DATA.acquisti.categorie.find((c) => String(c.id) === catId);
-      cat.ordini[idx].bloccato = false;
-      saveData(); renderFn();
-    };
-  });
-  document.querySelectorAll('.ordine-del').forEach((btn) => {
-    btn.onclick = () => {
-      const row = btn.closest('tr'); const catId = row.dataset.cat; const idx = Number(row.dataset.idx);
-      if (!confirm('Eliminare questo ordine?')) return;
-      const cat = DATA.acquisti.categorie.find((c) => String(c.id) === catId);
-      cat.ordini.splice(idx, 1); saveData(); renderFn();
-    };
-  });
-}
 
-const ACQUISTI_SUBTABS = [ ['ordine', 'Ordini'], ['ddt', 'Consegne e DDT'], ['fattura', 'Fatture'] ];
+const ACQUISTI_SUBTABS = [ ['ordine', '1 · Ordini fornitori'], ['ddt', '2 · DDT'], ['fattura', '3 · Fatture e scadenze'] ];
 
 function acquistiSubNav(active) {
-  return `<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:16px"><button class="btn btn-outline btn-sm acq-home">← Riepilogo acquisti</button><div class="tabs" style="padding:0; border-bottom:2px solid var(--border); flex:1;">${ACQUISTI_SUBTABS.map(([key, label]) => `<button class="acq-subtab ${key === active ? 'active' : ''}" data-acqsub="${key}" style="border:none; background:transparent; padding:10px 16px; font-size:13.5px; font-weight:600; color:${key === active ? 'var(--teal)' : 'var(--gray)'}; cursor:pointer; border-bottom:3px solid ${key === active ? 'var(--teal)' : 'transparent'};">${label}</button>`).join('')}</div></div>`;
+  return `<nav class="panel" aria-label="Sezioni acquisti" style="padding:8px 10px;margin-bottom:18px"><div style="display:flex;gap:6px;flex-wrap:wrap">${ACQUISTI_SUBTABS.map(([key,label])=>`<button type="button" class="btn btn-sm ${key===active?'btn-primary':'btn-outline'} acq-subtab" data-acqsub="${key}">${label}</button>`).join('')}</div></nav>`;
 }
 
 function attachAcquistiSubNav() {
-  document.querySelectorAll('.acq-home').forEach((btn)=>{btn.onclick=()=>{ACQUISTI_SUBTAB='menu';renderAcquisti()}});
   document.querySelectorAll('.acq-subtab').forEach((btn) => {
     btn.onclick = () => { const destinazione=btn.getAttribute('data-acqsub'); if(destinazione==='ddt'){ACQ_DDT_FORNITORE='';ACQ_DDT_ORDER_ID=''} ACQUISTI_SUBTAB = destinazione; renderAcquisti(); };
   });
 }
 
-let ACQUISTI_SUBTAB = 'menu';
+let ACQUISTI_SUBTAB = 'ordine';
 let ACQ_OPEN = null; // "catId:idx" dell'ordine aperto per la compilazione/modifica
 const ACQ_EXTRA_LS_KEY='aedifica_acquisti_extra_v1';
 function caricaAcquistiExtra(){try{const v=JSON.parse(localStorage.getItem(ACQ_EXTRA_LS_KEY)||'{}');return v&&typeof v==='object'?v:{}}catch(e){return {}}}
 function integraAcquistoExtra(o){const x=caricaAcquistiExtra()[String(o.id)];if(x)Object.assign(o,x);if(!Array.isArray(o.scadenzePagamento))o.scadenzePagamento=[];if(!o.scadenzePagamento.length&&(o.dataPagamentoPrevista||o.importoPagamento||o.modalitaPagamento))o.scadenzePagamento=[{id:String(Date.now()),dataScadenza:o.dataPagamentoPrevista||'',modalita:o.modalitaPagamento||'BB',riferimento:'',importo:o.importoPagamento||o.importo||'',importoPagato:'',dataPagamento:''}];if(!Array.isArray(o.ddtMultipli))o.ddtMultipli=[];if(!o.ddtMultipli.length&&o.numeroDDT)o.ddtMultipli=[{id:String(Date.now()),numero:o.numeroDDT,merceConsegnata:o.descrizioneArrivo||'',corrisponde:!!o.quantitaConfermata}];return o}
-function salvaAcquistoExtra(o){const tutti=caricaAcquistiExtra();tutti[String(o.id)]={condizioniPagamento:o.condizioniPagamento||'',scadenzePagamento:Array.isArray(o.scadenzePagamento)?o.scadenzePagamento:[],ddtMultipli:Array.isArray(o.ddtMultipli)?o.ddtMultipli:[],fileOrdine:o.fileOrdine||null};localStorage.setItem(ACQ_EXTRA_LS_KEY,JSON.stringify(tutti));salvaStatoEstesoCloud('acquisti_extra',tutti)}
+function salvaAcquistoExtra(o){const tutti=caricaAcquistiExtra();tutti[String(o.id)]={condizioniPagamento:o.condizioniPagamento||'',scadenzePagamento:Array.isArray(o.scadenzePagamento)?o.scadenzePagamento:[],ddtMultipli:Array.isArray(o.ddtMultipli)?o.ddtMultipli:[],fileOrdine:o.fileOrdine||null,computoRiferimento:o.computoRiferimento||'',computoStato:o.computoStato||'',computoMotivo:o.computoMotivo||''};localStorage.setItem(ACQ_EXTRA_LS_KEY,JSON.stringify(tutti));salvaStatoEstesoCloud('acquisti_extra',tutti)}
 function nuovaScadenzaAcquisto(){return {id:String(Date.now())+Math.random().toString(16).slice(2),dataScadenza:'',modalita:'BB',riferimento:'',importo:'',importoPagato:'',dataPagamento:''}}
 function statoScadenzaAcquisto(r){const dovuto=Number(r.importo)||0,pagato=Number(r.importoPagato)||0;if(dovuto>0&&pagato>=dovuto)return {key:'pagata',label:'Pagata'};if(pagato>0)return {key:'in_scadenza',label:'Pagata parzialmente'};if(!r.dataScadenza)return {key:'mancante',label:'Data mancante'};const gg=Math.ceil((new Date(r.dataScadenza+'T12:00:00')-new Date())/86400000);if(gg<0)return {key:'scaduto',label:'Scaduta'};if(gg<=30)return {key:'in_scadenza',label:'In scadenza'};return {key:'da_pagare',label:'Da pagare'}}
 let ACQ_ORDINI_FILTRI={fornitore:'',dal:'',al:''};
@@ -2316,6 +2331,7 @@ function caricaFattureExtra(){
   try{return JSON.parse(localStorage.getItem(FATT_EXTRA_LS_KEY)||'{}')||{}}catch(e){return {}}
 }
 async function salvaFatturaExtra(id,x){
+  if(Array.isArray(x.ordini))x.ordini=x.ordini.filter(Boolean);
   const v=caricaFattureExtra();v[String(id)]=x;
   copiaLocaleSicura('fatture_extra',FATT_EXTRA_LS_KEY,v);
   const r=await salvaStatoEstesoCloud('fatture_extra',v);
@@ -2365,128 +2381,17 @@ async function migraFileFattureEsistenti(){
     await salvaStatoEstesoCloud('fatture_extra',extra);
   }
 }
-function fatturaScadenzaHtml(i){return `<tr class="afi-rate"><td><input type="date" class="afi-rate-date" required></td><td><select class="afi-rate-mode"><option>BB</option><option>Cambiali</option><option>Assegni</option></select></td><td><input class="afi-rate-ref" placeholder="N. effetto/assegno"></td><td><input type="number" step="0.01" class="afi-rate-amount" required></td><td><button type="button" class="btn btn-outline btn-sm afi-rate-del">Elimina</button></td></tr>`}
-function fatturaScadenzaEditHtml(r={}){const data=r.data||r.dataScadenza||'',modalita=r.modalita||'BB';return `<tr class="invoice-edit-rate"><td><input type="date" class="invoice-edit-rate-date" value="${escAtt(data)}" required></td><td><select class="invoice-edit-rate-mode"><option ${modalita==='BB'?'selected':''}>BB</option><option ${modalita==='Cambiali'?'selected':''}>Cambiali</option><option ${modalita==='Assegni'?'selected':''}>Assegni</option></select></td><td><input class="invoice-edit-rate-ref" value="${escAtt(r.riferimento||'')}" placeholder="N. effetto/assegno"></td><td><input type="number" step="0.01" min="0" class="invoice-edit-rate-amount" value="${escAtt(r.importo||'')}" required></td><td><button type="button" class="btn btn-outline btn-sm invoice-edit-rate-del">Elimina</button></td></tr>`}
+function fatturaScadenzaHtml(i){return `<tr class="afi-rate"><td><input type="date" class="afi-rate-date" required></td><td><select class="afi-rate-mode"><option>BB</option><option>RiBa</option><option>Cambiali</option><option>Assegni</option><option>Contanti</option><option>Altro</option></select></td><td><input class="afi-rate-ref" placeholder="N. effetto/assegno"></td><td><input type="number" step="0.01" class="afi-rate-amount" required></td><td><button type="button" class="btn btn-outline btn-sm afi-rate-del">Elimina</button></td></tr>`}
+function fatturaScadenzaEditHtml(r={}){const data=r.data||r.dataScadenza||'',modalita=r.modalita||'BB';return `<tr class="invoice-edit-rate" data-data-pagamento="${escAtt(r.dataPagamento||'')}"><td><input type="date" class="invoice-edit-rate-date" value="${escAtt(data)}" required></td><td><select class="invoice-edit-rate-mode">${['BB','RiBa','Cambiali','Assegni','Contanti','Altro'].map(m=>`<option ${modalita===m?'selected':''}>${m}</option>`).join('')}</select></td><td><input class="invoice-edit-rate-ref" value="${escAtt(r.riferimento||'')}" placeholder="N. effetto/assegno"></td><td><input type="number" step="0.01" min="0" class="invoice-edit-rate-amount" value="${escAtt(r.importo||'')}" required></td><td><label style="display:flex;align-items:center;gap:5px;font-weight:400;white-space:nowrap"><input type="checkbox" class="invoice-edit-rate-paid" style="width:auto" ${r.pagata?'checked':''}> Pagata</label></td><td><button type="button" class="btn btn-outline btn-sm invoice-edit-rate-del">Elimina</button></td></tr>`}
 
 function renderAcquisti() {
-  if (['panoramica', 'preventivi', 'controllo', 'storico'].indexOf(ACQUISTI_SUBTAB) !== -1) ACQUISTI_SUBTAB = 'menu';
-  if (ACQUISTI_SUBTAB === 'menu') renderAcquistiMenu();
-  else if (ACQUISTI_SUBTAB === 'ordine') renderAcquistiOrdine();
+  if (['menu', 'panoramica', 'preventivi', 'controllo', 'storico', 'pagamenti'].indexOf(ACQUISTI_SUBTAB) !== -1) ACQUISTI_SUBTAB = 'ordine';
+  if (ACQUISTI_SUBTAB === 'ordine') renderAcquistiOrdine();
   else if (ACQUISTI_SUBTAB === 'ddt') renderAcquistiDDTSemplice();
   else if (ACQUISTI_SUBTAB === 'fattura') renderAcquistiFattura();
 }
 
-function renderAcquistiMenu(){
-  const flat=allOrdiniFlat();
-  flat.forEach(({o})=>integraAcquistoExtra(o));
-  const pratiche=flat.filter(({o})=>o.numeroOrdine||o.dataOrdine||o.fornitore).sort((a,b)=>(b.o.dataOrdine||'').localeCompare(a.o.dataOrdine||''));
-  const ordini=pratiche.length;
-  const ddtMancanti=pratiche.filter(({o})=>!(o.ddtMultipli||[]).length&&!o.numeroDDT).length;
-  const fattureMancanti=pratiche.filter(({o})=>!fattureCollegateOrdine(o).length).length;
-  const idsFattureCollegate=new Set(pratiche.flatMap(({o})=>fattureCollegateOrdine(o).map(f=>String(f.id))));
-  const fattureSenzaOrdine=(DATA.finanziario.fatture||[]).filter(f=>f.tipo==='ricevuta'&&!idsFattureCollegate.has(String(f.id)));
-  const totaleOrdini=flat.reduce((s,{o})=>s+(Number(o.importo)||0),0);
-  const praticheHtml=pratiche.map(({catId,catNome,idx,o})=>{
-    const ddt=(o.ddtMultipli||[]).length+(o.numeroDDT&&!(o.ddtMultipli||[]).length?1:0),fatture=fattureCollegateOrdine(o),extra=caricaFattureExtra();
-    const scadenze=fatture.reduce((n,f)=>{const x=extra[String(f.id)]||{};return n+(Array.isArray(x.scadenze)&&x.scadenze.length?x.scadenze.length:(f.scadenzaPagamento?1:0))},0);
-    const incompleta=!ddt||!fatture.length||(fatture.length&&!scadenze);
-    const step=(numero,titolo,valore,ok,neutro)=>`<div class="sub-overview-fact" style="border-top:3px solid var(--${ok?'teal':neutro?'gray':'amber'});min-height:70px"><span>0${numero} · ${titolo}</span><strong style="color:var(--${ok?'teal':neutro?'gray':'amber'})">${valore}</strong></div>`;
-    return `<article class="sub-overview-card acq-history-practice" data-cat="${escAtt(catId)}" data-idx="${idx}" style="cursor:pointer"><div class="sub-overview-top"><div class="sub-overview-title"><span class="sub-overview-status ${incompleta?'warning':''}"></span><div><h3>${escAtt(o.fornitore||'Fornitore da inserire')}</h3><p>${o.dataOrdine?dataBreve(o.dataOrdine):'Data da inserire'} · Ordine ${escAtt(o.numeroOrdine||'senza numero')} · ${escAtt(catNome)}</p></div></div><span class="chip ${incompleta?'amber':'teal'}">${incompleta?'Da completare':'Completa'}</span></div><div class="sub-overview-facts" style="grid-template-columns:repeat(auto-fit,minmax(145px,1fr))">${step(1,'Ordine',euro(o.importo),true,false)}${step(2,'Consegne / DDT',ddt?`${ddt} registrati`:'Mancante',!!ddt,false)}${step(3,'Fattura',fatture.length?`${fatture.length} collegate`:'Non collegata',!!fatture.length,false)}${step(4,'Scadenze',scadenze?`${scadenze} registrate`:'Da inserire',!!scadenze,!fatture.length)}</div><div class="sub-overview-open"><span>Apri lo storico completo della pratica</span><span>→</span></div></article>`;
-  }).join('');
-  document.getElementById('main').innerHTML=`<div class="section-hero"><div><h2>Storico acquisti di cantiere</h2><p>Tutti gli ordini, vecchi e nuovi, seguono ora lo stesso percorso: ordine, DDT, fattura e scadenze.</p></div><button class="btn btn-primary" id="acqNewOrder">+ Nuovo ordine</button></div><div class="grid-stats cols-4"><div class="stat-card blue"><div class="num">${ordini}</div><div class="label">Pratiche nello storico</div></div><div class="stat-card blue"><div class="num">${euro(totaleOrdini)}</div><div class="label">Totale ordinato</div></div><div class="stat-card amber"><div class="num">${ddtMancanti+fattureMancanti}</div><div class="label">Informazioni mancanti</div></div><div class="stat-card ${fattureSenzaOrdine.length?'amber':'teal'}"><div class="num">${fattureSenzaOrdine.length}</div><div class="label">Fatture senza ordine collegato</div></div></div><div class="section-title"><div><h2>Pratiche in ordine cronologico</h2><p>Apri una pratica per consultare e completare tutto il suo storico.</p></div><button class="btn btn-outline btn-sm" id="acqUnlinkedInvoices">Vedi fatture non collegate</button></div><div style="display:grid;gap:14px">${praticheHtml||'<div class="panel"><p class="empty-note">Nessun ordine presente nello storico.</p></div>'}</div>`;
-  document.getElementById('acqNewOrder').onclick=()=>{ACQUISTI_SUBTAB='ordine';renderAcquisti()};
-  document.getElementById('acqUnlinkedInvoices').onclick=()=>{ACQUISTI_SUBTAB='fattura';renderAcquisti()};
-  document.querySelectorAll('.acq-history-practice').forEach(card=>{card.onclick=()=>{ACQ_OPEN=card.dataset.cat+':'+card.dataset.idx;ACQUISTI_SUBTAB='ordine';renderAcquisti()}});
-}
 
-function renderAcquistiPagamenti(){
-  const flat=allOrdiniFlat();
-  flat.forEach(({o})=>integraAcquistoExtra(o));
-  const items=flat.flatMap(({o,catNome})=>(o.scadenzePagamento||[]).map((r,ri)=>({o,catNome,r,ri,stato:statoScadenzaAcquisto(r)}))).sort((a,b)=>(a.r.dataScadenza||'9999').localeCompare(b.r.dataScadenza||'9999'));
-  const daPagare=items.filter(x=>x.stato.key!=='pagata'),pagate=items.filter(x=>x.stato.key==='pagata');
-  const totaleDaPagare=daPagare.reduce((s,x)=>s+Math.max(0,(Number(x.r.importo)||0)-(Number(x.r.importoPagato)||0)),0);
-  const rows=items.map(({o,catNome,r,ri,stato})=>`<tr data-order-pay="${escAtt(o.id)}" data-rate-idx="${ri}"><td><strong>${r.dataScadenza?dataBreve(r.dataScadenza):'Da inserire'}</strong></td><td><strong>${escAtt(o.fornitore||'-')}</strong><br><span class="empty-note">Ord. ${escAtt(o.numeroOrdine||'-')} · ${escAtt(catNome)}</span></td><td>${escAtt(r.modalita||'BB')}</td><td>${escAtt(r.riferimento||'-')}</td><td style="text-align:right"><strong>${euro(r.importo)}</strong></td><td style="text-align:right">${euro(r.importoPagato||0)}</td><td>${chip(stato.key,stato.label)}</td><td>${stato.key==='pagata'?'<span class="empty-note">Completato</span>':'<button class="btn btn-primary btn-sm acq-rate-paid">Registra saldo</button>'}</td></tr>`).join('');
-  document.getElementById('main').innerHTML=`<div class="section-hero"><div><h2>Pagamenti acquisti</h2><p>Scadenziario rateale di BB, cambiali e assegni collegati agli ordini.</p></div><button class="btn btn-outline" id="openInvoiceRegister">Apri registro fatture</button></div>${acquistiSubNav('pagamenti')}<div class="grid-stats cols-3"><div class="stat-card red"><div class="num">${daPagare.length}</div><div class="label">Scadenze da gestire</div></div><div class="stat-card amber"><div class="num">${euro(totaleDaPagare)}</div><div class="label">Residuo da pagare</div></div><div class="stat-card teal"><div class="num">${pagate.length}</div><div class="label">Scadenze pagate</div></div></div><div class="panel"><div class="table-wrap"><table class="row-table"><thead><tr><th>Data scadenza</th><th>Fornitore / ordine</th><th>Modalità</th><th>Partita / riferimento</th><th style="text-align:right">In scadenza</th><th style="text-align:right">Pagato</th><th>Stato</th><th></th></tr></thead><tbody>${rows||'<tr><td colspan="8" class="empty-note">Nessuna scadenza di pagamento inserita negli ordini.</td></tr>'}</tbody></table></div></div>`;
-  attachAcquistiSubNav();
-  document.getElementById('openInvoiceRegister').onclick=()=>vaiA('finanziaria','fatture');
-  document.querySelectorAll('[data-order-pay]').forEach(row=>{const btn=row.querySelector('.acq-rate-paid');if(btn)btn.onclick=()=>{const item=flat.find(x=>String(x.o.id)===String(row.dataset.orderPay));if(!item)return;const rata=item.o.scadenzePagamento[Number(row.dataset.rateIdx)];if(!confirm('Registrare questa scadenza come interamente pagata?'))return;rata.importoPagato=rata.importo;rata.dataPagamento=new Date().toISOString().slice(0,10);salvaAcquistoExtra(item.o);renderAcquistiPagamenti()}});
-}
-
-function renderAcquistiPanoramica() {
-  const { totali, generale } = acquistiPerSubappalto();
-  const flat = allOrdiniFlat();
-  const conteggi = [0, 0, 0, 0, 0]; let daAvviare = 0;
-  flat.forEach(({ o }) => { const i = faseAcquisto(o); if (i === -1) daAvviare++; else conteggi[i]++; });
-
-  document.getElementById('main').innerHTML = `
-    <div class="panel">
-      <h2>Ufficio acquisti</h2>
-      <p class="sub">Materiali comprati direttamente dalla tua azienda (anche quando destinati a un subappaltatore). Le schede qui sopra seguono l'iter operativo, dall'ordine allo storico costi.</p>
-      ${acquistiSubNav('panoramica')}
-      <h3 style="font-size:13.5px; margin:0 0 8px;">Procedura operativa</h3>
-      <ol style="font-size:13px; line-height:1.75; margin:0 0 6px; padding-left:22px;">
-        <li><strong>Ordine</strong> &mdash; nella scheda <a href="#" class="acq-goto" data-goto="ordine">1. Ordine</a> registra il fornitore (ragione sociale), chi ha ordinato (Aedifica o altri), il numero ordine, la data, l'importo, le quantit&agrave;/specifiche e la consegna richiesta. Il numero ordine &egrave; il riferimento che lega tutto il resto.</li>
-        <li><strong>DDT</strong> &mdash; all'arrivo della merce, nella scheda <a href="#" class="acq-goto" data-goto="ddt">2. DDT</a> registra numero DDT, data e cosa &egrave; arrivato, confrontalo con l'ordinato e spunta "corrisponde". Inserisci anche il valore della merce arrivata (&euro;).</li>
-        <li><strong>Fattura</strong> &mdash; contestualmente al DDT arriva la fattura: creala in Finanziario &rarr; Fatture (anche con l'autofill da PDF) e collegala all'ordine nella scheda <a href="#" class="acq-goto" data-goto="fattura">3. Fattura</a>.</li>
-        <li><strong>Controllo scostamenti</strong> &mdash; la scheda <a href="#" class="acq-goto" data-goto="controllo">4. Controllo scostamenti</a> confronta ordinato &rarr; valore DDT &rarr; fatturato: se una differenza supera il 3% la vedi segnalata in rosso/ambra.</li>
-        <li><strong>Storico costi</strong> &mdash; la scheda <a href="#" class="acq-goto" data-goto="storico">5. Storico costi</a> riepiloga i costi sostenuti divisi tra ferro, cemento e contratti di appalto.</li>
-      </ol>
-      <p class="sub">La registrazione contabile vera e propria (prima nota, pagamenti) resta sul software di contabilit&agrave;: qui tieni il controllo operativo del flusso e intercetti gli errori prima di pagare.</p>
-      <h3 style="font-size:13.5px; margin:18px 0 8px;">Ordini per fase</h3>
-      <div class="grid-stats" style="grid-template-columns: repeat(5, 1fr);">
-        <div class="stat-card gray"><div class="num">${daAvviare}</div><div class="label">Da avviare</div></div>
-        <div class="stat-card in_scadenza"><div class="num">${conteggi[0]}</div><div class="label">Ordinati</div></div>
-        <div class="stat-card in_scadenza"><div class="num">${conteggi[1]}</div><div class="label">In consegna (DDT)</div></div>
-        <div class="stat-card presente"><div class="num">${conteggi[2] + conteggi[3]}</div><div class="label">Fatturati</div></div>
-        <div class="stat-card valido"><div class="num">${conteggi[4]}</div><div class="label">Pagati</div></div>
-      </div>
-      <h3 style="font-size:13.5px; margin:18px 0 8px;">Materiali forniti per lavorazione</h3>
-      <table class="row-table">
-        <thead><tr><th>Lavorazione</th><th>Materiali forniti</th></tr></thead>
-        <tbody>
-          ${elencoSubappalti().map((s) => `<tr><td>${s.lavorazione}</td><td>${euro(totali[s.id])}</td></tr>`).join('')}
-          <tr><td>Cantiere (generale)</td><td>${euro(generale)}</td></tr>
-        </tbody>
-      </table>
-      <p class="sub" style="margin-top:8px;">Non incluso automaticamente nell'importo contrattuale del subappalto: lo vedi come voce separata in Finanziario &rarr; Costi.</p>
-      <h3 style="font-size:13.5px; margin:18px 0 8px;">Categorie fornitura</h3>
-      <table class="row-table">
-        <thead><tr><th>Categoria</th><th>Totale ordinato</th><th></th></tr></thead>
-        <tbody>
-          ${DATA.acquisti.categorie.map((cat) => `<tr data-cat-card="${cat.id}"><td>${cat.nome}</td><td>${euro(cat.ordini.reduce((s, o) => s + (Number(o.importo) || 0), 0))}</td><td><button class="btn btn-outline btn-sm cat-rename">Rinomina</button> <button class="btn btn-outline btn-sm cat-del">Elimina</button></td></tr>`).join('')}
-        </tbody>
-      </table>
-      <button class="btn btn-outline btn-sm" id="addCategoria" style="margin-top:10px;">+ Nuova categoria fornitura</button>
-    </div>
-  `;
-  attachAcquistiSubNav();
-  document.querySelectorAll('.acq-goto').forEach((a) => {
-    a.onclick = (e) => { e.preventDefault(); ACQUISTI_SUBTAB = a.getAttribute('data-goto'); renderAcquisti(); };
-  });
-  document.getElementById('addCategoria').onclick = () => {
-    const nome = prompt('Nome categoria fornitura (es. Impianti elettrici):');
-    if (!nome) return;
-    DATA.acquisti.categorie.push({ id: nextId('categorieAcquisto'), nome, ordini: [] });
-    saveData(); renderAcquisti();
-  };
-  document.querySelectorAll('.cat-rename').forEach((btn) => {
-    btn.onclick = () => {
-      const catId = btn.closest('[data-cat-card]').getAttribute('data-cat-card');
-      const cat = DATA.acquisti.categorie.find((c) => String(c.id) === catId);
-      const nuovo = prompt('Nuovo nome categoria:', cat.nome);
-      if (!nuovo) return;
-      cat.nome = nuovo; saveData(); renderAcquisti();
-    };
-  });
-  document.querySelectorAll('.cat-del').forEach((btn) => {
-    btn.onclick = () => {
-      const catId = btn.closest('[data-cat-card]').getAttribute('data-cat-card');
-      if (!confirm('Eliminare questa categoria e tutti i suoi ordini?')) return;
-      DATA.acquisti.categorie = DATA.acquisti.categorie.filter((c) => String(c.id) !== catId);
-      saveData(); renderAcquisti();
-    };
-  });
-}
 
 function pulsantiOrdineRiga(bl) {
   return bl
@@ -2636,9 +2541,9 @@ function fattureCollegateOrdine(o){
   return (DATA.finanziario.fatture||[]).filter(f=>f.tipo==='ricevuta'&&(String(f.id)===String(o.fatturaId)||(extra[String(f.id)]?.ordini||[]).some(id=>String(id)===idOrdine)));
 }
 function storicoCicloOrdineHtml(o){
-  const ddt=(o.ddtMultipli||[]).slice().sort((a,b)=>(a.data||'').localeCompare(b.data||''));
-  const fatture=fattureCollegateOrdine(o).slice().sort((a,b)=>(a.data||'').localeCompare(b.data||''));
-  const extra=caricaFattureExtra(),scadenze=fatture.flatMap(f=>{const x=extra[String(f.id)]||{},rate=Array.isArray(x.scadenze)&&x.scadenze.length?x.scadenze:(f.scadenzaPagamento?[{data:f.scadenzaPagamento,modalita:'',riferimento:'',importo:f.importo}]:[]);return rate.map(r=>({...r,fattura:f}))}).sort((a,b)=>(a.data||a.dataScadenza||'').localeCompare(b.data||b.dataScadenza||''));
+  const ddt=(o.ddtMultipli||[]).slice().sort((a,b)=>(b.data||'').localeCompare(a.data||''));
+  const fatture=fattureCollegateOrdine(o).slice().sort((a,b)=>(b.data||'').localeCompare(a.data||''));
+  const extra=caricaFattureExtra(),scadenze=fatture.flatMap(f=>{const x=extra[String(f.id)]||{},rate=Array.isArray(x.scadenze)&&x.scadenze.length?x.scadenze:(f.scadenzaPagamento?[{data:f.scadenzaPagamento,modalita:'',riferimento:'',importo:f.importo}]:[]);return rate.map(r=>({...r,fattura:f}))}).sort((a,b)=>(b.data||b.dataScadenza||'').localeCompare(a.data||a.dataScadenza||''));
   const ordineCompleto=!!(o.dataOrdine&&o.fornitore&&o.numeroOrdine),scadenzeAperte=scadenze.filter(r=>!r.pagata&&!(r.importoPagato&&Number(r.importoPagato)>=Number(r.importo))).length;
   const anomalie=[];
   if(fatture.length&&!ddt.length)anomalie.push({classe:'red',testo:'Fattura presente, ma nessun DDT è associato a questo ordine.'});
@@ -2652,13 +2557,59 @@ function storicoCicloOrdineHtml(o){
   ddt.forEach(d=>eventi.push({data:d.data||o.dataConsegnaEffettiva||'',fase:'DDT',titolo:`DDT ${d.numero||'senza numero'}`,dettaglio:d.merceConsegnata||o.descrizioneArrivo||'Merce consegnata',stato:d.corrisponde?'Conforme':'Da verificare',classe:d.corrisponde?'teal':'amber'}));
   fatture.forEach(f=>eventi.push({data:f.data||'',fase:'Fattura',titolo:`Fattura ${f.numero||'senza numero'}`,dettaglio:`${f.controparte||o.fornitore||'Fornitore'} · ${euro(f.importo)}`,stato:f.pagata?'Pagata':'Da pagare',classe:f.pagata?'teal':'amber',file:(extra[String(f.id)]||{}).file}));
   scadenze.forEach(r=>{const data=r.data||r.dataScadenza||'',pagata=!!r.pagata||(Number(r.importo)>0&&Number(r.importoPagato)>=Number(r.importo));eventi.push({data,fase:'Scadenza',titolo:`${r.modalita||'Pagamento'} · ${euro(r.importo)}`,dettaglio:`Fattura ${r.fattura.numero||'-'}${r.riferimento?' · '+r.riferimento:''}`,stato:pagata?'Pagata':(data&&data<oggiIsoAttivita()?'Scaduta':'Aperta'),classe:pagata?'teal':(data&&data<oggiIsoAttivita()?'red':'amber')})});
-  eventi.sort((a,b)=>(a.data||'9999-12-31').localeCompare(b.data||'9999-12-31'));
+  eventi.sort((a,b)=>(b.data||'0000-00-00').localeCompare(a.data||'0000-00-00'));
   const pannelloOrdine=`<div class="grid-stats cols-3" style="margin-bottom:0"><div class="stat-card blue"><div class="num" style="font-size:17px">${escAtt(o.numeroOrdine||'Da inserire')}</div><div class="label">Numero ordine</div></div><div class="stat-card blue"><div class="num" style="font-size:17px">${o.dataOrdine?dataBreve(o.dataOrdine):'Da inserire'}</div><div class="label">Data ordine</div></div><div class="stat-card blue"><div class="num" style="font-size:17px">${euro(o.importo)}</div><div class="label">Importo ordinato</div></div></div>`;
   const pannelloDdt=ddt.length?`<div class="table-wrap"><table class="row-table"><thead><tr><th>Data</th><th>N. DDT</th><th>Merce consegnata</th><th>Esito</th></tr></thead><tbody>${ddt.map(d=>`<tr><td>${d.data?dataBreve(d.data):'-'}</td><td><strong>${escAtt(d.numero||'-')}</strong></td><td style="white-space:normal">${escAtt(d.merceConsegnata||'-')}</td><td><span class="chip ${d.corrisponde?'teal':'amber'}">${d.corrisponde?'Conforme':'Da verificare'}</span></td></tr>`).join('')}</tbody></table></div>`:'<div class="diary-alert" style="border-color:var(--amber);color:var(--amber)">Nessun DDT associato a questo ordine.</div>';
   const pannelloFatture=fatture.length?`<div class="table-wrap"><table class="row-table"><thead><tr><th>Data</th><th>N. fattura</th><th>Totale</th><th>Stato</th><th>File</th></tr></thead><tbody>${fatture.map(f=>{const file=(extra[String(f.id)]||{}).file;return `<tr><td>${f.data?dataBreve(f.data):'-'}</td><td><strong>${escAtt(f.numero||'-')}</strong></td><td><strong>${euro(f.importo)}</strong></td><td><span class="chip ${f.pagata?'teal':'amber'}">${f.pagata?'Pagata':'Da pagare'}</span></td><td>${file?.path?`<a class="btn btn-outline btn-sm" href="#" data-invoice-file-path="${escAtt(file.path)}" download="${escAtt(file.nome||'fattura')}">Apri</a>`:file?.dati?`<a class="btn btn-outline btn-sm" href="${file.dati}" download="${escAtt(file.nome||'fattura')}">Apri</a>`:'Non allegato'}</td></tr>`}).join('')}</tbody></table></div>`:'<div class="diary-alert" style="border-color:var(--amber);color:var(--amber)">Nessuna fattura collegata a questo ordine.</div>';
   const pannelloScadenze=scadenze.length?`<div class="table-wrap"><table class="row-table"><thead><tr><th>Data</th><th>Modalità</th><th>Fattura</th><th>Importo</th><th>Stato</th></tr></thead><tbody>${scadenze.map(r=>{const data=r.data||r.dataScadenza||'',pagata=!!r.pagata||(Number(r.importo)>0&&Number(r.importoPagato)>=Number(r.importo)),scaduta=!pagata&&data&&data<oggiIsoAttivita();return `<tr><td><strong>${data?dataBreve(data):'-'}</strong></td><td>${escAtt(r.modalita||'-')}${r.riferimento?`<br><span class="empty-note">${escAtt(r.riferimento)}</span>`:''}</td><td>${escAtt(r.fattura.numero||'-')}</td><td><strong>${euro(r.importo)}</strong></td><td><span class="chip ${pagata?'teal':scaduta?'red':'amber'}">${pagata?'Pagata':scaduta?'Scaduta':'Aperta'}</span></td></tr>`}).join('')}</tbody></table></div>`:'<div class="diary-alert" style="border-color:var(--amber);color:var(--amber)">Nessuna scadenza collegata alla fattura.</div>';
   const pannelli=[['ordine','Ordine registrato','Il punto di partenza della pratica di acquisto.',pannelloOrdine],['ddt','Consegne e DDT','Tutti i documenti di trasporto collegati automaticamente.',pannelloDdt],['fattura','Fatture collegate','Fatture associate a questo ordine e relativi allegati.',pannelloFatture],['scadenze','Scadenze di pagamento','Rate che alimentano la gestione finanziaria.',pannelloScadenze]];
   return `<section class="purchase-cycle" style="margin-bottom:18px"><div class="section-title" style="margin-top:0"><div><h2>Scheda unica dell’acquisto</h2><p>Ordine, consegne, fatture e scadenze riuniti nella stessa pratica.</p></div><span class="chip ${anomalie.some(a=>a.classe==='red')?'red':anomalie.length?'amber':'teal'}">${anomalie.length?`${anomalie.length} informazioni da completare`:'Pratica completa'}</span></div>${anomalie.length?`<div style="display:grid;gap:8px;margin-bottom:14px">${anomalie.map(a=>`<div class="diary-alert" style="border-color:var(--${a.classe});color:var(--${a.classe})"><strong>Informazioni incomplete:</strong> ${escAtt(a.testo)}</div>`).join('')}</div>`:''}<div class="purchase-cycle-steps" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(155px,1fr));gap:8px;margin-bottom:14px">${passi.map((p,i)=>`<button type="button" class="sub-overview-fact purchase-cycle-step ${i===0?'selected':''}" data-cycle-step="${pannelli[i][0]}" aria-pressed="${i===0?'true':'false'}" style="text-align:left;cursor:pointer;border:1px solid var(--border);border-top:3px solid var(--${p[2]});background:${i===0?'var(--teal-light)':'var(--card)'}"><span>0${i+1} · ${p[0]}</span><strong>${p[1]}</strong></button>`).join('')}</div><div class="panel" style="margin-bottom:14px;padding:16px">${pannelli.map((p,i)=>`<div class="purchase-cycle-panel" data-cycle-panel="${p[0]}" style="display:${i===0?'block':'none'}"><div class="section-title" style="margin-top:0"><div><h2>${p[1]}</h2><p>${p[2]}</p></div>${p[0]==='ddt'?'<button type="button" class="btn btn-primary btn-sm oe-add-ddt">+ Aggiungi DDT</button>':p[0]==='fattura'?`<button type="button" class="btn btn-primary btn-sm oe-open-invoices">${fatture.length?'Apri fatture':'Collega fattura'}</button>`:''}</div>${p[3]}</div>`).join('')}</div><details><summary style="cursor:pointer;font-weight:700;color:var(--teal)">Apri lo storico cronologico completo</summary><div class="table-wrap" style="margin-top:12px"><table class="row-table"><thead><tr><th>Data</th><th>Passaggio</th><th>Operazione</th><th>Dettaglio</th><th>Stato</th><th>File</th></tr></thead><tbody>${eventi.map(e=>`<tr><td><strong>${e.data?dataBreve(e.data):'-'}</strong></td><td>${e.fase}</td><td><strong>${escAtt(e.titolo)}</strong></td><td style="white-space:normal">${escAtt(e.dettaglio)}</td><td><span class="chip ${e.classe}">${e.stato}</span></td><td>${e.file?.path?`<a class="btn btn-outline btn-sm" href="#" data-invoice-file-path="${escAtt(e.file.path)}" download="${escAtt(e.file.nome||'fattura')}">Apri</a>`:e.file?.dati?`<a class="btn btn-outline btn-sm" href="${e.file.dati}" download="${escAtt(e.file.nome||'fattura')}">Apri</a>`:'-'}</td></tr>`).join('')}</tbody></table></div></details></section>`;
+}
+
+function suggerisciComputoOrdine(o,catNome){
+  const testo=`${o.fornitore||''} ${o.descrizioneOrdine||''} ${catNome||''}`.toLowerCase();
+  const regole=[
+    {ref:'NP3',parole:['gru','edilcom']},
+    {ref:'AREA|Apprestamenti e noli',parole:['ponteggio','noleggio','mezzi','movisud']},
+    {ref:'NP4',parole:['magrone']},
+    {ref:'NP5',parole:['platea','fondazione','c35/45']},
+    {ref:'NP6',parole:['pilastri','muri di contenimento','elevazione','c32/40']},
+    {ref:'NP7',parole:['predalles','solaio','solai']},
+    {ref:'AREA|Strutture',parole:['ferro','acciaio','armatura','calcestruzzo','cemento','carpenteria','olimpo']},
+    {ref:'NP8',parole:['ascensore','ascensori']},
+    {ref:'NP9',parole:['ytong 30','muratura esterna']},
+    {ref:'NP10',parole:['ytong 40']},
+    {ref:'NP11',parole:['pareti divisorie','lana di roccia']},
+    {ref:'AREA|Murature e cartongesso',parole:['ytong','muratura','cartongesso']},
+    {ref:'NP12',parole:['ghiaia','sottofondo']},
+    {ref:'NP13',parole:['massetto industriale','garage']},
+    {ref:'NP14',parole:['massetto','posa resina']},
+    {ref:'NP15',parole:['resina decorativa','pavimento in resina']},
+    {ref:'NP16',parole:['rivestimenti bagni','rivestimento bagno']},
+    {ref:'AREA|Sottofondi, pavimenti e rivestimenti',parole:['pavimento','rivestimento']},
+    {ref:'NP17',parole:['controsoffitto','controsoffittatura']},
+    {ref:'NP18',parole:['intonaco','intonaci']},
+    {ref:'NP19',parole:['tinteggiatura','pittura']},
+    {ref:'AREA|Finiture',parole:['finiture']},
+    {ref:'NP20',parole:['tagliafuoco','rei']},
+    {ref:'NP21',parole:['porte interne','porta interna']},
+    {ref:'NP22',parole:['monoblocchi','tapparelle']},
+    {ref:'NP23',parole:['infissi','pvc','serramenti']},
+    {ref:'AREA|Porte e infissi',parole:['porte','infisso']}
+  ];
+  for(const r of regole){const trovata=r.parole.find(p=>testo.includes(p));if(trovata)return {riferimento:r.ref,motivo:`Riconosciuta la parola “${trovata}” nei dati dell’ordine.`}}
+  return {riferimento:'',motivo:'Non ci sono ancora informazioni sufficienti per proporre una lavorazione.'};
+}
+function etichettaComputoRiferimento(ref){
+  if(!ref)return 'Da classificare';
+  if(ref.startsWith('AREA|'))return ref.slice(5);
+  const voce=COMPUTO_CALVANICO.voci.find(v=>v.codice===ref);
+  return voce?`${voce.codice} · ${voce.nome}`:'Da classificare';
+}
+function opzioniComputoOrdine(selezionato){
+  const aree=riepilogoComputoCalvanico().map(g=>`<option value="AREA|${escAtt(g.nome)}" ${selezionato===`AREA|${g.nome}`?'selected':''}>Area · ${escAtt(g.nome)}</option>`).join('');
+  const voci=riepilogoComputoCalvanico().map(g=>`<optgroup label="${escAtt(g.nome)}">${g.voci.map(v=>`<option value="${v.codice}" ${selezionato===v.codice?'selected':''}>${v.codice} · ${escAtt(v.nome)}</option>`).join('')}</optgroup>`).join('');
+  return `<option value="" ${!selezionato?'selected':''}>Da verificare dal tecnico</option><optgroup label="Classificazione semplice per area">${aree}</optgroup>${voci}`;
 }
 
 // Editor a espansione: tutti i campi dell'ordine raggruppati in Ordine / DDT / Fattura.
@@ -2672,6 +2623,8 @@ function ordineEditor(catId, catNome, idx, o) {
       <button type="button" class="btn btn-outline btn-sm rf-add">+ Aggiungi voce</button>
     </div>` : '';
   const cicloHtml=storicoCicloOrdineHtml(o);
+  const suggerimento=suggerisciComputoOrdine(o,catNome),riferimento=o.computoRiferimento||suggerimento.riferimento;
+  const statoClassificazione=o.computoStato||(o.computoRiferimento?'confermata':(suggerimento.riferimento?'suggerita':'da_verificare'));
   return `
     <div class="oe-editor" data-cat="${catId}" data-idx="${idx}" style="background:var(--bg); border:1px solid var(--border); border-radius:10px; padding:14px; margin-top:10px;">
       ${cicloHtml}
@@ -2689,6 +2642,13 @@ function ordineEditor(catId, catNome, idx, o) {
         <div class="field" style="grid-column:1/-1"><label>File ordine</label><input type="file" class="oe-fileOrdine" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" />${o.fileOrdine&&o.fileOrdine.dati?`<a class="drive-mini" style="display:inline-block;margin-top:6px" href="${o.fileOrdine.dati}" download="${escAtt(o.fileOrdine.nome||'ordine')}">Apri file già caricato ↗</a>`:'<span class="empty-note" style="display:block;margin-top:5px">Nessun file caricato</span>'}</div>
         <div class="field" style="grid-column:1/-1;"><label>Quantit&agrave;/specifiche ordinate</label><input type="text" class="oe-descrizioneOrdine" value="${o.descrizioneOrdine || ''}" placeholder="es. 3 quintali ferro &Oslash;10mm B450C" /></div>
       </div>
+      <div class="classification-assistant" style="margin-top:14px;padding:16px;border:1px solid #bfdbfe;border-radius:14px;background:#eff6ff">
+        <div class="section-title" style="margin-top:0"><div><h2>Collegamento assistito al computo</h2><p>L’app propone una destinazione usando fornitore, categoria e descrizione. Non è obbligatorio conoscere il computo.</p></div><span class="chip ${statoClassificazione==='confermata'?'teal':statoClassificazione==='suggerita'?'blue':'amber'} oe-computo-chip">${statoClassificazione==='confermata'?'Confermato':statoClassificazione==='suggerita'?'Suggerimento automatico':'Da verificare'}</span></div>
+        <div class="form-grid"><div class="field" style="grid-column:1/-1"><label>Lavorazione proposta</label><select class="oe-computo-riferimento">${opzioniComputoOrdine(riferimento)}</select></div></div>
+        <p class="sub oe-computo-motivo" style="margin:9px 0 12px">${escAtt(o.computoMotivo||suggerimento.motivo)}</p>
+        <div style="display:flex;gap:8px;flex-wrap:wrap"><button type="button" class="btn btn-primary btn-sm oe-computo-conferma">Conferma suggerimento</button><button type="button" class="btn btn-outline btn-sm oe-computo-verifica">Da verificare dal tecnico</button></div>
+        <input type="hidden" class="oe-computo-stato" value="${escAtt(statoClassificazione)}"><input type="hidden" class="oe-computo-motivo-val" value="${escAtt(o.computoMotivo||suggerimento.motivo)}">
+      </div>
       ${ferroHtml}
       <div style="margin-top:10px; display:flex; gap:8px;">
         <button class="btn btn-primary btn-sm oe-save">Salva</button>
@@ -2698,38 +2658,66 @@ function ordineEditor(catId, catNome, idx, o) {
     </div>`;
 }
 
+// Editor in stile gestionale: prima i dati indispensabili, poi le informazioni
+// facoltative. Mantiene le stesse classi per non cambiare salvataggio e storico.
+ordineEditor=function(catId,catNome,idx,o){
+  const ferro=isFerroCategoria(catNome),chiHidden=o.ordinatoDa==='altri'?'':'display:none;';
+  const ferroHtml=ferro?`<details style="margin-top:14px"><summary style="cursor:pointer;font-weight:800;color:var(--teal)">Quantità e tipologie di ferro</summary><div class="prevent-ferro-row" data-cat="${catId}" data-idx="${idx}" style="margin-top:12px"><div class="righe-ferro-list">${(o.righeFerro&&o.righeFerro.length?o.righeFerro:[nuovaRigaFerro()]).map((r,ri)=>rigaFerroHtml(r,ri,'')).join('')}</div><button type="button" class="btn btn-outline btn-sm rf-add">+ Aggiungi voce</button></div></details>`:'';
+  const suggerimento=suggerisciComputoOrdine(o,catNome),riferimento=o.computoRiferimento||suggerimento.riferimento,stato=o.computoStato||(o.computoRiferimento?'confermata':(suggerimento.riferimento?'suggerita':'da_verificare'));
+  return `<div class="oe-editor" data-cat="${catId}" data-idx="${idx}" style="background:var(--card);border:1px solid var(--teal);border-radius:15px;margin-top:14px;overflow:hidden">
+    <div style="background:var(--teal);color:white;padding:13px 18px;display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap"><div><strong>${o.numeroOrdine?'Modifica ordine '+escAtt(o.numeroOrdine):'Nuovo ordine a fornitore'}</strong><div style="font-size:11px;opacity:.85;margin-top:2px">Compila prima i campi contrassegnati con *</div></div><div style="display:flex;gap:7px"><button type="button" class="btn btn-sm oe-close">Annulla</button><button type="button" class="btn btn-sm oe-save" style="background:white;color:var(--teal)">Salva ordine</button></div></div>
+    <div style="padding:18px">
+      <h3 style="margin:0 0 12px;font-size:14px">Dati principali</h3>
+      <div class="form-grid">
+        <div class="field"><label>Fornitore *</label><input type="text" class="oe-fornitore" value="${escAtt(o.fornitore||'')}" placeholder="Ragione sociale"></div>
+        <div class="field"><label>Numero ordine *</label><input type="text" class="oe-numeroOrdine" value="${escAtt(o.numeroOrdine||'')}" placeholder="es. 125/26"></div>
+        <div class="field"><label>Data ordine *</label><input type="date" class="oe-dataOrdine" value="${escAtt(o.dataOrdine||'')}"></div>
+        <div class="field"><label>Importo ordinato (€) *</label><input type="number" step="0.01" class="oe-importo" value="${escAtt(o.importo||'')}"></div>
+        <div class="field" style="grid-column:1/-1"><label>Cosa è stato ordinato *</label><input type="text" class="oe-descrizioneOrdine" value="${escAtt(o.descrizioneOrdine||'')}" placeholder="Descrizione semplice della merce o del servizio"></div>
+      </div>
+      <h3 style="margin:20px 0 12px;font-size:14px">Consegna e riferimenti</h3>
+      <div class="form-grid">
+        <div class="field"><label>Consegna prevista</label><input type="date" class="oe-consegnaPrevista" value="${escAtt(o.dataConsegnaPrevista||'')}"></div>
+        <div class="field"><label>Condizioni di pagamento</label><input type="text" class="oe-condizioniPagamento" value="${escAtt(o.condizioniPagamento||'')}" placeholder="es. 30 giorni data fattura"></div>
+        <div class="field"><label>Acquisto effettuato da</label><select class="oe-ordinatoDa"><option value="aedifica" ${o.ordinatoDa!=='altri'?'selected':''}>Aedifica</option><option value="altri" ${o.ordinatoDa==='altri'?'selected':''}>Altro soggetto</option></select></div>
+        <div class="field"><label>Nome altro soggetto</label><input type="text" class="oe-ordinatoDaChi" value="${escAtt(o.ordinatoDaChi||'')}" style="${chiHidden}" placeholder="Nome"></div>
+        <div class="field"><label>Destinato a</label><select class="oe-sub">${destinazioneOptions(o.subappaltoId)}</select></div>
+        <div class="field"><label>File ordine</label><input type="file" class="oe-fileOrdine" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx">${o.fileOrdine&&o.fileOrdine.dati?`<a class="drive-mini" style="display:block;margin-top:6px" href="${o.fileOrdine.dati}" download="${escAtt(o.fileOrdine.nome||'ordine')}">Apri file caricato</a>`:'<span class="empty-note" style="display:block;margin-top:5px">Facoltativo</span>'}</div>
+      </div>
+      ${ferroHtml}
+      <details style="margin-top:16px"><summary style="cursor:pointer;font-weight:800;color:var(--teal)">Collegamento al computo (facoltativo)</summary><div class="classification-assistant" style="margin-top:10px;padding:14px;background:var(--bg);border-radius:12px"><div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap"><strong>Proposta automatica</strong><span class="chip ${stato==='confermata'?'teal':stato==='suggerita'?'blue':'amber'} oe-computo-chip">${stato==='confermata'?'Confermato':stato==='suggerita'?'Da confermare':'Da verificare'}</span></div><div class="field" style="margin-top:10px"><label>Area o lavorazione</label><select class="oe-computo-riferimento">${opzioniComputoOrdine(riferimento)}</select></div><p class="sub oe-computo-motivo" style="margin:8px 0">${escAtt(o.computoMotivo||suggerimento.motivo)}</p><div style="display:flex;gap:8px;flex-wrap:wrap"><button type="button" class="btn btn-primary btn-sm oe-computo-conferma">Conferma</button><button type="button" class="btn btn-outline btn-sm oe-computo-verifica">Lascia al tecnico</button></div><input type="hidden" class="oe-computo-stato" value="${escAtt(stato)}"><input type="hidden" class="oe-computo-motivo-val" value="${escAtt(o.computoMotivo||suggerimento.motivo)}"></div></details>
+      <details style="margin-top:16px"><summary style="cursor:pointer;font-weight:800;color:var(--teal)">Consulta DDT, fatture e scadenze collegate</summary><div style="margin-top:12px">${storicoCicloOrdineHtml(o)}</div></details>
+      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:20px;padding-top:14px;border-top:1px solid var(--border)"><button type="button" class="btn btn-outline btn-sm oe-del" style="margin-right:auto;color:var(--red)">Elimina</button><button type="button" class="btn btn-outline oe-close">Annulla</button><button type="button" class="btn btn-primary oe-save">Salva ordine</button></div>
+    </div>
+  </div>`;
+};
+
 function renderAcquistiOrdine() {
   const flat = allOrdiniFlat();
   flat.forEach(({o})=>integraAcquistoExtra(o));
   const filtrati=flat.filter(({o})=>(!ACQ_ORDINI_FILTRI.fornitore||(o.fornitore||'').toLowerCase().includes(ACQ_ORDINI_FILTRI.fornitore.toLowerCase()))&&(!ACQ_ORDINI_FILTRI.dal||o.dataOrdine>=ACQ_ORDINI_FILTRI.dal)&&(!ACQ_ORDINI_FILTRI.al||o.dataOrdine<=ACQ_ORDINI_FILTRI.al)).sort((a,b)=>(b.o.dataOrdine||'').localeCompare(a.o.dataOrdine||'')||String(b.o.id||'').localeCompare(String(a.o.id||''),undefined,{numeric:true}));
-  const cards = filtrati.map(({ catId, catNome, idx, o }) => {
+  const righeOrdini = filtrati.map(({ catId, catNome, idx, o }) => {
     const key = catId + ':' + idx;
     const aperto = ACQ_OPEN === key;
-    const acquistatoDa=o.ordinatoDa==='altri'?(o.ordinatoDaChi||'Altro soggetto'):'AEDIFICA';
     const haDdt=(o.ddtMultipli||[]).length>0||!!o.numeroDDT,haFatture=fattureCollegateOrdine(o).length>0;
     const anomaliaFatturaSenzaDdt=haFatture&&!haDdt;
     const stato=anomaliaFatturaSenzaDdt?'Fattura presente · DDT mancante':(haDdt?'Consegnato':'In attesa di consegna');
-    const compact = `
-      <div data-open="${key}" style="cursor:pointer"><div style="display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap"><div><div style="font-size:19px;font-weight:800;color:var(--navy)">${o.dataOrdine?dataBreve(o.dataOrdine):'Data da inserire'}</div><h3 style="font-size:16px;margin:5px 0 2px">${escAtt(o.fornitore||'Fornitore da inserire')}</h3><p class="sub" style="margin:0">${escAtt(catNome)}${o.descrizioneOrdine?' · '+escAtt(o.descrizioneOrdine):''}</p></div><span class="chip ${anomaliaFatturaSenzaDdt?'red':(haDdt?'teal':'amber')}">${stato}</span></div>${anomaliaFatturaSenzaDdt?'<div class="diary-alert" style="margin-top:12px;border-color:var(--red);color:var(--red)"><strong>Informazioni incomplete:</strong> la fattura è collegata, ma manca il DDT.</div>':''}<div class="sub-overview-facts" style="grid-template-columns:repeat(4,minmax(0,1fr));margin-top:18px"><div class="sub-overview-fact"><span>Numero ordine</span><strong>${escAtt(o.numeroOrdine||'Da inserire')}</strong></div><div class="sub-overview-fact"><span>Importo</span><strong>${euro(o.importo)}</strong></div><div class="sub-overview-fact"><span>Consegna prevista</span><strong>${o.dataConsegnaPrevista?dataBreve(o.dataConsegnaPrevista):'Da inserire'}</strong></div><div class="sub-overview-fact"><span>Condizioni pagamento</span><strong>${escAtt(o.condizioniPagamento||'Da inserire')}</strong></div></div><div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-top:14px;padding-top:12px;border-top:1px solid var(--border)"><div style="font-size:12px"><strong>Acquisto effettuato da:</strong> ${escAtt(acquistatoDa)}${o.fileOrdine&&o.fileOrdine.dati?` · <a href="${o.fileOrdine.dati}" download="${escAtt(o.fileOrdine.nome||'ordine')}" onclick="event.stopPropagation()">Apri file ordine ↗</a>`:' · <span class="empty-note">File non caricato</span>'}</div><span style="font-size:12px;font-weight:700;color:var(--teal)">${aperto?'Chiudi':'Modifica ordine'} →</span></div></div>`;
-    return `<div class="ordine-card" data-key="${key}">${compact}${aperto ? ordineEditor(catId, catNome, idx, o) : ''}</div>`;
+    const classSuggerita=suggerisciComputoOrdine(o,catNome),classRef=o.computoRiferimento||classSuggerita.riferimento,classStato=o.computoStato||(o.computoRiferimento?'confermata':(classRef?'suggerita':'da_verificare'));
+    const classeStato=anomaliaFatturaSenzaDdt?'red':haDdt?'teal':'amber';
+    return `<tr><td><strong>${o.dataOrdine?dataBreve(o.dataOrdine):'Da inserire'}</strong></td><td><strong>${escAtt(o.fornitore||'Da inserire')}</strong><div class="empty-note">${escAtt(catNome)}</div></td><td><strong>${escAtt(o.numeroOrdine||'Da inserire')}</strong></td><td style="white-space:normal">${escAtt(o.descrizioneOrdine||'Descrizione da inserire')}<div style="margin-top:4px"><span class="chip ${classStato==='confermata'?'teal':classStato==='suggerita'?'blue':'amber'}">${escAtt(etichettaComputoRiferimento(classRef))}</span></div></td><td><strong>${euro(o.importo)}</strong></td><td>${o.dataConsegnaPrevista?dataBreve(o.dataConsegnaPrevista):'—'}</td><td><span class="chip ${classeStato}">${escAtt(stato)}</span></td><td><button type="button" class="btn btn-outline btn-sm" data-open="${key}">${aperto?'Chiudi':'Apri'}</button></td></tr>${aperto?`<tr><td colspan="8" style="padding:0;border-bottom:0">${ordineEditor(catId,catNome,idx,o)}</td></tr>`:''}`;
   }).join('');
-  const catExists = DATA.acquisti.categorie.length > 0;
-  const catChips = DATA.acquisti.categorie.map((c) => `<span class="chip gray" style="cursor:default;">${c.nome} <a href="#" class="cat-rename" data-id="${c.id}" title="Rinomina">&#9998;</a> <a href="#" class="cat-del" data-id="${c.id}" title="Elimina">&#10005;</a></span>`).join(' ');
+  const registroOrdini=righeOrdini?`<div class="table-wrap"><table class="row-table"><thead><tr><th>Data</th><th>Fornitore</th><th>N. ordine</th><th>Descrizione</th><th>Importo</th><th>Consegna</th><th>Stato</th><th></th></tr></thead><tbody>${righeOrdini}</tbody></table></div>`:'<p class="empty-note">Nessun ordine corrisponde ai filtri impostati.</p>';
 
   document.getElementById('main').innerHTML = `
     <div class="panel">
-      <h2>Ordini</h2>
-      <p class="sub">Gli ordini sono mostrati dal più recente. Apri una scheda per consultare insieme ordine, DDT, fatture e relative scadenze; le sezioni dedicate restano disponibili come archivi generali.</p>
+      <h2>Ordini fornitori</h2>
+      <p class="sub">Registro ordinato dal più recente. Premi “Apri” soltanto sull’ordine che vuoi consultare o modificare.</p>
       ${acquistiSubNav('ordine')}
       <form id="acqOrderFilters" style="display:grid;grid-template-columns:2fr 1fr 1fr auto auto;gap:10px;align-items:end;margin-bottom:16px;padding:14px;background:var(--bg);border:1px solid var(--border);border-radius:14px"><div class="field"><label>Cerca fornitore</label><input id="acqFilterSupplier" value="${escAtt(ACQ_ORDINI_FILTRI.fornitore)}" placeholder="Scrivi il nome del fornitore"></div><div class="field"><label>Data ordine dal</label><input type="date" id="acqFilterFrom" value="${ACQ_ORDINI_FILTRI.dal}"></div><div class="field"><label>Data ordine al</label><input type="date" id="acqFilterTo" value="${ACQ_ORDINI_FILTRI.al}"></div><button class="btn btn-primary btn-sm" type="submit">Cerca</button><button class="btn btn-outline btn-sm" type="button" id="acqFilterReset">Azzera</button></form>
-      ${catExists ? `
-      <div style="display:flex; gap:8px; align-items:center; margin-bottom:8px; flex-wrap:wrap;">
-        <select id="newOrdineCat" style="max-width:240px;">${categorieOptions()}</select>
+      <div style="display:flex;gap:8px;align-items:end;margin-bottom:16px;flex-wrap:wrap"><div class="field" style="min-width:260px"><label>Categoria materiale</label><select id="newOrdineCat">${CATEGORIE_ACQUISTI_INIZIALI.map((nome)=>`<option value="${escAtt(nome)}">${escAtt(nome)}</option>`).join('')}</select></div>
         <button class="btn btn-primary btn-sm" id="addOrdine">+ Nuovo ordine</button>
       </div>
-      <details style="margin-bottom:14px"><summary style="cursor:pointer;font-size:12px;font-weight:700;color:var(--gray)">Gestisci categorie di fornitura</summary><div style="margin-top:8px;font-size:12px;line-height:2">${catChips} <button class="btn btn-outline btn-sm" id="addCat">+ Categoria</button></div></details>
-      ` : `<p class="empty-note">Crea prima una categoria fornitura: <button class="btn btn-outline btn-sm" id="addCat">+ Categoria</button></p>`}
-      ${cards || '<p class="empty-note">Nessun ordine corrisponde ai filtri impostati.</p>'}
+      ${registroOrdini}
     </div>
   `;
   attachAcquistiSubNav();
@@ -2737,7 +2725,7 @@ function renderAcquistiOrdine() {
   document.getElementById('acqFilterReset').onclick=()=>{ACQ_ORDINI_FILTRI={fornitore:'',dal:'',al:''};ACQ_OPEN=null;renderAcquistiOrdine()};
   document.querySelectorAll('[data-open]').forEach((el) => {
     el.onclick = (e) => {
-      if (e.target.closest('a,button,input,select,textarea,label')) return;
+      e.preventDefault();
       const key = el.getAttribute('data-open');
       ACQ_OPEN = (ACQ_OPEN === key) ? null : key;
       renderAcquistiOrdine();
@@ -2745,16 +2733,13 @@ function renderAcquistiOrdine() {
   });
   const addBtn = document.getElementById('addOrdine');
   if (addBtn) addBtn.onclick = () => {
-    const catId = document.getElementById('newOrdineCat').value;
-    const cat = DATA.acquisti.categorie.find((c) => String(c.id) === catId);
+    const nomeCat = document.getElementById('newOrdineCat').value;
+    let cat = DATA.acquisti.categorie.find((c) => String(c.nome||'').trim().toLowerCase() === nomeCat.toLowerCase());
+    if (!cat) { cat = { id: nextId('categorieAcquisto'), nome: nomeCat, ordini: [] }; DATA.acquisti.categorie.push(cat); }
     cat.ordini.push({ id: nextId('ordini'), fornitore: '', subappaltoId: '', ordinatoDa: 'aedifica', ordinatoDaChi: '', numeroOrdine: '', dataOrdine: new Date().toISOString().slice(0, 10), importo: '', descrizioneOrdine: '', dataConsegnaPrevista: '', condizioniPagamento: '', dataPagamentoPrevista: '', importoPagamento: '', modalitaPagamento: '', fileOrdine: null, numeroDDT: '', importoDDT: '', dataConsegnaEffettiva: '', descrizioneArrivo: '', quantitaConfermata: false, fatturaId: '', fatturaVerificata: false, righeFerro: [] });
-    ACQ_OPEN = catId + ':' + (cat.ordini.length - 1);
+    ACQ_OPEN = cat.id + ':' + (cat.ordini.length - 1);
     saveData(); renderAcquistiOrdine();
   };
-  const addCat = document.getElementById('addCat');
-  if (addCat) addCat.onclick = () => { const nome = prompt('Nome categoria fornitura (es. Ferro/Acciaio):'); if (!nome) return; DATA.acquisti.categorie.push({ id: nextId('categorieAcquisto'), nome, ordini: [] }); saveData(); renderAcquistiOrdine(); };
-  document.querySelectorAll('.cat-rename').forEach((a) => { a.onclick = (e) => { e.preventDefault(); const c = DATA.acquisti.categorie.find((x) => String(x.id) === a.dataset.id); const n = prompt('Nuovo nome categoria:', c.nome); if (!n) return; c.nome = n; saveData(); renderAcquistiOrdine(); }; });
-  document.querySelectorAll('.cat-del').forEach((a) => { a.onclick = (e) => { e.preventDefault(); if (!confirm('Eliminare questa categoria e tutti i suoi ordini?')) return; DATA.acquisti.categorie = DATA.acquisti.categorie.filter((x) => String(x.id) !== a.dataset.id); saveData(); renderAcquistiOrdine(); }; });
   if (ACQ_OPEN) attachOrdineEditor();
 }
 
@@ -2783,6 +2768,14 @@ function attachOrdineEditor() {
   const ferro = isFerroCategoria(cat.nome);
   const ordDa = ed.querySelector('.oe-ordinatoDa');
   ordDa.onchange = () => { ed.querySelector('.oe-ordinatoDaChi').style.display = ordDa.value === 'altri' ? '' : 'none'; };
+  const computoSelect=ed.querySelector('.oe-computo-riferimento'),computoStato=ed.querySelector('.oe-computo-stato'),computoMotivo=ed.querySelector('.oe-computo-motivo-val'),computoTesto=ed.querySelector('.oe-computo-motivo'),computoChip=ed.querySelector('.oe-computo-chip');
+  const aggiornaChipClassificazione=(stato)=>{computoChip.className='chip '+(stato==='confermata'?'teal':stato==='suggerita'?'blue':'amber');computoChip.textContent=stato==='confermata'?'Confermato':stato==='suggerita'?'Suggerimento automatico':'Da verificare'};
+  const aggiornaSuggerimento=()=>{if(computoStato.value==='confermata')return;const s=suggerisciComputoOrdine({fornitore:ed.querySelector('.oe-fornitore').value,descrizioneOrdine:ed.querySelector('.oe-descrizioneOrdine').value},cat.nome);computoSelect.value=s.riferimento||'';computoStato.value=s.riferimento?'suggerita':'da_verificare';computoMotivo.value=s.motivo;computoTesto.textContent=s.motivo;aggiornaChipClassificazione(computoStato.value)};
+  ed.querySelector('.oe-fornitore').addEventListener('input',aggiornaSuggerimento);
+  ed.querySelector('.oe-descrizioneOrdine').addEventListener('input',aggiornaSuggerimento);
+  computoSelect.onchange=()=>{computoStato.value=computoSelect.value?'suggerita':'da_verificare';computoMotivo.value=computoSelect.value?'Selezione modificata manualmente: confermala quando sei sicura.':'Classificazione rinviata al tecnico.';computoTesto.textContent=computoMotivo.value;aggiornaChipClassificazione(computoStato.value)};
+  ed.querySelector('.oe-computo-conferma').onclick=()=>{if(!computoSelect.value){alert('Scegli una proposta oppure usa “Da verificare dal tecnico”.');return}computoStato.value='confermata';computoMotivo.value='Collegamento confermato dall’utente.';computoTesto.textContent=computoMotivo.value;aggiornaChipClassificazione('confermata')};
+  ed.querySelector('.oe-computo-verifica').onclick=()=>{computoSelect.value='';computoStato.value='da_verificare';computoMotivo.value='Classificazione da verificare con il tecnico di cantiere.';computoTesto.textContent=computoMotivo.value;aggiornaChipClassificazione('da_verificare')};
   if (ferro) attachRigheFerroHandlers(catId, idx, renderAcquistiOrdine);
   const gotoFatt = ed.querySelector('.oe-goto-fatture');
   if (gotoFatt) gotoFatt.onclick = (e) => { e.preventDefault(); vaiA('finanziaria', 'fatture'); };
@@ -2791,12 +2784,12 @@ function attachOrdineEditor() {
   const openInvoices=ed.querySelector('.oe-open-invoices');
   if(openInvoices)openInvoices.onclick=()=>{ACQ_FATTURA_MODE='collegata';ACQ_FATTURA_FORNITORE=o.fornitore||'';ACQUISTI_SUBTAB='fattura';renderAcquisti()};
   collegaFileFatture();
-  ed.querySelector('.oe-save').onclick = async () => {
+  const salvaOrdineEditor = async () => {
     const g = (c) => { const el = ed.querySelector(c); return el ? (el.type === 'checkbox' ? el.checked : el.value) : undefined; };
     const patch = {
       fornitore: g('.oe-fornitore'), subappaltoId: g('.oe-sub'), ordinatoDa: g('.oe-ordinatoDa'), ordinatoDaChi: g('.oe-ordinatoDaChi'),
       numeroOrdine: g('.oe-numeroOrdine'), dataOrdine: g('.oe-dataOrdine'), importo: g('.oe-importo'), descrizioneOrdine: g('.oe-descrizioneOrdine'), dataConsegnaPrevista: g('.oe-consegnaPrevista'),
-      condizioniPagamento: g('.oe-condizioniPagamento')
+      condizioniPagamento: g('.oe-condizioniPagamento'), computoRiferimento:g('.oe-computo-riferimento'),computoStato:g('.oe-computo-stato'),computoMotivo:g('.oe-computo-motivo-val')
     };
     const fileInput=ed.querySelector('.oe-fileOrdine');
     if(fileInput&&fileInput.files&&fileInput.files[0]){const file=fileInput.files[0];if(file.size>3*1024*1024){alert('Il file ordine supera 3 MB. Caricalo su Drive e usa un PDF più leggero.');return;}patch.fileOrdine={nome:file.name,dati:await leggiFileComeDataUrl(file)};}
@@ -2811,7 +2804,8 @@ function attachOrdineEditor() {
     ACQ_OPEN = null;
     saveData(); renderAcquistiOrdine();
   };
-  ed.querySelector('.oe-close').onclick = () => { ACQ_OPEN = null; renderAcquistiOrdine(); };
+  ed.querySelectorAll('.oe-save').forEach(btn=>btn.onclick=salvaOrdineEditor);
+  ed.querySelectorAll('.oe-close').forEach(btn=>btn.onclick=()=>{ACQ_OPEN=null;renderAcquistiOrdine()});
   ed.querySelector('.oe-del').onclick = () => { if (!confirm('Eliminare questo ordine?')) return; cat.ordini.splice(idx, 1); ACQ_OPEN = null; saveData(); renderAcquistiOrdine(); };
 }
 
@@ -2861,95 +2855,6 @@ function ferroDdtExtraRowHtml(o, catId, idx, dis) {
   </tr>`;
 }
 
-function renderAcquistiDDTLegacy() {
-  const flat = allOrdiniFlat();
-  const rows = flat.map(({ catId, catNome, idx, o }) => { const dis = o.bloccato ? 'disabled' : '';
-    const mismatchWarn = o.numeroDDT && !o.quantitaConfermata ? `<br><span style="color:var(--amber); font-size:11px; font-weight:700;">&#9888; da verificare</span>` : '';
-    const mainRow = `
-    <tr class="prevent-main-row" data-cat="${catId}" data-idx="${idx}">
-      <td class="empty-note">${catNome}<br><strong>${o.fornitore || '-'}</strong><br>${ordinatoDaChip(o)}</td>
-      <td class="empty-note"><strong>${o.numeroOrdine || '-'}</strong><br>${o.dataOrdine ? dataBreve(o.dataOrdine) : ''}</td>
-      <td class="empty-note" style="max-width:140px; white-space:normal;">${o.descrizioneOrdine || '<span class="no-link">nessuna descrizione</span>'}</td>
-      <td><input type="text" class="f-numeroDDT" value="${o.numeroDDT || ''}" placeholder="N. DDT/bolla" ${dis} /></td>
-      <td><input type="date" class="f-consegnaEffettiva" value="${o.dataConsegnaEffettiva || ''}" ${dis} /></td>
-      <td><input type="text" class="f-descrizioneArrivo" value="${o.descrizioneArrivo || ''}" placeholder="es. 4 quintali" ${dis} /></td>
-      <td><input type="number" class="f-importoDDT" value="${o.importoDDT || ''}" placeholder="€" ${dis} /></td>
-      <td><label style="display:flex; align-items:center; gap:6px; font-weight:400;"><input type="checkbox" class="f-quantitaConfermata" style="width:auto;" ${o.quantitaConfermata ? 'checked' : ''} ${dis} /> corrisponde</label>${mismatchWarn}</td>
-      <td>${faseChipOrdine(o)}</td>
-      <td>${pulsantiOrdineRiga(o.bloccato)}</td>
-    </tr>`;
-    const ferroRow = isFerroCategoria(catNome) ? ferroDdtExtraRowHtml(o, catId, idx, dis) : '';
-    return mainRow + ferroRow;
-  }).join('');
-
-  document.getElementById('main').innerHTML = `
-    <div class="panel">
-      <h2>3. DDT &mdash; arrivo materiale in cantiere</h2>
-      <p class="sub">Confronta "Quantit&agrave;/specifiche ordinate" (da Ordine) con quanto arrivato, poi spunta "corrisponde". "Valore merce" &egrave; il valore in euro di quanto arrivato con questo DDT: serve alla scheda 5. Controllo scostamenti. Per il ferro trovi il confronto voce per voce e il prezzo previsionale (quantit&agrave; arrivata &times; prezzo pattuito), usato come valore merce se non lo compili.</p>
-      ${acquistiSubNav('ddt')}
-      <table class="row-table">
-        <thead><tr><th>Categoria / Fornitore</th><th>N. ordine</th><th>Ordinato</th><th>N. DDT</th><th>Data arrivo</th><th>Arrivato</th><th>Valore merce</th><th>Verifica</th><th>Fase</th><th></th></tr></thead>
-        <tbody>${rows || '<tr><td colspan="10" class="empty-note">Nessun ordine ancora.</td></tr>'}</tbody>
-      </table>
-    </div>
-  `;
-  attachAcquistiSubNav();
-  attachOrdineRowHandlers([['.f-numeroDDT', 'numeroDDT'], ['.f-consegnaEffettiva', 'dataConsegnaEffettiva'], ['.f-descrizioneArrivo', 'descrizioneArrivo'], ['.f-importoDDT', 'importoDDT'], ['.f-quantitaConfermata', 'quantitaConfermata', 'checkbox']], renderAcquistiDDT);
-  document.querySelectorAll('.prevent-main-row .ordine-save').forEach((btn) => {
-    const mainTr = btn.closest('tr');
-    const ferroTr = mainTr.nextElementSibling;
-    if (!ferroTr || !ferroTr.classList.contains('prevent-ferro-row')) return;
-    btn.onclick = () => {
-      const catId = mainTr.dataset.cat; const idx = Number(mainTr.dataset.idx);
-      const cat = DATA.acquisti.categorie.find((c) => String(c.id) === catId);
-      const righeAggiornate = (cat.ordini[idx].righeFerro || []).map((r, ri) => {
-        const div = ferroTr.querySelector(`.riga-ferro[data-riga-idx="${ri}"]`);
-        if (!div) return r;
-        const input = div.querySelector('.rf-tonnArrivate');
-        return input ? { ...r, tonnellateArrivate: input.value } : r;
-      });
-      const patch = {
-        numeroDDT: mainTr.querySelector('.f-numeroDDT').value,
-        dataConsegnaEffettiva: mainTr.querySelector('.f-consegnaEffettiva').value,
-        descrizioneArrivo: mainTr.querySelector('.f-descrizioneArrivo').value,
-        importoDDT: mainTr.querySelector('.f-importoDDT').value,
-        quantitaConfermata: mainTr.querySelector('.f-quantitaConfermata').checked,
-        righeFerro: righeAggiornate,
-        bloccato: true
-      };
-      // Per il ferro, se il valore merce non e' compilato lo si ricava dal
-      // previsionale (tonnellate arrivate x prezzo pattuito per voce).
-      if (!patch.importoDDT) {
-        const previsionale = prezzoPrevisionale({ righeFerro: righeAggiornate });
-        if (previsionale > 0) patch.importoDDT = previsionale.toFixed(2);
-      }
-      Object.assign(cat.ordini[idx], patch);
-      saveData();
-      renderAcquistiDDT();
-    };
-  });
-}
-
-function renderAcquistiDDT() {
-  const flat=allOrdiniFlat();flat.forEach(({o})=>integraAcquistoExtra(o));
-  const fornitori=[...new Set(flat.map(x=>String(x.o.fornitore||'').trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'it'));
-  if(ACQ_DDT_FORNITORE&&!fornitori.includes(ACQ_DDT_FORNITORE)){ACQ_DDT_FORNITORE='';ACQ_DDT_ORDER_ID=''}
-  const ordiniFornitore=ACQ_DDT_FORNITORE?flat.filter(({o})=>String(o.fornitore||'').toLowerCase()===ACQ_DDT_FORNITORE.toLowerCase()):[];
-  if(ACQ_DDT_ORDER_ID&&!ordiniFornitore.some(({o})=>String(o.id)===String(ACQ_DDT_ORDER_ID)))ACQ_DDT_ORDER_ID='';
-  if(!ACQ_DDT_ORDER_ID&&ordiniFornitore.length){
-    const candidato=ordiniFornitore.slice().sort((a,b)=>(a.o.ddtMultipli.length?1:0)-(b.o.ddtMultipli.length?1:0)||(b.o.dataOrdine||'').localeCompare(a.o.dataOrdine||''))[0];
-    ACQ_DDT_ORDER_ID=String(candidato.o.id);
-  }
-  const selezionato=flat.find(({o})=>String(o.id)===String(ACQ_DDT_ORDER_ID));
-  const elencoOrdini=ACQ_DDT_FORNITORE?(selezionato?`<div class="panel"><div class="section-title" style="margin-top:0"><div><h2>Ordine individuato automaticamente</h2><p>È stato proposto l’ordine aperto più recente di ${escAtt(ACQ_DDT_FORNITORE)}.</p></div><span class="chip teal">Ord. ${escAtt(selezionato.o.numeroOrdine||'senza numero')}</span></div>${ordiniFornitore.length>1?`<details><summary style="cursor:pointer;font-weight:700;color:var(--teal)">Il DDT riguarda un altro ordine?</summary><div class="field" style="max-width:620px;margin-top:12px"><label>Cambia eccezionalmente l’ordine collegato</label><select id="ddtOrderOverride">${ordiniFornitore.map(({o})=>`<option value="${escAtt(o.id)}" ${String(o.id)===String(ACQ_DDT_ORDER_ID)?'selected':''}>Ord. ${escAtt(o.numeroOrdine||'senza numero')} · ${o.dataOrdine?dataBreve(o.dataOrdine):'data mancante'}</option>`).join('')}</select></div></details>`:''}</div>`:'<div class="panel"><p class="empty-note">Non risultano ordini per questo fornitore.</p></div>'):'<div class="panel"><p class="empty-note">Seleziona il fornitore: l’app individuerà automaticamente l’ordine da collegare.</p></div>';
-  const storicoDDT=flat.flatMap(({o,catNome})=>(o.ddtMultipli||[]).map(d=>({d,o,catNome}))).sort((a,b)=>((b.d.data||b.o.dataConsegnaEffettiva||b.o.dataOrdine||'').localeCompare(a.d.data||a.o.dataConsegnaEffettiva||a.o.dataOrdine||'')));
-  const storicoHtml=`<div class="panel" style="margin-top:20px"><div class="section-title" style="margin-top:0"><div><h2>Storico DDT</h2><p>Tutti i documenti di trasporto registrati, ordinati dal più recente.</p></div><span class="chip blue">${storicoDDT.length} DDT</span></div><div class="table-wrap"><table class="row-table"><thead><tr><th>Data</th><th>Fornitore</th><th>N. DDT</th><th>Ordine collegato</th><th>Merce consegnata</th><th>Esito</th></tr></thead><tbody>${storicoDDT.map(({d,o,catNome})=>`<tr><td><strong>${d.data?dataBreve(d.data):(o.dataConsegnaEffettiva?dataBreve(o.dataConsegnaEffettiva):'-')}</strong></td><td><strong>${escAtt(o.fornitore||'-')}</strong><br><span class="empty-note">${escAtt(catNome)}</span></td><td><strong>${escAtt(d.numero||'-')}</strong></td><td>Ord. ${escAtt(o.numeroOrdine||'-')}</td><td style="white-space:normal">${escAtt(d.merceConsegnata||'-')}</td><td>${d.corrisponde?'<span class="chip valido">Conforme</span>':'<span class="chip in_scadenza">Con differenze</span>'}</td></tr>`).join('')||'<tr><td colspan="6" class="empty-note">Nessun DDT registrato.</td></tr>'}</tbody></table></div></div>`;
-  let dettaglio='';
-  if(selezionato){const {o,catNome}=selezionato,righe=o.ddtMultipli||[];dettaglio=`<div class="panel"><div class="section-hero" style="margin-bottom:16px"><div><span class="empty-note">NUOVO DDT</span><h2 style="margin-top:4px">${escAtt(o.fornitore||'-')}</h2><p>Collegamento automatico: ordine ${escAtt(o.numeroOrdine||'senza numero')} · ${escAtt(catNome)}</p></div><span class="chip teal">Ordine già individuato</span></div><div class="info-strip" style="grid-template-columns:1fr"><div class="info-chip"><span>Merce prevista dall’ordine</span><strong>${escAtt(o.descrizioneOrdine||'Descrizione non presente nell’ordine')}</strong></div></div><form id="newDdtForm" style="margin-top:18px"><div class="form-grid"><div class="field"><label>Data DDT *</label><input type="date" id="newDdtDate" value="${oggiIsoAttivita()}" required></div><div class="field"><label>Numero DDT *</label><input id="newDdtNumber" required></div><div class="field"><label>Merce consegnata *</label><input id="newDdtDelivered" required placeholder="Descrizione e quantità consegnata"></div><div class="field" style="align-self:end"><label style="display:flex;align-items:center;gap:7px;font-weight:500"><input type="checkbox" id="newDdtMatches" style="width:auto"> Merce conforme all’ordine</label></div><div style="grid-column:1/-1"><button class="btn btn-primary" type="submit">Salva DDT nello storico</button></div></div></form></div>`}
-  document.getElementById('main').innerHTML=`<div class="section-hero"><div><h2>Consegne e DDT</h2><p>Scegli il fornitore e registra il DDT: l’ordine viene individuato automaticamente. Lo storico resta sempre visibile.</p></div></div>${acquistiSubNav('ddt')}<div class="panel"><div class="field" style="max-width:620px"><label>Cerca fornitore</label><select id="ddtSupplierSelect"><option value="">Seleziona un fornitore</option>${fornitori.map(f=>`<option ${f===ACQ_DDT_FORNITORE?'selected':''}>${escAtt(f)}</option>`).join('')}</select></div></div>${elencoOrdini}${dettaglio}${storicoHtml}`;
-  attachAcquistiSubNav();document.getElementById('ddtSupplierSelect').onchange=e=>{ACQ_DDT_FORNITORE=e.target.value;ACQ_DDT_ORDER_ID='';renderAcquistiDDT()};const override=document.getElementById('ddtOrderOverride');if(override)override.onchange=e=>{ACQ_DDT_ORDER_ID=e.target.value;renderAcquistiDDT()};
-  if(selezionato){const o=selezionato.o;const aggiornaLegacy=()=>{o.numeroDDT=o.ddtMultipli.map(x=>x.numero).filter(Boolean).join(', ');o.descrizioneArrivo=o.ddtMultipli.map(x=>x.merceConsegnata).filter(Boolean).join(' | ');o.quantitaConfermata=o.ddtMultipli.length>0&&o.ddtMultipli.every(x=>x.corrisponde)};document.getElementById('newDdtForm').onsubmit=e=>{e.preventDefault();o.ddtMultipli.push({id:String(Date.now()),data:document.getElementById('newDdtDate').value,numero:document.getElementById('newDdtNumber').value.trim(),merceConsegnata:document.getElementById('newDdtDelivered').value.trim(),corrisponde:document.getElementById('newDdtMatches').checked});aggiornaLegacy();salvaAcquistoExtra(o);saveData();renderAcquistiDDT()}}
-}
 
 function renderAcquistiDDTSemplice(){
   const flat=allOrdiniFlat();flat.forEach(({o})=>integraAcquistoExtra(o));
@@ -2965,20 +2870,19 @@ function renderAcquistiDDTSemplice(){
   document.getElementById('main').innerHTML=`
     <div class="section-hero"><div><h2>Consegne e DDT</h2><p>Registra il documento ricevuto dal fornitore. Il collegamento con l’ordine viene gestito automaticamente.</p></div><span class="chip blue">${storico.length} DDT registrati</span></div>
     ${acquistiSubNav('ddt')}
-    <div class="panel">
-      <h2>Registra nuovo DDT</h2>
-      <p class="sub">Scegli il fornitore e registra il documento. Ordine e fattura sono collegamenti facoltativi.</p>
-      <form id="simpleDdtForm">
+    <div class="panel" style="padding:0;overflow:hidden;border-color:var(--teal)">
+      <div style="background:var(--teal);color:white;padding:13px 18px;display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap"><div><strong>Nuovo DDT da fornitore</strong><div style="font-size:11px;opacity:.85;margin-top:2px">Inserisci soltanto i dati riportati sul documento ricevuto</div></div><div style="display:flex;gap:7px"><button type="button" class="btn btn-sm" id="simpleDdtCancel">Annulla</button><button type="submit" form="simpleDdtForm" class="btn btn-sm" style="background:white;color:var(--teal)">Salva DDT</button></div></div>
+      <form id="simpleDdtForm" style="padding:18px">
+        <h3 style="font-size:14px;margin:0 0 12px">Dati principali</h3>
         <div class="form-grid">
-          <div class="field"><label>1. Fornitore *</label><select id="simpleDdtSupplier" required><option value="">Seleziona liberamente un fornitore</option>${fornitori.map(f=>`<option ${f===ACQ_DDT_FORNITORE?'selected':''}>${escAtt(f)}</option>`).join('')}</select><span class="empty-note">Elenco ricavato da ordini e fatture già registrati.</span></div>
-          <div class="field"><label>Ordine da collegare <span class="empty-note">(facoltativo)</span></label><select id="simpleDdtOrder" ${ACQ_DDT_FORNITORE?'':'disabled'}><option value="">Nessun ordine collegato</option>${ordiniFornitore.slice().sort((a,b)=>(b.o.dataOrdine||'').localeCompare(a.o.dataOrdine||'')).map(({o})=>`<option value="${escAtt(o.id)}" ${String(o.id)===String(ACQ_DDT_ORDER_ID)?'selected':''}>Ord. ${escAtt(o.numeroOrdine||'senza numero')} · ${o.dataOrdine?dataBreve(o.dataOrdine):'data mancante'} · ${euro(o.importo)}</option>`).join('')}</select></div>
-          <div class="field"><label>Fattura da collegare <span class="empty-note">(facoltativa)</span></label><select id="simpleDdtInvoice" ${ACQ_DDT_FORNITORE?'':'disabled'}><option value="">Nessuna fattura collegata</option>${fattureFornitore.slice().sort((a,b)=>(b.data||'').localeCompare(a.data||'')).map(f=>`<option value="${escAtt(f.id)}">Fatt. ${escAtt(f.numero||'senza numero')} · ${f.data?dataBreve(f.data):'data mancante'} · ${euro(f.importo)}</option>`).join('')}</select></div>
+          <div class="field"><label>Fornitore *</label><select id="simpleDdtSupplier" required><option value="">Seleziona il fornitore</option>${fornitori.map(f=>`<option ${f===ACQ_DDT_FORNITORE?'selected':''}>${escAtt(f)}</option>`).join('')}</select></div>
           <div class="field"><label>Data DDT *</label><input type="date" id="simpleDdtDate" value="${oggiIsoAttivita()}" required></div>
-          <div class="field"><label>Numero DDT *</label><input id="simpleDdtNumber" required placeholder="Numero riportato sul DDT"></div>
-          <div class="field"><label>Merce consegnata *</label><input id="simpleDdtGoods" required placeholder="Descrizione sintetica della merce"></div>
-          <div class="field" style="grid-column:1/-1"><label style="display:flex;align-items:center;gap:8px;font-weight:600"><input type="checkbox" id="simpleDdtMatches" style="width:auto"> La merce ricevuta corrisponde a quella ordinata</label></div>
-          <div style="grid-column:1/-1"><button class="btn btn-primary" type="submit">Salva DDT</button></div>
+          <div class="field"><label>Numero DDT *</label><input id="simpleDdtNumber" required placeholder="Numero riportato sul documento"></div>
+          <div class="field"><label>Merce consegnata *</label><input id="simpleDdtGoods" required placeholder="Descrizione sintetica"></div>
+          <div class="field" style="grid-column:1/-1"><label style="display:flex;align-items:center;gap:8px;font-weight:600"><input type="checkbox" id="simpleDdtMatches" style="width:auto"> La consegna risulta corretta</label></div>
         </div>
+        <details style="margin-top:16px"><summary style="cursor:pointer;font-weight:800;color:var(--teal)">Collega ordine o fattura (facoltativo)</summary><div class="form-grid" style="margin-top:12px"><div class="field"><label>Ordine collegato</label><select id="simpleDdtOrder" ${ACQ_DDT_FORNITORE?'':'disabled'}><option value="">Nessun ordine collegato</option>${ordiniFornitore.slice().sort((a,b)=>(b.o.dataOrdine||'').localeCompare(a.o.dataOrdine||'')).map(({o})=>`<option value="${escAtt(o.id)}" ${String(o.id)===String(ACQ_DDT_ORDER_ID)?'selected':''}>Ord. ${escAtt(o.numeroOrdine||'senza numero')} · ${o.dataOrdine?dataBreve(o.dataOrdine):'data mancante'} · ${euro(o.importo)}</option>`).join('')}</select></div><div class="field"><label>Fattura collegata</label><select id="simpleDdtInvoice" ${ACQ_DDT_FORNITORE?'':'disabled'}><option value="">Nessuna fattura collegata</option>${fattureFornitore.slice().sort((a,b)=>(b.data||'').localeCompare(a.data||'')).map(f=>`<option value="${escAtt(f.id)}">Fatt. ${escAtt(f.numero||'senza numero')} · ${f.data?dataBreve(f.data):'data mancante'} · ${euro(f.importo)}</option>`).join('')}</select></div></div></details>
+        <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:20px;padding-top:14px;border-top:1px solid var(--border)"><button type="button" class="btn btn-outline" id="simpleDdtCancelBottom">Annulla</button><button class="btn btn-primary" type="submit">Salva DDT</button></div>
       </form>
       ${ACQ_DDT_FORNITORE&&!ordiniFornitore.length?`<div class="diary-alert" style="border-color:var(--teal);color:var(--teal)">Nessun ordine registrato per questo fornitore: puoi comunque salvare il DDT${fattureFornitore.length?' e collegarlo a una delle fatture disponibili':''}.</div>`:''}
     </div>
@@ -2987,6 +2891,8 @@ function renderAcquistiDDTSemplice(){
       <div class="table-wrap"><table class="row-table"><thead><tr><th>Data</th><th>Fornitore</th><th>N. DDT</th><th>Merce consegnata</th><th>Esito</th><th>Collegamento</th></tr></thead><tbody>${storicoRighe||'<tr><td colspan="6" class="empty-note">Nessun DDT registrato.</td></tr>'}</tbody></table></div>
     </div>`;
   attachAcquistiSubNav();
+  const annullaDdt=()=>{ACQUISTI_SUBTAB='ordine';ACQ_DDT_FORNITORE='';ACQ_DDT_ORDER_ID='';renderAcquisti()};
+  document.getElementById('simpleDdtCancel').onclick=annullaDdt;document.getElementById('simpleDdtCancelBottom').onclick=annullaDdt;
   document.getElementById('simpleDdtSupplier').onchange=e=>{ACQ_DDT_FORNITORE=e.target.value;ACQ_DDT_ORDER_ID='';renderAcquistiDDTSemplice()};
   document.getElementById('simpleDdtOrder').onchange=e=>{ACQ_DDT_ORDER_ID=e.target.value};
   document.getElementById('simpleDdtForm').onsubmit=async e=>{
@@ -2999,52 +2905,34 @@ function renderAcquistiDDTSemplice(){
   };
 }
 
-function renderAcquistiFatturaLegacy() {
-  const flat = allOrdiniFlat();
-  const rows = flat.map(({ catId, catNome, idx, o }) => {
-    const fattura = DATA.finanziario.fatture.find((f) => String(f.id) === String(o.fatturaId));
-    const fatturaStatoHtml = fattura ? chip(statoFattura(fattura), statoFattura(fattura) === 'pagata' ? 'Pagata' : 'Da pagare') : '<span class="no-link">Non collegata</span>';
-    const dis = o.bloccato ? 'disabled' : '';
-    return `
-    <tr data-cat="${catId}" data-idx="${idx}">
-      <td class="empty-note">${catNome}<br><strong>${o.fornitore || '-'}</strong><br>${ordinatoDaChip(o)}</td>
-      <td class="empty-note"><strong>Ord. ${o.numeroOrdine || '-'}</strong><br>DDT ${o.numeroDDT || '-'}</td>
-      <td class="empty-note">${euro(o.importo)}</td>
-      <td><select class="f-fattura" ${dis}>${fattureRicevuteOptions(o.fatturaId)}</select></td>
-      <td>${fatturaStatoHtml}</td>
-      <td><label style="display:flex; align-items:center; gap:6px; font-weight:400;"><input type="checkbox" class="f-verificata" style="width:auto;" ${o.fatturaVerificata ? 'checked' : ''} ${dis} /> Verificata</label></td>
-      <td>${faseChipOrdine(o)}</td>
-      <td>${pulsantiOrdineRiga(o.bloccato)}</td>
-    </tr>`;
-  }).join('');
-
-  document.getElementById('main').innerHTML = `
-    <div class="panel">
-      <h2>4. Fattura collegata &mdash; verifica e pagamento</h2>
-      <p class="sub">Collega la fattura ricevuta (creala in Finanziario &rarr; Fatture se manca) e controlla che l'importo corrisponda a ordine/DDT (visibili qui a fianco) prima di spuntare "Verificata". Il pagamento si vede dallo stato della fattura.</p>
-      ${acquistiSubNav('fattura')}
-      <table class="row-table">
-        <thead><tr><th>Categoria / Fornitore</th><th>Rif. Ordine / DDT</th><th>Importo ordinato</th><th>Fattura collegata</th><th>Stato pagamento</th><th>Verifica</th><th>Fase</th><th></th></tr></thead>
-        <tbody>${rows || '<tr><td colspan="8" class="empty-note">Nessun ordine ancora.</td></tr>'}</tbody>
-      </table>
-    </div>
-  `;
-  attachAcquistiSubNav();
-  attachOrdineRowHandlers([['.f-fattura', 'fatturaId'], ['.f-verificata', 'fatturaVerificata', 'checkbox']], renderAcquistiFattura);
-}
 
 function renderAcquistiFattura(){
   const flat=allOrdiniFlat();flat.forEach(({o})=>integraAcquistoExtra(o));
-  const fornitori=[...new Set(flat.map(x=>String(x.o.fornitore||'').trim()).filter(Boolean))].sort();
+  const fornitori=[...new Map(flat.map(x=>String(x.o.fornitore||'').trim()).concat((DATA.finanziario.fatture||[]).filter(f=>f.tipo==='ricevuta').map(f=>String(f.controparte||'').trim())).filter(Boolean).map(nome=>[nome.toLowerCase(),nome])).values()].sort((a,b)=>a.localeCompare(b,'it'));
   const ordiniFornitore=ACQ_FATTURA_FORNITORE?flat.filter(x=>(x.o.fornitore||'').toLowerCase()===ACQ_FATTURA_FORNITORE.toLowerCase()):[];
   const fattureExtraStorico=caricaFattureExtra();
   const fattureStorico=(DATA.finanziario.fatture||[]).filter(f=>f.tipo==='ricevuta').slice().sort((a,b)=>(b.data||'').localeCompare(a.data||''));
-  const storicoHtml=`<div class="panel" style="margin-top:20px"><div class="section-title" style="margin-top:0"><div><h2>Storico fatture acquisti</h2><p>Tutte le fatture registrate, comprese quelle manuali e quelle collegate a ordini e DDT.</p></div><span class="chip blue">${fattureStorico.length} fatture</span></div><div class="table-wrap"><table class="row-table"><thead><tr><th>Data</th><th>Fornitore</th><th>N. fattura</th><th>Ordini / DDT collegati</th><th>Totale</th><th>Stato</th><th>File</th></tr></thead><tbody>${fattureStorico.map(f=>{const x=fattureExtraStorico[String(f.id)]||{},ordini=(x.ordini||[]).map(id=>flat.find(y=>String(y.o.id)===String(id))).filter(Boolean),file=x.file||null;return `<tr><td><strong>${f.data?dataBreve(f.data):'-'}</strong></td><td><strong>${escAtt(f.controparte||'Fornitore non indicato')}</strong></td><td>${escAtt(f.numero||'-')}</td><td style="white-space:normal">${ordini.length?ordini.map(({o})=>`<div><strong>Ord. ${escAtt(o.numeroOrdine||'-')}</strong> · DDT ${escAtt(o.numeroDDT||'non presente')}</div>`).join(''):'<span class="empty-note">Fattura manuale, senza ordine/DDT</span>'}</td><td><strong>${euro(f.importo)}</strong></td><td>${f.pagata?'<span class="chip teal">Pagata</span>':'<span class="chip amber">Da pagare</span>'}</td><td><div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">${file&&file.path?`<a class="btn btn-outline btn-sm" href="#" data-invoice-file-path="${escAtt(file.path)}" download="${escAtt(file.nome||'fattura')}">Apri</a>`:file&&file.dati?`<a class="btn btn-outline btn-sm" href="${file.dati}" download="${escAtt(file.nome||'fattura')}">Apri</a>`:'<span class="empty-note">Non allegato</span>'}<label class="btn btn-primary btn-sm" style="cursor:pointer">${file?'Sostituisci':'Allega fattura'}<input type="file" class="invoice-history-upload" data-invoice-id="${escAtt(f.id)}" accept=".pdf,.jpg,.jpeg,.png" hidden></label></div></td></tr>`}).join('')||'<tr><td colspan="7" class="empty-note">Nessuna fattura registrata.</td></tr>'}</tbody></table></div></div>`;
-  const form=ACQ_FATTURA_MODE?`<div class="panel"><div class="section-hero" style="margin-bottom:14px"><div><h2>${ACQ_FATTURA_MODE==='collegata'?'Fattura collegata a ordine e DDT':'Fattura manuale'}</h2><p>${ACQ_FATTURA_MODE==='collegata'?'Seleziona il fornitore: l’app propone automaticamente ordini e DDT compatibili.':'Registra una fattura che non deriva da ordini o DDT.'}</p></div><button class="btn btn-outline btn-sm" id="afiBack">Cambia percorso</button></div>${ACQ_FATTURA_MODE==='collegata'?`<div class="field" style="max-width:520px;margin-bottom:14px"><label>Fornitore *</label><select id="afiSupplierSelect"><option value="">Seleziona fornitore</option>${fornitori.map(f=>`<option ${f===ACQ_FATTURA_FORNITORE?'selected':''}>${escAtt(f)}</option>`).join('')}</select></div>${ACQ_FATTURA_FORNITORE?`<div style="margin-bottom:16px"><strong>Ordini e DDT trovati</strong><div class="missing-list" style="margin-top:8px">${ordiniFornitore.map(({o,catNome})=>`<label class="missing-item" style="cursor:pointer"><div><input type="checkbox" class="afi-order" value="${escAtt(o.id)}" style="width:auto;margin-right:8px"><strong>Ord. ${escAtt(o.numeroOrdine||'-')}</strong> · ${escAtt(catNome)}<br><span>DDT: ${escAtt(o.numeroDDT||'nessun DDT collegato')} · ${euro(o.importo)}</span></div></label>`).join('')||'<p class="empty-note">Nessun ordine disponibile per questo fornitore.</p>'}</div></div>`:''}`:''}<form id="afiForm"><div class="form-grid">${ACQ_FATTURA_MODE==='manuale'?`<div class="field"><label>Fornitore *</label><input id="afiSupplier" required list="afiSuppliers"><datalist id="afiSuppliers">${fornitori.map(f=>`<option value="${escAtt(f)}">`).join('')}</datalist></div><div class="field"><label>P.IVA / Codice fiscale</label><input id="afiVatNumber"></div>`:''}<div class="field"><label>Numero fattura *</label><input id="afiNumber" required></div><div class="field"><label>Data fattura *</label><input type="date" id="afiDate" required></div><div class="field"><label>Imponibile *</label><input type="number" step="0.01" id="afiTaxable" required></div><div class="field"><label>Aliquota IVA %</label><input type="number" step="0.01" id="afiVatRate" value="22"></div><div class="field"><label>IVA</label><input type="number" step="0.01" id="afiVat" readonly></div><div class="field"><label>Totale fattura</label><input type="number" step="0.01" id="afiTotal" readonly></div><div class="field" style="grid-column:1/-1"><label>Descrizione / causale *</label><input id="afiDescription" required></div><div class="field"><label>Categoria di costo</label><input id="afiCategory" placeholder="es. materiali, trasporto, consulenza"></div><div class="field"><label>File fattura</label><input type="file" id="afiFile" accept=".pdf,.jpg,.jpeg,.png"></div></div><div style="display:flex;justify-content:space-between;align-items:center;margin:18px 0 8px"><strong>Piano pagamenti</strong><button type="button" class="btn btn-outline btn-sm" id="afiAddRate">+ Scadenza</button></div><div class="table-wrap"><table class="row-table"><thead><tr><th>Scadenza</th><th>Modalità</th><th>Riferimento</th><th>Importo</th><th></th></tr></thead><tbody id="afiRates">${fatturaScadenzaHtml(0)}</tbody></table></div><div style="margin-top:16px"><button class="btn btn-primary" type="submit">Salva fattura</button></div></form></div>`:'';
-  document.getElementById('main').innerHTML=`<div class="section-hero"><div><h2>Fatture acquisti</h2><p>Registra una fattura collegata scegliendo prima il fornitore, oppure inseriscila manualmente. Lo storico resta sempre visibile.</p></div></div>${acquistiSubNav('fattura')}<div class="sub-overview-grid" style="margin-bottom:20px"><article class="sub-overview-card" id="afiLinked"><div class="sub-overview-top"><div class="sub-overview-title"><span class="sub-overview-status"></span><div><h3>Fattura di un fornitore registrato</h3><p>Gli ordini e i DDT vengono proposti automaticamente</p></div></div></div><div class="sub-overview-open"><span>Seleziona fornitore</span><span>→</span></div></article><article class="sub-overview-card" id="afiManual"><div class="sub-overview-top"><div class="sub-overview-title"><span class="sub-overview-status warning"></span><div><h3>Fattura senza ordine/DDT</h3><p>Inserimento manuale per altri costi</p></div></div></div><div class="sub-overview-open"><span>Inserisci manualmente</span><span>→</span></div></article></div>${form}${storicoHtml}`;
-  const percorsoCollegato=document.getElementById('afiLinked'),percorsoManuale=document.getElementById('afiManual');
-  percorsoCollegato.querySelector('h3').textContent='Fattura su ordini e DDT presenti';
-  percorsoManuale.querySelector('h3').textContent='Aggiungi fattura manuale';
+  const scadenzarioRighe=[];fattureStorico.forEach(f=>{const x=fattureExtraStorico[String(f.id)]||{},scadenze=Array.isArray(x.scadenze)&&x.scadenze.length?x.scadenze:(f.scadenzaPagamento?[{data:f.scadenzaPagamento,modalita:'-',riferimento:'',importo:f.importo}]:null);if(!scadenze){if(!f.pagata)scadenzarioRighe.push({f,data:'',modalita:'-',riferimento:'',importo:f.importo,senzaScadenza:true});return}scadenze.forEach(r=>{const pagata=r.pagata!==undefined?!!r.pagata:!!f.pagata;if(!pagata)scadenzarioRighe.push({f,data:r.data||r.dataScadenza||'',modalita:r.modalita||'-',riferimento:r.riferimento||'',importo:r.importo})})});
+  scadenzarioRighe.sort((a,b)=>(a.data||'9999').localeCompare(b.data||'9999'));
+  const scadenzarioHtml=`<div class="panel" style="margin-top:20px;border-color:var(--amber)"><div class="section-title" style="margin-top:0"><div><h2>Prossime scadenze</h2><p>Tutte le rate non ancora pagate, aggregate da tutte le fatture registrate.</p></div><span class="chip amber">${scadenzarioRighe.length} da pagare</span></div>${scadenzarioRighe.length?`<div class="table-wrap"><table class="row-table"><thead><tr><th>Scadenza</th><th>Fornitore</th><th>N. fattura</th><th>Modalità</th><th>Importo</th><th>Stato</th><th></th></tr></thead><tbody>${scadenzarioRighe.map(r=>{const gg=giorniDaScadenza(r.data);const stato=r.senzaScadenza||!r.data?'<span class="chip red">Scadenza da inserire</span>':gg>0?'<span class="chip red">Scaduta</span>':gg>=-7?'<span class="chip amber">In scadenza</span>':'<span class="chip">Da pagare</span>';return `<tr><td><strong>${r.data?dataBreve(r.data):'-'}</strong></td><td>${escAtt(r.f.controparte||'-')}</td><td>${escAtt(r.f.numero||'-')}</td><td>${escAtt(r.modalita||'-')}</td><td><strong>${euro(r.importo)}</strong></td><td>${stato}</td><td><button type="button" class="btn btn-outline btn-sm due-panel-edit" data-invoice-id="${escAtt(r.f.id)}">Apri</button></td></tr>`}).join('')}</tbody></table></div>`:'<p class="empty-note" style="margin:0">Nessuna scadenza aperta: tutte le fatture registrate risultano pagate.</p>'}</div>`;
+  const storicoHtml=`<div class="panel" style="margin-top:20px"><div class="section-title" style="margin-top:0"><div><h2>Storico fatture acquisti</h2><p>Tutte le fatture registrate, comprese quelle manuali e quelle collegate a ordini e DDT.</p></div><span class="chip blue">${fattureStorico.length} fatture</span></div><div class="table-wrap"><table class="row-table"><thead><tr><th>Data</th><th>Fornitore</th><th>N. fattura</th><th>Ordini / DDT collegati</th><th>Totale</th><th>Stato</th><th>File</th></tr></thead><tbody>${fattureStorico.map(f=>{const x=fattureExtraStorico[String(f.id)]||{},ordini=(x.ordini||[]).map(id=>flat.find(y=>String(y.o.id)===String(id))).filter(Boolean),file=x.file||null;const totOrdini=ordini.reduce((s,{o})=>s+(Number(o.importo)||0),0),scostamento=ordini.length&&totOrdini>0?(Number(f.imponibile)||Number(f.importo)||0)-totOrdini:null,scostamentoPct=scostamento!==null?Math.abs(scostamento)/totOrdini*100:null,chipScostamento=scostamento===null?'':scostamentoPct<=3?'<div class="empty-note" style="margin-top:4px"><span class="chip teal">Importo conforme all\'ordine</span></div>':`<div class="empty-note" style="margin-top:4px"><span class="chip ${scostamento>0?'red':'amber'}">${scostamento>0?'Fattura superiore':'Fattura inferiore'} all'ordine di ${euro(Math.abs(scostamento))} (al netto IVA)</span></div>`;return `<tr><td><strong>${f.data?dataBreve(f.data):'-'}</strong></td><td><strong>${escAtt(f.controparte||'Fornitore non indicato')}</strong></td><td>${escAtt(f.numero||'-')}</td><td style="white-space:normal">${ordini.length?ordini.map(({o})=>`<div><strong>Ord. ${escAtt(o.numeroOrdine||'-')}</strong> · DDT ${escAtt(o.numeroDDT||'non presente')}</div>`).join('')+chipScostamento:'<span class="empty-note">Fattura manuale, senza ordine/DDT</span>'}</td><td><strong>${euro(f.importo)}</strong></td><td>${f.pagata?'<span class="chip teal">Pagata</span>':'<span class="chip amber">Da pagare</span>'}</td><td><div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">${file&&file.path?`<a class="btn btn-outline btn-sm" href="#" data-invoice-file-path="${escAtt(file.path)}" download="${escAtt(file.nome||'fattura')}">Apri</a>`:file&&file.dati?`<a class="btn btn-outline btn-sm" href="${file.dati}" download="${escAtt(file.nome||'fattura')}">Apri</a>`:'<span class="empty-note">Non allegato</span>'}<label class="btn btn-primary btn-sm" style="cursor:pointer">${file?'Sostituisci':'Allega fattura'}<input type="file" class="invoice-history-upload" data-invoice-id="${escAtt(f.id)}" accept=".pdf,.jpg,.jpeg,.png" hidden></label></div></td></tr>`}).join('')||'<tr><td colspan="7" class="empty-note">Nessuna fattura registrata.</td></tr>'}</tbody></table></div></div>`;
+  const form=ACQ_FATTURA_MODE?`<div class="panel"><div class="section-hero" style="margin-bottom:14px"><div><h2>${ACQ_FATTURA_MODE==='collegata'?'Fattura collegata a ordine e DDT':'Fattura manuale'}</h2><p>${ACQ_FATTURA_MODE==='collegata'?'Seleziona il fornitore: l’app propone automaticamente ordini e DDT compatibili.':'Registra una fattura che non deriva da ordini o DDT.'}</p></div><button class="btn btn-outline btn-sm" id="afiBack">Cambia percorso</button></div>${ACQ_FATTURA_MODE==='collegata'?`<div class="field" style="max-width:520px;margin-bottom:14px"><label>Fornitore *</label><select id="afiSupplierSelect"><option value="">Seleziona fornitore</option>${fornitori.map(f=>`<option ${f===ACQ_FATTURA_FORNITORE?'selected':''}>${escAtt(f)}</option>`).join('')}</select></div>${ACQ_FATTURA_FORNITORE?`<div style="margin-bottom:16px"><strong>Ordini e DDT trovati</strong><div class="missing-list" style="margin-top:8px">${ordiniFornitore.map(({o,catNome})=>`<label class="missing-item" style="cursor:pointer"><div><input type="checkbox" class="afi-order" value="${escAtt(o.id)}" style="width:auto;margin-right:8px"><strong>Ord. ${escAtt(o.numeroOrdine||'-')}</strong> · ${escAtt(catNome)}<br><span>DDT: ${escAtt(o.numeroDDT||'nessun DDT collegato')} · ${euro(o.importo)}</span></div></label>`).join('')||'<p class="empty-note">Nessun ordine disponibile per questo fornitore.</p>'}</div></div>`:''}`:''}<form id="afiForm"><div class="form-grid">${ACQ_FATTURA_MODE==='manuale'?`<div class="field"><label>Fornitore *</label><input id="afiSupplier" required list="afiSuppliers"><datalist id="afiSuppliers">${fornitori.map(f=>`<option value="${escAtt(f)}">`).join('')}</datalist></div><div class="field"><label>P.IVA / Codice fiscale</label><input id="afiVatNumber"></div>`:''}<div class="field"><label>Numero fattura *</label><input id="afiNumber" required></div><div class="field"><label>Data fattura *</label><input type="date" id="afiDate" required></div><div class="field"><label>Imponibile *</label><input type="number" step="0.01" id="afiTaxable" required><div class="empty-note" id="afiOrderHint" style="margin-top:4px"></div></div><div class="field"><label>Aliquota IVA %</label><input type="number" step="0.01" id="afiVatRate" value="22"></div><div class="field"><label>IVA</label><input type="number" step="0.01" id="afiVat" readonly></div><div class="field"><label>Totale fattura</label><input type="number" step="0.01" id="afiTotal" readonly></div><div class="field" style="grid-column:1/-1"><label>Descrizione / causale *</label><input id="afiDescription" required></div><div class="field"><label>Categoria materiale</label><select id="afiCategory"><option value="">Seleziona categoria</option>${CATEGORIE_ACQUISTI_INIZIALI.map(c=>`<option>${escAtt(c)}</option>`).join('')}</select></div><div class="field"><label>File fattura</label><input type="file" id="afiFile" accept=".pdf,.jpg,.jpeg,.png"></div></div><div style="display:flex;justify-content:space-between;align-items:center;margin:18px 0 8px"><strong>Piano pagamenti</strong><button type="button" class="btn btn-outline btn-sm" id="afiAddRate">+ Scadenza</button></div><div class="table-wrap"><table class="row-table"><thead><tr><th>Scadenza</th><th>Modalità</th><th>Riferimento</th><th>Importo</th><th></th></tr></thead><tbody id="afiRates">${fatturaScadenzaHtml(0)}</tbody></table></div><div class="empty-note" id="afiRateSumHint" style="margin-top:8px"></div><div style="margin-top:16px"><button class="btn btn-primary" type="submit">Salva fattura</button></div></form></div>`:'';
+  document.getElementById('main').innerHTML=`<div class="section-hero"><div><h2>Fatture acquisti</h2><p>Registra una fattura collegata scegliendo prima il fornitore, oppure inseriscila manualmente. Lo storico resta sempre visibile.</p></div></div>${acquistiSubNav('fattura')}<div class="sub-overview-grid" style="margin-bottom:20px"><article class="sub-overview-card" id="afiLinked"><div class="sub-overview-top"><div class="sub-overview-title"><span class="sub-overview-status"></span><div><h3>Fattura di un fornitore registrato</h3><p>Gli ordini e i DDT vengono proposti automaticamente</p></div></div></div><div class="sub-overview-open"><span>Seleziona fornitore</span><span>→</span></div></article><article class="sub-overview-card" id="afiManual"><div class="sub-overview-top"><div class="sub-overview-title"><span class="sub-overview-status warning"></span><div><h3>Fattura senza ordine/DDT</h3><p>Inserimento manuale per altri costi</p></div></div></div><div class="sub-overview-open"><span>Inserisci manualmente</span><span>→</span></div></article></div>${form}${scadenzarioHtml}${storicoHtml}`;
+  const sceltaPercorso=document.querySelector('#main > .sub-overview-grid');
+  if(sceltaPercorso)sceltaPercorso.innerHTML=`<article class="sub-overview-card" id="afiLinked" style="cursor:pointer"><div class="sub-overview-top"><div class="sub-overview-title"><span class="sub-overview-status"></span><div><h3>Registra nuova fattura fornitore</h3><p>Ordine e DDT saranno proposti, ma restano facoltativi.</p></div></div></div><div class="sub-overview-open"><span>Apri compilazione</span><span>→</span></div></article>`;
+  const percorsoCollegato=document.getElementById('afiLinked');
+  const formNuova=document.getElementById('afiForm');
+  if(formNuova){
+    const pannello=formNuova.closest('.panel'),testata=pannello.querySelector('.section-hero');
+    if(sceltaPercorso)sceltaPercorso.style.display='none';
+    pannello.style.borderColor='var(--teal)';pannello.style.padding='0';pannello.style.overflow='hidden';formNuova.style.padding='18px';
+    if(testata){testata.querySelector('h2').textContent='Nuova fattura da fornitore';testata.querySelector('p').textContent='Compila i dati della fattura. Ordine e DDT sono facoltativi.';testata.style.background='var(--teal)';testata.style.color='white';testata.style.padding='13px 18px';testata.style.borderRadius='0';testata.style.margin='0';const annulla=testata.querySelector('#afiBack');if(annulla){annulla.textContent='Annulla';annulla.style.background='white';annulla.style.color='var(--teal)'}}
+    const selezioneFornitore=document.getElementById('afiSupplierSelect');if(selezioneFornitore)selezioneFornitore.closest('.field').style.margin='18px 18px 8px';
+    if(ACQ_FATTURA_MODE==='collegata')formNuova.insertAdjacentHTML('afterbegin','<input type="checkbox" class="afi-order" value="" checked hidden>');
+    const titoloCollegamenti=[...pannello.querySelectorAll('strong')].find(x=>x.textContent.trim()==='Ordini e DDT trovati');
+    if(titoloCollegamenti){const blocco=titoloCollegamenti.closest('div[style*="margin-bottom"]');if(blocco){const dettagli=document.createElement('details');dettagli.style.cssText='margin:14px 18px 0';dettagli.innerHTML='<summary style="cursor:pointer;font-weight:800;color:var(--teal)">Collega ordine o DDT (facoltativo)</summary>';blocco.before(dettagli);dettagli.appendChild(blocco);blocco.style.marginTop='10px'}}
+    const salva=formNuova.querySelector('button[type="submit"]');if(salva){salva.textContent='Salva fattura';salva.closest('div').style.cssText='margin-top:18px;display:flex;justify-content:flex-end';}
+  }
   const storicoPanel=[...document.querySelectorAll('#main .panel')].find(p=>p.querySelector('h2')?.textContent.trim()==='Storico fatture acquisti');
   if(storicoPanel){
     const head=storicoPanel.querySelector('thead tr');if(head)head.insertAdjacentHTML('beforeend','<th>Azioni</th>');
@@ -3054,16 +2942,18 @@ function renderAcquistiFattura(){
     rows.forEach((row,i)=>{const f=fattureStorico[i];if(!f)return;const x=fattureExtraStorico[String(f.id)]||{},scadenze=Array.isArray(x.scadenze)&&x.scadenze.length?x.scadenze:(f.scadenzaPagamento?[{data:f.scadenzaPagamento,importo:f.importo}]:[]),scaduta=!f.pagata&&scadenze.some(r=>(r.data||r.dataScadenza||'')&&String(r.data||r.dataScadenza)<oggiIsoAttivita());row.dataset.invoiceSearch=`${f.controparte||''} ${f.numero||''}`.toLowerCase();const stato=row.children[5];if(stato){stato.innerHTML=f.pagata?'<span class="chip teal">Pagata</span>':!scadenze.length?'<span class="chip red">Inserisci scadenza fattura</span>':scaduta?'<span class="chip red">Pagamento scaduto</span>':'<span class="chip amber">Da pagare</span>';if(scadenze.length)stato.insertAdjacentHTML('beforeend',`<div class="empty-note" style="margin-top:5px">${scadenze.map(r=>r.data||r.dataScadenza).filter(Boolean).map(dataBreve).join(', ')}</div>`)}});
     document.getElementById('invoiceHistorySearch').oninput=e=>{const q=e.target.value.trim().toLowerCase();rows.forEach(row=>{if(row.dataset.invoiceSearch!==undefined)row.style.display=!q||row.dataset.invoiceSearch.includes(q)?'':'none'})};
     const fEdit=(DATA.finanziario.fatture||[]).find(f=>String(f.id)===String(ACQ_FATTURA_EDIT_ID));
-    if(fEdit){const x=fattureExtraStorico[String(fEdit.id)]||{};storicoPanel.insertAdjacentHTML('beforebegin',`<div class="panel" id="invoiceEditPanel" style="margin-top:20px;border-color:var(--teal)"><div class="section-title" style="margin-top:0"><div><h2>Modifica fattura ${escAtt(fEdit.numero||'')}</h2><p>Correggi i dati senza perdere allegato e collegamenti a ordini o DDT.</p></div><button class="btn btn-outline btn-sm" id="invoiceEditCancel">Annulla</button></div><form id="invoiceEditForm"><div class="form-grid three"><div class="field"><label>Fornitore *</label><input id="invoiceEditSupplier" value="${escAtt(fEdit.controparte||'')}" required></div><div class="field"><label>Numero fattura *</label><input id="invoiceEditNumber" value="${escAtt(fEdit.numero||'')}" required></div><div class="field"><label>Data fattura *</label><input type="date" id="invoiceEditDate" value="${escAtt(fEdit.data||'')}" required></div><div class="field"><label>Imponibile *</label><input type="number" step="0.01" min="0" id="invoiceEditTaxable" value="${Number(fEdit.imponibile)||0}" required></div><div class="field"><label>IVA</label><input type="number" step="0.01" min="0" id="invoiceEditVat" value="${Number(fEdit.iva)||0}"></div><div class="field"><label>Totale fattura *</label><input type="number" step="0.01" min="0" id="invoiceEditTotal" value="${Number(fEdit.importo)||0}" required></div><div class="field" style="grid-column:1/-1"><label>Descrizione / causale</label><input id="invoiceEditDescription" value="${escAtt(x.descrizione||'')}"></div><div class="field"><label>Categoria di costo</label><input id="invoiceEditCategory" value="${escAtt(x.categoria||'')}"></div><div class="field"><label>Stato pagamento</label><select id="invoiceEditPaid"><option value="no" ${fEdit.pagata?'':'selected'}>Da pagare</option><option value="si" ${fEdit.pagata?'selected':''}>Pagata</option></select></div><div style="grid-column:1/-1"><button class="btn btn-primary" type="submit">Salva modifiche</button></div></div></form></div>`)}
-    if(fEdit){const x=fattureExtraStorico[String(fEdit.id)]||{},rate=Array.isArray(x.scadenze)&&x.scadenze.length?x.scadenze:(fEdit.scadenzaPagamento?[{data:fEdit.scadenzaPagamento,modalita:'BB',riferimento:'',importo:fEdit.importo}]:[{}]),formEdit=document.getElementById('invoiceEditForm'),azioni=formEdit.querySelector('button[type="submit"]').closest('div');azioni.insertAdjacentHTML('beforebegin',`<div style="grid-column:1/-1"><div style="display:flex;justify-content:space-between;align-items:center;gap:12px;margin:8px 0"><div><strong>Scadenziario dei pagamenti *</strong><div class="empty-note">Inserisci tutte le rate previste.</div></div><button type="button" class="btn btn-outline btn-sm" id="invoiceEditRateAdd">+ Aggiungi scadenza</button></div><div class="table-wrap"><table class="row-table"><thead><tr><th>Data</th><th>Modalità</th><th>Riferimento</th><th>Importo</th><th></th></tr></thead><tbody id="invoiceEditRates">${rate.map(fatturaScadenzaEditHtml).join('')}</tbody></table></div></div>`);const collegaEliminaRate=()=>document.querySelectorAll('.invoice-edit-rate-del').forEach(btn=>btn.onclick=()=>{if(document.querySelectorAll('.invoice-edit-rate').length>1)btn.closest('tr').remove();else alert('Deve essere presente almeno una scadenza di pagamento.')});collegaEliminaRate();document.getElementById('invoiceEditRateAdd').onclick=()=>{document.getElementById('invoiceEditRates').insertAdjacentHTML('beforeend',fatturaScadenzaEditHtml());collegaEliminaRate()}}
+    if(fEdit){const x=fattureExtraStorico[String(fEdit.id)]||{};storicoPanel.insertAdjacentHTML('beforebegin',`<div class="panel" id="invoiceEditPanel" style="margin-top:20px;border-color:var(--teal)"><div class="section-title" style="margin-top:0"><div><h2>Modifica fattura ${escAtt(fEdit.numero||'')}</h2><p>Correggi i dati senza perdere allegato e collegamenti a ordini o DDT.</p></div><button class="btn btn-outline btn-sm" id="invoiceEditCancel">Annulla</button></div><form id="invoiceEditForm"><div class="form-grid three"><div class="field"><label>Fornitore *</label><input id="invoiceEditSupplier" value="${escAtt(fEdit.controparte||'')}" required></div><div class="field"><label>Numero fattura *</label><input id="invoiceEditNumber" value="${escAtt(fEdit.numero||'')}" required></div><div class="field"><label>Data fattura *</label><input type="date" id="invoiceEditDate" value="${escAtt(fEdit.data||'')}" required></div><div class="field"><label>Imponibile *</label><input type="number" step="0.01" min="0" id="invoiceEditTaxable" value="${Number(fEdit.imponibile)||0}" required></div><div class="field"><label>IVA</label><input type="number" step="0.01" min="0" id="invoiceEditVat" value="${Number(fEdit.iva)||0}"></div><div class="field"><label>Totale fattura *</label><input type="number" step="0.01" min="0" id="invoiceEditTotal" value="${Number(fEdit.importo)||0}" required></div><div class="field" style="grid-column:1/-1"><label>Descrizione / causale</label><input id="invoiceEditDescription" value="${escAtt(x.descrizione||'')}"></div><div class="field"><label>Categoria materiale</label><select id="invoiceEditCategory"><option value="">Seleziona categoria</option>${CATEGORIE_ACQUISTI_INIZIALI.concat(x.categoria&&!CATEGORIE_ACQUISTI_INIZIALI.includes(x.categoria)?[x.categoria]:[]).map(c=>`<option ${c===x.categoria?'selected':''}>${escAtt(c)}</option>`).join('')}</select></div><div class="field"><label>Stato pagamento</label><select id="invoiceEditPaid"><option value="no" ${fEdit.pagata?'':'selected'}>Da pagare</option><option value="si" ${fEdit.pagata?'selected':''}>Pagata</option></select></div><div style="grid-column:1/-1"><button class="btn btn-primary" type="submit">Salva modifiche</button></div></div></form></div>`)}
+    if(fEdit){const pannelloModifica=document.getElementById('invoiceEditPanel'),testataModifica=pannelloModifica.querySelector('.section-title'),formModifica=document.getElementById('invoiceEditForm');pannelloModifica.style.padding='0';pannelloModifica.style.overflow='hidden';testataModifica.style.cssText='margin:0;background:var(--teal);color:white;padding:13px 18px';formModifica.style.padding='18px';const annullaModifica=document.getElementById('invoiceEditCancel');annullaModifica.style.background='white';annullaModifica.style.color='var(--teal)'}
+    if(fEdit){const x=fattureExtraStorico[String(fEdit.id)]||{},rate=Array.isArray(x.scadenze)&&x.scadenze.length?x.scadenze:(fEdit.scadenzaPagamento?[{data:fEdit.scadenzaPagamento,modalita:'BB',riferimento:'',importo:fEdit.importo}]:[{}]),formEdit=document.getElementById('invoiceEditForm'),azioni=formEdit.querySelector('button[type="submit"]').closest('div');azioni.insertAdjacentHTML('beforebegin',`<div style="grid-column:1/-1"><div style="display:flex;justify-content:space-between;align-items:center;gap:12px;margin:8px 0"><div><strong>Scadenziario dei pagamenti *</strong><div class="empty-note">Inserisci tutte le rate previste.</div></div><button type="button" class="btn btn-outline btn-sm" id="invoiceEditRateAdd">+ Aggiungi scadenza</button></div><div class="table-wrap"><table class="row-table"><thead><tr><th>Data</th><th>Modalità</th><th>Riferimento</th><th>Importo</th><th>Pagata</th><th></th></tr></thead><tbody id="invoiceEditRates">${rate.map(fatturaScadenzaEditHtml).join('')}</tbody></table></div></div>`);const collegaEliminaRate=()=>document.querySelectorAll('.invoice-edit-rate-del').forEach(btn=>btn.onclick=()=>{if(document.querySelectorAll('.invoice-edit-rate').length>1)btn.closest('tr').remove();else alert('Deve essere presente almeno una scadenza di pagamento.')});collegaEliminaRate();document.getElementById('invoiceEditRateAdd').onclick=()=>{document.getElementById('invoiceEditRates').insertAdjacentHTML('beforeend',fatturaScadenzaEditHtml());collegaEliminaRate()}}
   }
-  attachAcquistiSubNav();document.getElementById('afiLinked').onclick=()=>{ACQ_FATTURA_MODE='collegata';renderAcquistiFattura()};document.getElementById('afiManual').onclick=()=>{ACQ_FATTURA_MODE='manuale';renderAcquistiFattura()};
+  attachAcquistiSubNav();document.getElementById('afiLinked').onclick=()=>{ACQ_FATTURA_MODE='collegata';renderAcquistiFattura()};
   const intestazioneScadenze=[...document.querySelectorAll('#afiForm strong')].find(x=>x.textContent.trim()==='Piano pagamenti');if(intestazioneScadenze){intestazioneScadenze.textContent='Scadenziario dei pagamenti *';intestazioneScadenze.insertAdjacentHTML('afterend','<span class="empty-note" style="margin-left:8px">Obbligatorio</span>')}
   document.querySelectorAll('.invoice-history-edit').forEach(btn=>btn.onclick=()=>{ACQ_FATTURA_EDIT_ID=btn.dataset.invoiceId;renderAcquistiFattura();document.getElementById('invoiceEditPanel')?.scrollIntoView({behavior:'smooth',block:'start'})});
+  document.querySelectorAll('.due-panel-edit').forEach(btn=>btn.onclick=()=>{ACQ_FATTURA_EDIT_ID=btn.dataset.invoiceId;renderAcquistiFattura();document.getElementById('invoiceEditPanel')?.scrollIntoView({behavior:'smooth',block:'start'})});
   document.querySelectorAll('.invoice-history-delete').forEach(btn=>btn.onclick=async()=>{const id=btn.dataset.invoiceId,f=(DATA.finanziario.fatture||[]).find(x=>String(x.id)===String(id));if(!f)return;const extra=caricaFattureExtra()[String(id)]||{},ordini=flat.filter(({o})=>String(o.fatturaId)===String(id)||(extra.ordini||[]).some(oid=>String(oid)===String(o.id))),ddtOrdini=flat.reduce((n,{o})=>n+(o.ddtMultipli||[]).filter(d=>String(d.fatturaId)===String(id)).length,0),ddtLiberi=caricaDdtStandalone().filter(d=>String(d.fatturaId)===String(id));const collegamenti=[];if(ordini.length)collegamenti.push(`${ordini.length} ${ordini.length===1?'ordine':'ordini'}`);if(ddtOrdini+ddtLiberi.length)collegamenti.push(`${ddtOrdini+ddtLiberi.length} DDT`);if(Array.isArray(extra.scadenze)&&extra.scadenze.length)collegamenti.push(`${extra.scadenze.length} ${extra.scadenze.length===1?'scadenza':'scadenze'}`);const messaggio=`Eliminare definitivamente la fattura ${f.numero||'senza numero'} di ${f.controparte||'fornitore non indicato'}?${collegamenti.length?'\n\nVerranno rimossi i collegamenti con '+collegamenti.join(', ')+'. Ordini e DDT resteranno nello storico.':''}\n\nQuesta operazione non può essere annullata.`;if(!confirm(messaggio))return;btn.disabled=true;try{ordini.forEach(({o})=>{if(String(o.fatturaId)===String(id)){o.fatturaId='';o.fatturaVerificata=false}(o.ddtMultipli||[]).forEach(d=>{if(String(d.fatturaId)===String(id))d.fatturaId='' });salvaAcquistoExtra(o)});const liberi=caricaDdtStandalone().map(d=>String(d.fatturaId)===String(id)?{...d,fatturaId:''}:d);if(ddtLiberi.length)await salvaDdtStandalone(liberi);DATA.finanziario.fatture=DATA.finanziario.fatture.filter(x=>String(x.id)!==String(id));await eliminaFatturaExtra(id);await saveData();if(extra.file?.path)await supa.storage.from(FATTURE_FILE_BUCKET).remove([extra.file.path]);ACQ_FATTURA_EDIT_ID='';renderAcquistiFattura()}catch(err){alert(err.message||'Non è stato possibile eliminare la fattura.');btn.disabled=false}});
   const editCancel=document.getElementById('invoiceEditCancel');if(editCancel)editCancel.onclick=()=>{ACQ_FATTURA_EDIT_ID='';renderAcquistiFattura()};
   const editForm=document.getElementById('invoiceEditForm');if(editForm)editForm.onsubmit=async e=>{e.preventDefault();const f=(DATA.finanziario.fatture||[]).find(x=>String(x.id)===String(ACQ_FATTURA_EDIT_ID));if(!f)return;const fornitore=document.getElementById('invoiceEditSupplier').value.trim(),numero=document.getElementById('invoiceEditNumber').value.trim();if(DATA.finanziario.fatture.some(x=>String(x.id)!==String(f.id)&&x.tipo==='ricevuta'&&String(x.controparte||'').toLowerCase()===fornitore.toLowerCase()&&String(x.numero||'').toLowerCase()===numero.toLowerCase())){alert('Esiste già una fattura con lo stesso fornitore e numero.');return}const extra=caricaFattureExtra()[String(f.id)]||{};Object.assign(f,{controparte:fornitore,numero,data:document.getElementById('invoiceEditDate').value,imponibile:Number(document.getElementById('invoiceEditTaxable').value)||0,iva:Number(document.getElementById('invoiceEditVat').value)||0,importo:Number(document.getElementById('invoiceEditTotal').value)||0,pagata:document.getElementById('invoiceEditPaid').value==='si'});try{await salvaFatturaExtra(f.id,{...extra,descrizione:document.getElementById('invoiceEditDescription').value.trim(),categoria:document.getElementById('invoiceEditCategory').value.trim()});await saveData();ACQ_FATTURA_EDIT_ID='';renderAcquistiFattura()}catch(err){alert(err.message||'Non è stato possibile salvare le modifiche.')}};
-  if(editForm){const salvaBase=editForm.onsubmit;editForm.addEventListener('submit',e=>e.preventDefault(),true);editForm.onsubmit=async e=>{e.preventDefault();const rate=[...document.querySelectorAll('.invoice-edit-rate')].map(r=>({data:r.querySelector('.invoice-edit-rate-date').value,modalita:r.querySelector('.invoice-edit-rate-mode').value,riferimento:r.querySelector('.invoice-edit-rate-ref').value.trim(),importo:r.querySelector('.invoice-edit-rate-amount').value}));if(!rate.length||rate.some(r=>!r.data||!r.importo)){alert('Inserisci almeno una scadenza completa di data e importo.');return}const id=ACQ_FATTURA_EDIT_ID,extra=caricaFattureExtra()[String(id)]||{};try{await salvaFatturaExtra(id,{...extra,scadenze:rate});await salvaBase(e)}catch(err){alert(err.message||'Non è stato possibile salvare lo scadenziario.')}}}
+  if(editForm){const salvaBase=editForm.onsubmit;editForm.addEventListener('submit',e=>e.preventDefault(),true);editForm.onsubmit=async e=>{e.preventDefault();const rate=[...document.querySelectorAll('.invoice-edit-rate')].map(r=>{const pagata=r.querySelector('.invoice-edit-rate-paid').checked;return {data:r.querySelector('.invoice-edit-rate-date').value,modalita:r.querySelector('.invoice-edit-rate-mode').value,riferimento:r.querySelector('.invoice-edit-rate-ref').value.trim(),importo:r.querySelector('.invoice-edit-rate-amount').value,pagata,dataPagamento:pagata?(r.dataset.dataPagamento||oggiIsoAttivita()):''}});if(!rate.length||rate.some(r=>!r.data||!r.importo)){alert('Inserisci almeno una scadenza completa di data e importo.');return}const id=ACQ_FATTURA_EDIT_ID,extra=caricaFattureExtra()[String(id)]||{};try{await salvaFatturaExtra(id,{...extra,scadenze:rate});await salvaBase(e)}catch(err){alert(err.message||'Non è stato possibile salvare lo scadenziario.')}}}
   collegaFileFatture();
   document.querySelectorAll('.invoice-history-upload').forEach(inp=>inp.onchange=async e=>{
     const file=e.target.files&&e.target.files[0];if(!file)return;
@@ -3077,8 +2967,13 @@ function renderAcquistiFattura(){
     }catch(err){alert(err.message||'Non è stato possibile allegare la fattura.');inp.disabled=false;e.target.value=''}
   });
   if(!ACQ_FATTURA_MODE)return;document.getElementById('afiBack').onclick=()=>{ACQ_FATTURA_MODE='';ACQ_FATTURA_FORNITORE='';renderAcquistiFattura()};const supplierSelect=document.getElementById('afiSupplierSelect');if(supplierSelect)supplierSelect.onchange=e=>{ACQ_FATTURA_FORNITORE=e.target.value;renderAcquistiFattura()};
-  const calc=()=>{const imponibile=Number(document.getElementById('afiTaxable').value)||0,aliquota=Number(document.getElementById('afiVatRate').value)||0,iva=imponibile*aliquota/100;document.getElementById('afiVat').value=iva.toFixed(2);document.getElementById('afiTotal').value=(imponibile+iva).toFixed(2)};document.getElementById('afiTaxable').oninput=calc;document.getElementById('afiVatRate').oninput=calc;
-  const bindRateDel=()=>document.querySelectorAll('.afi-rate-del').forEach(btn=>btn.onclick=()=>{if(document.querySelectorAll('.afi-rate').length>1)btn.closest('tr').remove()});bindRateDel();document.getElementById('afiAddRate').onclick=()=>{document.getElementById('afiRates').insertAdjacentHTML('beforeend',fatturaScadenzaHtml(Date.now()));bindRateDel()};
+  const aggiornaConfrontoOrdiniHint=()=>{const hint=document.getElementById('afiOrderHint');if(!hint)return;const selezionati=[...document.querySelectorAll('.afi-order:checked')].map(x=>x.value).filter(Boolean);if(!selezionati.length){hint.textContent='';return}const totOrdini=selezionati.reduce((s,oid)=>{const item=ordiniFornitore.find(x=>String(x.o.id)===String(oid));return s+(item?Number(item.o.importo)||0:0)},0);const imponibile=Number(document.getElementById('afiTaxable').value)||0;if(!imponibile){hint.innerHTML=`Totale ordini collegati: <strong>${euro(totOrdini)}</strong> (al netto IVA)`;return}const diff=imponibile-totOrdini,pct=totOrdini?Math.abs(diff)/totOrdini*100:0,segno=diff>0?'+':'';if(pct<=3)hint.innerHTML=`Ordini collegati: ${euro(totOrdini)} — <strong style="color:var(--teal)">importo conforme</strong>`;else hint.innerHTML=`Ordini collegati: ${euro(totOrdini)} — <strong style="color:${pct<=10?'var(--amber)':'var(--red)'}">scostamento ${segno}${euro(diff)} (${segno}${pct.toFixed(1)}%)</strong>`};
+  const aggiornaRateSumHint=()=>{const hint=document.getElementById('afiRateSumHint');if(!hint)return;const importi=[...document.querySelectorAll('.afi-rate-amount')].map(i=>Number(i.value)||0),somma=importi.reduce((s,v)=>s+v,0),totale=Number(document.getElementById('afiTotal').value)||0;if(!totale){hint.textContent='';return}const diff=totale-somma;if(Math.abs(diff)<0.01)hint.innerHTML=`Somma scadenze: <strong style="color:var(--teal)">${euro(somma)}, corrisponde al totale fattura</strong>`;else if(diff>0)hint.innerHTML=`Somma scadenze: <strong>${euro(somma)}</strong> — <strong style="color:var(--red)">manca ${euro(diff)}</strong> per coprire il totale fattura (${euro(totale)})`;else hint.innerHTML=`Somma scadenze: <strong>${euro(somma)}</strong> — <strong style="color:var(--red)">supera il totale fattura di ${euro(Math.abs(diff))}</strong>`};
+  const calc=()=>{const imponibile=Number(document.getElementById('afiTaxable').value)||0,aliquota=Number(document.getElementById('afiVatRate').value)||0,iva=imponibile*aliquota/100;document.getElementById('afiVat').value=iva.toFixed(2);document.getElementById('afiTotal').value=(imponibile+iva).toFixed(2);aggiornaConfrontoOrdiniHint();aggiornaRateSumHint()};document.getElementById('afiTaxable').oninput=calc;document.getElementById('afiVatRate').oninput=calc;
+  document.querySelectorAll('.afi-order').forEach(cb=>cb.onchange=()=>{aggiornaConfrontoOrdiniHint()});
+  document.getElementById('afiRates').addEventListener('input',aggiornaRateSumHint);
+  const bindRateDel=()=>document.querySelectorAll('.afi-rate-del').forEach(btn=>btn.onclick=()=>{if(document.querySelectorAll('.afi-rate').length>1){btn.closest('tr').remove();aggiornaRateSumHint()}});bindRateDel();document.getElementById('afiAddRate').onclick=()=>{document.getElementById('afiRates').insertAdjacentHTML('beforeend',fatturaScadenzaHtml(Date.now()));bindRateDel();aggiornaRateSumHint()};
+  aggiornaConfrontoOrdiniHint();aggiornaRateSumHint();
   document.getElementById('afiForm').onsubmit=async e=>{e.preventDefault();const fornitore=ACQ_FATTURA_MODE==='collegata'?ACQ_FATTURA_FORNITORE:document.getElementById('afiSupplier').value.trim();if(!fornitore){alert('Inserisci o seleziona il fornitore.');return}const selezionati=[...document.querySelectorAll('.afi-order:checked')].map(x=>x.value);if(ACQ_FATTURA_MODE==='collegata'&&!selezionati.length){alert('Seleziona almeno un ordine da collegare.');return}const numero=document.getElementById('afiNumber').value.trim();if(DATA.finanziario.fatture.some(f=>f.tipo==='ricevuta'&&(f.controparte||'').toLowerCase()===fornitore.toLowerCase()&&String(f.numero||'').toLowerCase()===numero.toLowerCase())){alert('Esiste già una fattura con lo stesso fornitore e numero.');return}const fileInput=document.getElementById('afiFile'),file=fileInput.files&&fileInput.files[0],id=nextId('fatture'),imponibile=Number(document.getElementById('afiTaxable').value)||0,iva=Number(document.getElementById('afiVat').value)||0,total=Number(document.getElementById('afiTotal').value)||0;try{const fileCloud=file?await caricaFileFatturaCloud(file,id):null;DATA.finanziario.fatture.push({id,tipo:'ricevuta',numero,controparte:fornitore,data:document.getElementById('afiDate').value,imponibile,iva,importo:total,scadenzaPagamento:document.querySelector('.afi-rate-date').value,pagata:false,bloccato:false});selezionati.forEach(oid=>{const item=flat.find(x=>String(x.o.id)===String(oid));if(item){item.o.fatturaId=id;item.o.fatturaVerificata=false}});const scadenze=[...document.querySelectorAll('.afi-rate')].map(r=>({data:r.querySelector('.afi-rate-date').value,modalita:r.querySelector('.afi-rate-mode').value,riferimento:r.querySelector('.afi-rate-ref').value.trim(),importo:r.querySelector('.afi-rate-amount').value}));await salvaFatturaExtra(id,{modalitaInserimento:ACQ_FATTURA_MODE,piva:document.getElementById('afiVatNumber')?document.getElementById('afiVatNumber').value:'',descrizione:document.getElementById('afiDescription').value.trim(),categoria:document.getElementById('afiCategory').value.trim(),ordini:selezionati,scadenze,file:fileCloud});await saveData();ACQ_FATTURA_MODE='';ACQ_FATTURA_FORNITORE='';alert('Fattura registrata correttamente.');renderAcquistiFattura()}catch(err){alert(err.message||'Non è stato possibile salvare la fattura.')}};
 }
 
@@ -3127,53 +3022,6 @@ function creaAttivitaAcquisto(o,catNome,problemi) {
   tutte.push({id:String(Date.now()),titolo,area:'Acquisti',responsabile:'amministrazione',scadenza:oggiStr(),note:catNome+' - '+problemi.join('; '),priorita:'alta',stato:'da_fare',richiedeValidazione:true,validata:false,creataDa:EMAIL_UTENTE||'utente locale',creataIl:new Date().toISOString()});salvaAttivitaLocali(tutte);alert('Attivita acquisti creata.');
 }
 
-function renderAcquistiControllo() {
-  const flat = allOrdiniFlat();
-  let anomalie = 0;
-  let consegneRitardo = 0;
-  const tot = { ord: 0, ddt: 0, fatt: 0 };
-  const rows = flat.map(({ catNome, o }) => {
-    const ord = Number(o.importo) || null;
-    const ddt = valoreDdtOrdine(o);
-    const fatt = fatturatoOrdine(o);
-    tot.ord += ord || 0; tot.ddt += ddt || 0; tot.fatt += fatt || 0;
-    const fuoriSoglia = (v, rif) => v !== null && rif !== null && rif > 0 && Math.abs((v - rif) / rif * 100) > 3;
-    const problemi=criticitaOrdine(o);
-    if (problemi.length) anomalie++;
-    if (problemi.includes('Consegna in ritardo')) consegneRitardo++;
-    return `
-    <tr data-order-control="${escAtt(o.id)}">
-      <td class="empty-note">${catNome}<br><strong>${o.fornitore || '-'}</strong><br>${ordinatoDaChip(o)}</td>
-      <td class="empty-note">Ord. ${o.numeroOrdine || '-'}<br>DDT ${o.numeroDDT || '-'}</td>
-      <td>${euro(ord)}</td>
-      <td>${euro(ddt)}<br>${chipScostamento(ddt, ord)}</td>
-      <td>${euro(fatt)}<br>${chipScostamento(fatt, ddt !== null ? ddt : ord)}</td>
-      <td>${o.fatturaVerificata ? chip('valido', 'Verificata') : (fatt !== null ? chip('in_scadenza', 'Da verificare') : chip('mancante', 'Senza fattura'))}</td>
-      <td>${problemi.length?`<div class="safety-doc-sub" style="color:var(--red);margin-bottom:6px">${problemi.map(escAtt).join('<br>')}</div><button class="btn btn-outline btn-sm order-task">Crea attivit&agrave;</button>`:'<span class="chip teal">Nessuna anomalia</span>'}</td>
-    </tr>`;
-  }).join('');
-
-  document.getElementById('main').innerHTML = `
-    <div class="panel">
-      <h2>4. Controllo scostamenti &mdash; ordinato / DDT / fatturato</h2>
-      <p class="sub">Ogni passaggio &egrave; confrontato con il precedente: "Valore DDT" vs ordinato, "Fatturato" (imponibile della fattura collegata) vs valore DDT. Entro il &plusmn;3% il confronto &egrave; verde; in ambra se arriva/fatturato meno, in rosso se di pi&ugrave;. Controlla qui prima di autorizzare il pagamento sul software di contabilit&agrave;.</p>
-      ${acquistiSubNav('controllo')}
-      <div class="grid-stats">
-        <div class="stat-card gray"><div class="num">${euro(tot.ord)}</div><div class="label">Totale ordinato</div></div>
-        <div class="stat-card teal"><div class="num">${euro(tot.fatt)}</div><div class="label">Totale fatturato</div></div>
-        <div class="stat-card ${consegneRitardo ? 'red' : 'teal'}"><div class="num">${consegneRitardo}</div><div class="label">Consegne in ritardo</div></div>
-        <div class="stat-card ${anomalie ? 'red' : 'teal'}"><div class="num">${anomalie}</div><div class="label">Ordini con criticit&agrave;</div></div>
-      </div>
-      <table class="row-table">
-        <thead><tr><th>Categoria / Fornitore</th><th>Rif.</th><th>Ordinato</th><th>Valore DDT vs ord.</th><th>Fatturato vs DDT</th><th>Verifica fattura</th><th>Azioni</th></tr></thead>
-        <tbody>${rows || '<tr><td colspan="7" class="empty-note">Nessun ordine ancora.</td></tr>'}</tbody>
-        ${rows ? `<tfoot><tr><td colspan="2"><strong>Totali</strong></td><td><strong>${euro(tot.ord)}</strong></td><td><strong>${euro(tot.ddt)}</strong></td><td><strong>${euro(tot.fatt)}</strong></td><td colspan="2"></td></tr></tfoot>` : ''}
-      </table>
-    </div>
-  `;
-  attachAcquistiSubNav();
-  document.querySelectorAll('[data-order-control]').forEach(row=>{const item=flat.find(x=>String(x.o.id)===row.dataset.orderControl),btn=row.querySelector('.order-task');if(btn&&item)btn.onclick=()=>creaAttivitaAcquisto(item.o,item.catNome,criticitaOrdine(item.o))});
-}
 
 // ---------- 5. Storico costi (ferro / cemento / contratti di appalto) ----------
 // Costo sostenuto di un ordine: se collegato a una fattura usa il totale della
@@ -3188,41 +3036,6 @@ function bucketMateriale(catNome) {
   if (/ferro|acciaio/i.test(catNome || '')) return 'ferro';
   if (/cemento|calcestruzz/i.test(catNome || '')) return 'cemento';
   return 'altro';
-}
-function renderAcquistiStorico() {
-  const buckets = { ferro: [], cemento: [], altro: [] };
-  allOrdiniFlat().forEach(({ catNome, o }) => {
-    const costo = costoSostenutoOrdine(o);
-    if (!costo && !o.numeroOrdine) return;
-    buckets[bucketMateriale(catNome)].push({ catNome, o, costo });
-  });
-  const somma = (arr) => arr.reduce((s, x) => s + x.costo, 0);
-  const totFerro = somma(buckets.ferro), totCemento = somma(buckets.cemento), totAltro = somma(buckets.altro);
-  const subs = elencoSubappalti().map((s) => ({ s, speso: subSpeso(s.id), importo: subImporto(s.id) })).filter((x) => x.speso || x.importo);
-  const totContratti = subs.reduce((s, x) => s + x.speso, 0);
-  const totGen = totFerro + totCemento + totAltro + totContratti;
-
-  const tabellaMat = (items) => items.length ? `<table class="row-table"><thead><tr><th>Fornitore</th><th>Ordine</th><th>Ordinato da</th><th>Costo sostenuto</th></tr></thead><tbody>${items.map(({ catNome, o, costo }) => `<tr><td><strong>${o.fornitore || '-'}</strong><br><span class="empty-note">${catNome}</span></td><td class="empty-note">Ord. ${o.numeroOrdine || '-'}${o.dataOrdine ? ' &middot; ' + dataBreve(o.dataOrdine) : ''}</td><td>${ordinatoDaChip(o)}</td><td><strong>${euro(costo)}</strong></td></tr>`).join('')}</tbody></table>` : '<p class="empty-note">Nessun costo registrato in questa categoria.</p>';
-  const tabellaContratti = subs.length ? `<table class="row-table"><thead><tr><th>Subappaltatore</th><th>Importo contratto</th><th>Speso ad oggi</th></tr></thead><tbody>${subs.map(({ s, speso, importo }) => `<tr><td><strong>${s.lavorazione}</strong><br><span class="empty-note">${DATA.subappalti[s.id].ragioneSociale || 'da definire'}</span></td><td class="empty-note">${euro(importo)}</td><td><strong>${euro(speso)}</strong></td></tr>`).join('')}</tbody></table>` : '<p class="empty-note">Nessun costo di subappalto registrato (compila lo "speso" in Finanziario &rarr; Costi).</p>';
-
-  document.getElementById('main').innerHTML = `
-    <div class="panel">
-      <h2>5. Storico costi sostenuti</h2>
-      <p class="sub">Riepilogo dei costi sostenuti divisi tra <strong>ferro</strong>, <strong>cemento</strong> e <strong>contratti di appalto</strong>. Per gli acquisti il costo &egrave; il totale della fattura collegata (o l'importo ordinato se non ancora fatturato); per i contratti &egrave; lo "speso" registrato sui subappaltatori.</p>
-      ${acquistiSubNav('storico')}
-      <div class="grid-stats">
-        <div class="stat-card blue"><div class="num">${euro(totFerro)}</div><div class="label">Ferro</div></div>
-        <div class="stat-card gray"><div class="num">${euro(totCemento)}</div><div class="label">Cemento</div></div>
-        <div class="stat-card amber"><div class="num">${euro(totContratti)}</div><div class="label">Contratti di appalto</div></div>
-        <div class="stat-card teal"><div class="num">${euro(totGen)}</div><div class="label">Totale costi sostenuti</div></div>
-      </div>
-    </div>
-    <div class="panel"><h2>Ferro &mdash; ${euro(totFerro)}</h2>${tabellaMat(buckets.ferro)}</div>
-    <div class="panel"><h2>Cemento &mdash; ${euro(totCemento)}</h2>${tabellaMat(buckets.cemento)}</div>
-    <div class="panel"><h2>Contratti di appalto (subappaltatori) &mdash; ${euro(totContratti)}</h2>${tabellaContratti}</div>
-    ${totAltro ? `<div class="panel"><h2>Altri materiali &mdash; ${euro(totAltro)}</h2>${tabellaMat(buckets.altro)}</div>` : ''}
-  `;
-  attachAcquistiSubNav();
 }
 
 // ---------- AREA: FINANZIARIO ----------
@@ -4915,7 +4728,7 @@ function renderHome() {
         <h3>Azioni prioritarie</h3>
         <div class="quick-action" onclick="vaiA('attivita')"><div><b>Centro attivit&agrave;</b><br><span>Azioni aperte, scadute e da validare</span></div><span class="chip ${att.scadute.length?'red':'blue'}">${att.aperte.length}</span></div>
         <div class="quick-action" onclick="vaiA('giornale')"><div><b>Giornale di cantiere</b><br><span>Registrazioni in attesa di validazione</span></div><span class="chip ${caricaGiornaleLocale().some(g=>g.stato==='inviato')?'amber':'gray'}">${caricaGiornaleLocale().filter(g=>g.stato==='inviato').length}</span></div>
-        <div class="quick-action" onclick="ACQUISTI_SUBTAB='controllo';vaiA('acquisti')"><div><b>Controllo acquisti</b><br><span>Ordini, consegne, DDT e fatture da verificare</span></div><span class="chip ${acquistiCritici?'red':'gray'}">${acquistiCritici}</span></div>
+        <div class="quick-action" onclick="ACQUISTI_SUBTAB='ordine';vaiA('acquisti')"><div><b>Controllo acquisti</b><br><span>Ordini, consegne, DDT e fatture da verificare</span></div><span class="chip ${acquistiCritici?'red':'gray'}">${acquistiCritici}</span></div>
         ${accessoPM?`<div class="quick-action" onclick="vaiA('finanziaria','tesoreria')"><div><b>Tesoreria</b><br><span>Primo mese sotto la soglia di sicurezza</span></div><span class="chip ${tesoreria.primoSotto?'red':'teal'}">${tesoreria.primoSotto?meseAnno(tesoreria.primoSotto.mese+'-15'):'OK'}</span></div>`:''}
         <div class="quick-action" onclick="vaiA('documentazione','scadenzario')"><div><b>Documenti mancanti</b><br><span>File o dati ancora da caricare</span></div><span class="chip ${s.docsScaduti.length?'red':'gray'}">${allDocsFlat().filter(d=>!docCompilato(d)).length}</span></div>
         ${accessoPM?`<div class="quick-action" onclick="vaiA('finanziaria','salfornitori')"><div><b>Pagamenti fornitori</b><br><span>Scaduti o entro 30 giorni</span></div><span class="chip ${s.salFornScadute.length?'red':'amber'}">${s.salFornScadute.length+s.salFornImminenti.length}</span></div>
@@ -4934,7 +4747,7 @@ function renderHome() {
     <div class="section-title"><div><h2>Centro di controllo della commessa</h2><p>Accedi direttamente al processo operativo che devi gestire.</p></div></div>
     <div class="process-grid">
       <div class="process-card" onclick="vaiA('documentazione','scadenzario')"><div class="icon">D</div><h3>Documentazione</h3><p>Completezza dei documenti di appaltatore e subappaltatori.</p></div>
-      <div class="process-card" onclick="ACQUISTI_SUBTAB='menu';vaiA('acquisti')"><div class="icon">A</div><h3>Ciclo acquisti</h3><p>Ordini, consegne e DDT, fatture.</p></div>
+      <div class="process-card" onclick="ACQUISTI_SUBTAB='ordine';vaiA('acquisti')"><div class="icon">A</div><h3>Ciclo acquisti</h3><p>Ordini, consegne e DDT, fatture.</p></div>
       <div class="process-card" onclick="vaiA('sal')"><div class="icon">S</div><h3>SAL lavori</h3><p>Stati di avanzamento, lavorazioni, importi ed emissione.</p></div>
       ${accessoPM?`<div class="process-card" onclick="vaiA('finanziaria','tesoreria')"><div class="icon">F</div><h3>Cash flow</h3><p>Incassi, pagamenti, scadenze e fabbisogno finanziario.</p></div>
       <div class="process-card" onclick="vaiA('economica','quadro')"><div class="icon">€</div><h3>Controllo economico</h3><p>Budget, consuntivi, margine e scostamenti di commessa.</p></div>`:''}
@@ -4975,6 +4788,50 @@ function esportaBackup() {
 const CONTRATTI_EXTRA_LS_KEY='aedifica_contratti_sub_v1';
 function caricaContrattiExtra(){try{return JSON.parse(localStorage.getItem(CONTRATTI_EXTRA_LS_KEY)||'{}')||{}}catch(e){return {}}}
 function salvaContrattiExtra(v){localStorage.setItem(CONTRATTI_EXTRA_LS_KEY,JSON.stringify(v));salvaStatoEstesoCloud('contratti_extra',v)}
+// Computo metrico generale Calvanico del 27/06/2026.
+// E' il valore previsto delle lavorazioni e non viene sommato ai costi: contratti,
+// ordini, SAL e fatture rappresentano invece affidamenti e consuntivi.
+const COMPUTO_CALVANICO = {
+  data: '2026-06-27',
+  totale: 6631150,
+  voci: [
+    {codice:'NP1',categoria:'Apprestamenti e noli',nome:'Ponteggio completo - primo mese',unita:'mq',quantita:6500,prezzo:15,importo:97500},
+    {codice:'NP2',categoria:'Apprestamenti e noli',nome:'Ponteggio completo - mesi successivi',unita:'mq/30 gg',quantita:39000,prezzo:1.5,importo:58500},
+    {codice:'NP3',categoria:'Apprestamenti e noli',nome:'Noleggio, installazione e montaggio gru a torre',unita:'mesi',quantita:10,prezzo:2000,importo:20000},
+    {codice:'NP4',categoria:'Strutture',nome:'Calcestruzzo per magrone di fondazione',unita:'m3',quantita:300,prezzo:125,importo:37500},
+    {codice:'NP5',categoria:'Strutture',nome:'Calcestruzzo per platea e strutture interrate',unita:'mc',quantita:1470,prezzo:330,importo:485100},
+    {codice:'NP6',categoria:'Strutture',nome:'Calcestruzzo per pilastri e muri in elevazione',unita:'mc',quantita:1050,prezzo:370,importo:388500},
+    {codice:'NP7',categoria:'Strutture',nome:'Solaio Predalles con travi prefabbricate',unita:'m2',quantita:9600,prezzo:190,importo:1824000},
+    {codice:'NP8',categoria:'Impianti',nome:'Impianti ascensori',unita:'cadauno',quantita:5,prezzo:35000,importo:175000},
+    {codice:'NP9',categoria:'Murature e cartongesso',nome:'Muratura esterna Ytong 30 cm con controparete',unita:'m2',quantita:5500,prezzo:110,importo:605000},
+    {codice:'NP10',categoria:'Murature e cartongesso',nome:'Muratura interna Ytong 40 cm',unita:'m2',quantita:2850,prezzo:70,importo:199500},
+    {codice:'NP11',categoria:'Murature e cartongesso',nome:'Pareti divisorie in cartongesso con lana di roccia',unita:'m2',quantita:8800,prezzo:64,importo:563200},
+    {codice:'NP12',categoria:'Sottofondi, pavimenti e rivestimenti',nome:'Sottofondo in ghiaia',unita:'m3',quantita:1000,prezzo:52,importo:52000},
+    {codice:'NP13',categoria:'Sottofondi, pavimenti e rivestimenti',nome:'Massetto industriale garage',unita:'m2',quantita:1600,prezzo:40,importo:64000},
+    {codice:'NP14',categoria:'Sottofondi, pavimenti e rivestimenti',nome:'Massetto per posa resina',unita:'m2',quantita:7500,prezzo:20,importo:150000},
+    {codice:'NP15',categoria:'Sottofondi, pavimenti e rivestimenti',nome:'Pavimento in resina decorativa',unita:'m2',quantita:7500,prezzo:65,importo:487500},
+    {codice:'NP16',categoria:'Sottofondi, pavimenti e rivestimenti',nome:'Rivestimenti bagni',unita:'m2',quantita:1700,prezzo:35,importo:59500},
+    {codice:'NP17',categoria:'Finiture',nome:'Controsoffittatura in cartongesso',unita:'m2',quantita:3250,prezzo:28,importo:91000},
+    {codice:'NP18',categoria:'Finiture',nome:'Intonaci premiscelati',unita:'m2',quantita:8500,prezzo:20,importo:170000},
+    {codice:'NP19',categoria:'Finiture',nome:'Tinteggiatura pareti e soffitti interni',unita:'m2',quantita:12000,prezzo:18,importo:216000},
+    {codice:'NP20',categoria:'Porte e infissi',nome:'Porte tagliafuoco REI',unita:'cadauno',quantita:57,prezzo:850,importo:48450},
+    {codice:'NP21',categoria:'Porte e infissi',nome:'Porte interne complete di controtelaio',unita:'cadauno',quantita:442,prezzo:450,importo:198900},
+    {codice:'NP22',categoria:'Porte e infissi',nome:'Monoblocchi con tapparelle motorizzate',unita:'a corpo',quantita:1,prezzo:260000,importo:260000},
+    {codice:'NP23',categoria:'Porte e infissi',nome:'Infissi esterni in PVC',unita:'m2',quantita:950,prezzo:400,importo:380000}
+  ]
+};
+function riepilogoComputoCalvanico(){
+  const gruppi={};
+  COMPUTO_CALVANICO.voci.forEach(v=>{if(!gruppi[v.categoria])gruppi[v.categoria]={nome:v.categoria,importo:0,voci:[]};gruppi[v.categoria].importo+=v.importo;gruppi[v.categoria].voci.push(v)});
+  return Object.values(gruppi).sort((a,b)=>b.importo-a.importo);
+}
+function renderComputoCalvanico(){
+  const gruppi=riepilogoComputoCalvanico();
+  const assegnazioni={};let ordiniConfermati=0,ordiniDaVerificare=0;
+  allOrdiniFlat().forEach(({o,catNome})=>{integraAcquistoExtra(o);const importo=Number(o.importo)||0,s=suggerisciComputoOrdine(o,catNome),ref=o.computoRiferimento||s.riferimento;if(o.computoStato==='confermata'&&ref){const area=ref.startsWith('AREA|')?ref.slice(5):(COMPUTO_CALVANICO.voci.find(v=>v.codice===ref)||{}).categoria;if(area){assegnazioni[area]=(assegnazioni[area]||0)+importo;ordiniConfermati+=importo}}else ordiniDaVerificare+=importo});
+  const righe=gruppi.map((g,i)=>{const assegnato=assegnazioni[g.nome]||0;return `<details class="computo-group" ${i===0?'open':''}><summary><span><strong>${escAtt(g.nome)}</strong><small>${g.voci.length} ${g.voci.length===1?'voce':'voci'} · Computo ${euro(g.importo)} · Ordini classificati ${euro(assegnato)}</small></span><strong>${euro(g.importo-assegnato)} residuo</strong></summary><div class="table-wrap"><table class="row-table"><thead><tr><th>Codice</th><th>Lavorazione</th><th>Quantità</th><th>Prezzo unitario</th><th>Importo</th></tr></thead><tbody>${g.voci.map(v=>`<tr><td><span class="chip gray">${v.codice}</span></td><td>${escAtt(v.nome)}</td><td>${numeroIt(v.quantita)} ${escAtt(v.unita)}</td><td>${euro(v.prezzo)}</td><td><strong>${euro(v.importo)}</strong></td></tr>`).join('')}</tbody></table></div></details>`}).join('');
+  return `<section class="panel" id="computoCalvanico" style="margin-top:20px"><div class="section-title" style="margin-top:0"><div><h2>Computo metrico Calvanico</h2><p>Valore previsto delle 23 lavorazioni, raggruppate per area. Apri una categoria per consultare quantità e prezzi.</p></div><span class="chip blue">Aggiornato al ${dataBreve(COMPUTO_CALVANICO.data)}</span></div><div class="grid-stats"><div class="stat-card blue"><div class="num">${euro(COMPUTO_CALVANICO.totale)}</div><div class="label">Totale computo</div></div><div class="stat-card teal"><div class="num">${euro(ordiniConfermati)}</div><div class="label">Ordini classificati</div></div><div class="stat-card amber"><div class="num">${euro(ordiniDaVerificare)}</div><div class="label">Ordini da verificare</div></div><div class="stat-card gray"><div class="num">${COMPUTO_CALVANICO.voci.length}</div><div class="label">Voci di lavorazione</div></div><div class="stat-card blue"><div class="num">${euro(OLIMPO_PREVISTO.totale)}</div><div class="label">Contratto OLIMPO separato</div></div></div><div class="panel" style="background:var(--bg);margin:16px 0"><p class="sub" style="margin:0"><strong>Come leggere i dati:</strong> il computo rappresenta il valore previsto delle opere. Solo gli ordini che confermi entrano nella colonna “classificati”; i suggerimenti restano da verificare e non alterano i dati economici.</p></div>${righe}</section>`;
+}
 // Budget OLIMPO ricavato dal contratto a misura e dal computo metrico Calvanico.
 // Il previsto mensile segue le date del cronoprogramma; i SAL effettivi restano
 // sempre separati e consentono di confrontare piano e consuntivo senza perdere dati.
@@ -5050,7 +4907,7 @@ function riepilogoEconomicoImprese(){
 const renderControlloEconomicoBase=renderControlloEconomico;
 renderControlloEconomico=function(){
   renderControlloEconomicoBase();const r=riepilogoEconomicoImprese();
-  document.getElementById('main').insertAdjacentHTML('beforeend',`<div class="section-title"><div><h2>Riepilogo imprese</h2><p>Situazione economica aggiornata automaticamente dalle contabilità OLIMPO e MOVISUD.</p></div></div><div class="sub-overview-grid"><article class="sub-overview-card" onclick="vaiA('economica','costi')"><div class="sub-overview-top"><div class="sub-overview-title"><span class="sub-overview-status"></span><div><h3>OLIMPO</h3><p>Opere strutturali · contratto a misura</p></div></div><span class="chip blue">Budget ${euro(OLIMPO_PREVISTO.totale)}</span></div><div class="sub-overview-facts"><div class="sub-overview-fact"><span>SAL APPROVATI</span><strong>${euro(r.olimpoApprovato)}</strong></div><div class="sub-overview-fact"><span>FATTURATO</span><strong>${euro(r.olimpoFatturato)}</strong></div><div class="sub-overview-fact"><span>RESIDUO</span><strong>${euro(r.olimpoResiduo)}</strong></div><div class="sub-overview-fact"><span>SAL REGISTRATI</span><strong>${caricaSalOlimpo().length}</strong></div></div><div class="sub-overview-open"><span>Apri dettaglio OLIMPO</span><span>→</span></div></article><article class="sub-overview-card" id="economicMovisudCard"><div class="sub-overview-top"><div class="sub-overview-title"><span class="sub-overview-status warning"></span><div><h3>MOVISUD</h3><p>FIR e noleggio mezzi</p></div></div><span class="chip amber">${r.movVoci} voci</span></div><div class="sub-overview-facts"><div class="sub-overview-fact"><span>TOTALE REGISTRATO</span><strong>${euro(r.movTot)}</strong></div><div class="sub-overview-fact"><span>FIR</span><strong>${euro(r.fir)}</strong></div><div class="sub-overview-fact"><span>NOLEGGIO MEZZI</span><strong>${euro(r.noli)}</strong></div><div class="sub-overview-fact"><span>ALTRE VOCI</span><strong>${euro(r.movTot-r.fir-r.noli)}</strong></div></div><div class="sub-overview-open"><span>Apri contabilità MOVISUD</span><span>→</span></div></article></div>`);
+  document.getElementById('main').insertAdjacentHTML('beforeend',renderComputoCalvanico()+`<div class="section-title"><div><h2>Riepilogo imprese</h2><p>Situazione economica aggiornata automaticamente dalle contabilità OLIMPO e MOVISUD.</p></div></div><div class="sub-overview-grid"><article class="sub-overview-card" onclick="vaiA('economica','costi')"><div class="sub-overview-top"><div class="sub-overview-title"><span class="sub-overview-status"></span><div><h3>OLIMPO</h3><p>Opere strutturali · contratto a misura</p></div></div><span class="chip blue">Budget ${euro(OLIMPO_PREVISTO.totale)}</span></div><div class="sub-overview-facts"><div class="sub-overview-fact"><span>SAL APPROVATI</span><strong>${euro(r.olimpoApprovato)}</strong></div><div class="sub-overview-fact"><span>FATTURATO</span><strong>${euro(r.olimpoFatturato)}</strong></div><div class="sub-overview-fact"><span>RESIDUO</span><strong>${euro(r.olimpoResiduo)}</strong></div><div class="sub-overview-fact"><span>SAL REGISTRATI</span><strong>${caricaSalOlimpo().length}</strong></div></div><div class="sub-overview-open"><span>Apri dettaglio OLIMPO</span><span>→</span></div></article><article class="sub-overview-card" id="economicMovisudCard"><div class="sub-overview-top"><div class="sub-overview-title"><span class="sub-overview-status warning"></span><div><h3>MOVISUD</h3><p>FIR e noleggio mezzi</p></div></div><span class="chip amber">${r.movVoci} voci</span></div><div class="sub-overview-facts"><div class="sub-overview-fact"><span>TOTALE REGISTRATO</span><strong>${euro(r.movTot)}</strong></div><div class="sub-overview-fact"><span>FIR</span><strong>${euro(r.fir)}</strong></div><div class="sub-overview-fact"><span>NOLEGGIO MEZZI</span><strong>${euro(r.noli)}</strong></div><div class="sub-overview-fact"><span>ALTRE VOCI</span><strong>${euro(r.movTot-r.fir-r.noli)}</strong></div></div><div class="sub-overview-open"><span>Apri contabilità MOVISUD</span><span>→</span></div></article></div>`);
   document.getElementById('economicMovisudCard').onclick=()=>{vaiA('giornale');setTimeout(()=>renderGiornale('movisud'),0)};
 };
 
@@ -5093,21 +4950,27 @@ async function eliminaAnagraficaFornitore(nome){
   const chiave=String(nome||'').trim().toLowerCase(),v=caricaFornitoriManuali().filter(x=>String(x.ragioneSociale||'').trim().toLowerCase()!==chiave);
   await salvaFornitoriManuali(v);
 }
+function importoPagatoFattura(f,fattureExtra){
+  const extra=(fattureExtra||{})[String(f.id)]||{},scadenze=Array.isArray(extra.scadenze)&&extra.scadenze.length?extra.scadenze:null;
+  if(!scadenze)return f.pagata?(Number(f.importo)||0):0;
+  return scadenze.reduce((s,r)=>s+(r.pagata?(Number(r.importo)||0):0),0);
+}
 function elencoFornitoriRiepilogo(){
   const m=new Map(),prendi=nome=>{nome=String(nome||'').trim();if(!nome)return null;const k=nome.toLowerCase();if(!m.has(k))m.set(k,{nome,ordini:[],fatture:[],oggettoFornitura:'',linkDrive:''});return m.get(k)};
   allOrdiniFlat().forEach(x=>{const f=prendi(x.o.fornitore);if(f)f.ordini.push(x)});
   (DATA.finanziario.fatture||[]).filter(x=>x.tipo==='ricevuta').forEach(x=>{const f=prendi(x.fornitore||x.controparte);if(f)f.fatture.push(x)});
   caricaFornitoriManuali().forEach(x=>{const f=prendi(x.ragioneSociale);if(f){f.oggettoFornitura=x.oggettoFornitura||'';f.linkDrive=x.linkDrive||''}});
-  return [...m.values()].map(f=>{const totaleOrdini=f.ordini.reduce((s,x)=>s+(Number(x.o.importo)||0),0),totaleFatture=f.fatture.reduce((s,x)=>s+(Number(x.importo)||0),0),ddt=f.ordini.filter(x=>String(x.o.numeroDDT||'').trim()).length,date=f.ordini.map(x=>x.o.dataOrdine).concat(f.fatture.map(x=>x.data)).filter(Boolean).sort();return {...f,totaleOrdini,totaleFatture,ddt,ultima:date.length?date[date.length-1]:''}}).sort((a,b)=>a.nome.localeCompare(b.nome,'it'));
+  const fattureExtra=caricaFattureExtra();
+  return [...m.values()].map(f=>{const totaleOrdini=f.ordini.reduce((s,x)=>s+(Number(x.o.importo)||0),0),totaleFatture=f.fatture.reduce((s,x)=>s+(Number(x.importo)||0),0),totalePagato=f.fatture.reduce((s,x)=>s+importoPagatoFattura(x,fattureExtra),0),ddt=f.ordini.filter(x=>String(x.o.numeroDDT||'').trim()).length,date=f.ordini.map(x=>x.o.dataOrdine).concat(f.fatture.map(x=>x.data)).filter(Boolean).sort(),categorieFattureFornitore=f.fatture.map(x=>(fattureExtra[String(x.id)]||{}).categoria).filter(Boolean),categorie=[...new Set(f.ordini.map(x=>x.catNome).concat(categorieFattureFornitore).filter(Boolean))];return {...f,totaleOrdini,totaleFatture,totalePagato,totaleDaPagare:Math.max(0,totaleFatture-totalePagato),ddt,categorie,ultima:date.length?date[date.length-1]:''}}).sort((a,b)=>a.nome.localeCompare(b.nome,'it'));
 }
 function renderFornitori(){
   const tutti=elencoFornitoriRiepilogo(),q=FORNITORE_FILTRO.trim().toLowerCase(),visibili=tutti.filter(f=>!q||f.nome.toLowerCase().includes(q)),sel=tutti.find(f=>f.nome===FORNITORE_SELEZIONATO);
   const form=FORNITORE_FORM_APERTO?`<div class="panel" style="margin-bottom:18px"><h2>Nuovo fornitore</h2><form id="supplierForm"><div class="form-grid three"><div class="field"><label>Ragione sociale *</label><input id="supplierBusinessName" required></div><div class="field"><label>Oggetto fornitura *</label><input id="supplierSupplyObject" required></div><div class="field"><label>Link cartella Drive *</label><input id="supplierDriveLink" type="url" required placeholder="https://drive.google.com/..."></div></div><div style="display:flex;gap:8px;margin-top:16px"><button class="btn btn-primary" type="submit">Salva fornitore</button><button class="btn btn-outline" id="supplierCancel" type="button">Annulla</button></div></form></div>`:'';
-  const fatturatoVisualizzato=visibili.reduce((s,f)=>s+f.totaleFatture,0);
-  const cards=visibili.map(f=>`<details class="supplier-list-row" ${f.nome===FORNITORE_SELEZIONATO?'open':''} style="border-bottom:1px solid var(--border)"><summary style="display:grid;grid-template-columns:minmax(0,1fr) auto 24px;align-items:center;gap:14px;padding:17px 6px;cursor:pointer;list-style:none"><strong style="font-size:15px">${escAtt(f.nome)}</strong><strong style="font-size:15px;font-variant-numeric:tabular-nums">${euro(f.totaleFatture)}</strong><span style="color:var(--gray);font-size:18px">⌄</span></summary><div style="padding:0 6px 17px"><div class="info-strip" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr));margin-bottom:14px"><div class="info-chip"><span>Oggetto fornitura</span><strong>${escAtt(f.oggettoFornitura||'Da specificare')}</strong></div><div class="info-chip"><span>Fatture registrate</span><strong>${f.fatture.length}</strong></div><div class="info-chip"><span>Ordini registrati</span><strong>${f.ordini.length}</strong></div><div class="info-chip"><span>Ultima operazione</span><strong>${f.ultima?dataBreve(f.ultima):'Nessuna'}</strong></div></div><div style="display:flex;gap:8px;flex-wrap:wrap">${f.linkDrive?`<a class="btn btn-primary btn-sm" href="${escAtt(f.linkDrive)}" target="_blank" rel="noopener">Apri cartella Drive</a>`:''}<button class="btn btn-outline btn-sm supplier-edit-inline" data-supplier="${escAtt(f.nome)}">Modifica</button><button class="btn btn-outline btn-sm supplier-purchases-inline" data-supplier="${escAtt(f.nome)}">Apri gestione acquisti</button></div></div></details>`).join('');
+  const fatturatoVisualizzato=visibili.reduce((s,f)=>s+f.totaleFatture,0),pagatoVisualizzato=visibili.reduce((s,f)=>s+f.totalePagato,0),daPagareVisualizzato=visibili.reduce((s,f)=>s+f.totaleDaPagare,0);
+  const cards=visibili.map(f=>`<details class="supplier-list-row" ${f.nome===FORNITORE_SELEZIONATO?'open':''} style="border-bottom:1px solid var(--border)"><summary style="display:grid;grid-template-columns:minmax(0,1fr) auto 24px;align-items:center;gap:14px;padding:17px 6px;cursor:pointer;list-style:none"><div><strong style="font-size:15px">${escAtt(f.nome)}</strong>${f.categorie.length?`<div style="margin-top:4px;display:flex;gap:5px;flex-wrap:wrap">${f.categorie.map(c=>`<span class="chip blue">${escAtt(c)}</span>`).join('')}</div>`:''}</div><strong style="font-size:15px;font-variant-numeric:tabular-nums">${euro(f.totaleFatture)}</strong><span style="color:var(--gray);font-size:18px">⌄</span></summary><div style="padding:0 6px 17px"><div class="info-strip" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr));margin-bottom:14px"><div class="info-chip"><span>Oggetto fornitura</span><strong>${escAtt(f.oggettoFornitura||'Da specificare')}</strong></div><div class="info-chip"><span>Categoria materiale</span><strong>${f.categorie.length?escAtt(f.categorie.join(', ')):'Da specificare'}</strong></div><div class="info-chip"><span>Fatture registrate</span><strong>${f.fatture.length}</strong></div><div class="info-chip"><span>Ordini registrati</span><strong>${f.ordini.length}</strong></div><div class="info-chip"><span>Importo fatturato</span><strong>${euro(f.totaleFatture)}</strong></div><div class="info-chip"><span>Importo pagato</span><strong style="color:var(--teal)">${euro(f.totalePagato)}</strong></div><div class="info-chip"><span>Da pagare</span><strong style="color:${f.totaleDaPagare>0?'var(--amber)':'var(--teal)'}">${euro(f.totaleDaPagare)}</strong></div><div class="info-chip"><span>Ultima operazione</span><strong>${f.ultima?dataBreve(f.ultima):'Nessuna'}</strong></div></div><div style="display:flex;gap:8px;flex-wrap:wrap">${f.linkDrive?`<a class="btn btn-primary btn-sm" href="${escAtt(f.linkDrive)}" target="_blank" rel="noopener">Apri cartella Drive</a>`:''}<button class="btn btn-outline btn-sm supplier-edit-inline" data-supplier="${escAtt(f.nome)}">Modifica</button><button class="btn btn-outline btn-sm supplier-purchases-inline" data-supplier="${escAtt(f.nome)}">Apri gestione acquisti</button></div></div></details>`).join('');
   const modificaForm=sel&&FORNITORE_MODIFICA_APERTA?`<div class="panel" style="margin-top:14px;border:2px solid var(--teal)"><div class="section-title" style="margin-top:0"><div><h2>Modifica fornitore</h2><p>Aggiorna i dati anagrafici. La ragione sociale viene corretta anche nei documenti collegati.</p></div></div><form id="supplierEditForm"><div class="form-grid three"><div class="field"><label>Ragione sociale *</label><input id="supplierEditName" value="${escAtt(sel.nome)}" required></div><div class="field"><label>Oggetto fornitura</label><input id="supplierEditObject" value="${escAtt(sel.oggettoFornitura||'')}"></div><div class="field"><label>Link cartella Drive</label><input id="supplierEditDrive" type="url" value="${escAtt(sel.linkDrive||'')}" placeholder="https://drive.google.com/..."></div></div><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:16px"><button class="btn btn-primary" type="submit">Salva modifiche</button><button class="btn btn-outline" id="supplierEditCancel" type="button">Annulla</button><button class="btn btn-outline" id="supplierDelete" type="button" style="margin-left:auto;color:var(--red);border-color:var(--red)">Elimina fornitore</button></div><p class="empty-note" style="margin-top:10px">L’eliminazione è consentita soltanto se non esistono ordini o fatture collegati.</p></form></div>`:'';
   const dettaglio=sel?modificaForm:'';
-  document.getElementById('main').innerHTML=`<div class="section-hero"><div><h2>Fornitori</h2><p>Elenco alfabetico collegato automaticamente a ordini, DDT e fatture.</p></div><button class="btn btn-primary" id="supplierNew">+ Nuovo fornitore</button></div>${form}<div class="panel"><div class="field" style="max-width:520px;margin-bottom:14px"><label>Cerca per ragione sociale</label><input id="supplierSearch" value="${escAtt(FORNITORE_FILTRO)}" placeholder="Scrivi il nome del fornitore"></div><div style="border-top:1px solid var(--border)">${cards||'<p class="empty-note" style="padding:18px 6px">Nessun fornitore presente.</p>'}</div><div style="display:flex;justify-content:space-between;align-items:center;gap:16px;padding:20px 6px 4px;border-top:2px solid var(--navy);margin-top:-1px"><strong>${q?`Fatturato dei ${visibili.length} fornitori trovati`:'Fatturato totale fornitori'}</strong><strong style="font-size:20px;font-variant-numeric:tabular-nums">${euro(fatturatoVisualizzato)}</strong></div></div>${dettaglio}`;
+  document.getElementById('main').innerHTML=`<div class="section-hero"><div><h2>Fornitori</h2><p>Elenco alfabetico collegato automaticamente a ordini, DDT e fatture.</p></div><button class="btn btn-primary" id="supplierNew">+ Nuovo fornitore</button></div>${form}<div class="panel"><div class="field" style="max-width:520px;margin-bottom:14px"><label>Cerca per ragione sociale</label><input id="supplierSearch" value="${escAtt(FORNITORE_FILTRO)}" placeholder="Scrivi il nome del fornitore"></div><div style="border-top:1px solid var(--border)">${cards||'<p class="empty-note" style="padding:18px 6px">Nessun fornitore presente.</p>'}</div><div class="info-strip" style="grid-template-columns:repeat(auto-fit,minmax(170px,1fr));padding:20px 6px 4px;border-top:2px solid var(--navy);margin-top:-1px"><div class="info-chip"><span>${q?`Fatturato dei ${visibili.length} fornitori trovati`:'Fatturato totale fornitori'}</span><strong style="font-size:18px;font-variant-numeric:tabular-nums">${euro(fatturatoVisualizzato)}</strong></div><div class="info-chip"><span>Totale pagato</span><strong style="font-size:18px;font-variant-numeric:tabular-nums;color:var(--teal)">${euro(pagatoVisualizzato)}</strong></div><div class="info-chip"><span>Totale da pagare</span><strong style="font-size:18px;font-variant-numeric:tabular-nums;color:${daPagareVisualizzato>0?'var(--amber)':'var(--teal)'}">${euro(daPagareVisualizzato)}</strong></div></div></div>${dettaglio}`;
   document.getElementById('supplierNew').onclick=()=>{FORNITORE_FORM_APERTO=true;renderFornitori()};document.getElementById('supplierSearch').oninput=e=>{FORNITORE_FILTRO=e.target.value;renderFornitori();const campo=document.getElementById('supplierSearch');campo.focus();campo.setSelectionRange(campo.value.length,campo.value.length)};
   document.querySelectorAll('.supplier-edit-inline').forEach(btn=>btn.onclick=e=>{e.preventDefault();e.stopPropagation();FORNITORE_SELEZIONATO=btn.dataset.supplier;FORNITORE_MODIFICA_APERTA=true;renderFornitori()});
   document.querySelectorAll('.supplier-purchases-inline').forEach(btn=>btn.onclick=e=>{e.preventDefault();e.stopPropagation();ACQ_ORDINI_FILTRI.fornitore=btn.dataset.supplier;ACQUISTI_SUBTAB='ordine';vaiA('acquisti')});
@@ -5140,7 +5003,7 @@ let CURRENT_SUBTAB = null;
 function renderSubTabsNav() {
   const subTabsNav = document.getElementById('subTabs');
   const tabs = SUBTABS[CURRENT_AREA];
-  if (!tabs.length) { subTabsNav.style.display = 'none'; subTabsNav.innerHTML = ''; return; }
+  if (!tabs.length || CURRENT_AREA === 'anagrafica') { subTabsNav.style.display = 'none'; subTabsNav.innerHTML = ''; return; }
   subTabsNav.style.display = 'flex';
   subTabsNav.innerHTML = tabs.map(([key, label]) => `<button data-subtab="${key}" class="${key === CURRENT_SUBTAB ? 'active' : ''}">${label}</button>`).join('');
   subTabsNav.querySelectorAll('button').forEach((btn) => {
@@ -5273,11 +5136,48 @@ document.getElementById('logoutBtn').addEventListener('click', async () => {
   mostraLogin();
 });
 
-// Alla prima apertura, controlla se c'e' gia' una sessione valida (login precedente).
-supa.auth.getSession().then(({ data }) => {
-  if (data.session) avviaApp();
-  else mostraLogin();
-});
+// Anteprima grafica esclusivamente locale: consente di verificare il layout
+// senza usare credenziali e senza leggere o modificare i dati del cantiere.
+// Non puo' essere attivata su GitHub Pages o su altri domini pubblici.
+const ANTEPRIMA_LOCALE = ['127.0.0.1', 'localhost'].includes(location.hostname)
+  && new URLSearchParams(location.search).get('preview') === '1';
+
+if (ANTEPRIMA_LOCALE) {
+  document.getElementById('loginGate').style.display = 'none';
+  document.getElementById('appRoot').style.display = '';
+  DATA = normalizzaData(nuoviDatiConSeed());
+  // Dati dimostrativi isolati: servono soltanto a controllare visivamente
+  // tabelle, stati e collegamenti della sezione Acquisti.
+  const categoriaAnteprima = DATA.acquisti.categorie[0];
+  categoriaAnteprima.ordini = [
+    { id: 901, fornitore: 'CO.I.RE.S.', ordinatoDa: 'aedifica', ordinatoDaChi: 'Aedifica', numeroOrdine: 'ORD-146/26', dataOrdine: '2026-08-26', importo: 18450, descrizioneOrdine: 'Calcestruzzo per fondazioni', dataConsegnaPrevista: '2026-08-29', numeroDDT: '', dataConsegnaEffettiva: '', descrizioneArrivo: '', quantitaConfermata: false, fatturaId: '', fatturaVerificata: false, righeFerro: [], ddtMultipli: [] },
+    { id: 902, fornitore: 'FERRAMATI INT', ordinatoDa: 'aedifica', ordinatoDaChi: 'Aedifica', numeroOrdine: 'ORD-139/26', dataOrdine: '2026-08-20', importo: 12600, descrizioneOrdine: 'Rete elettrosaldata e armature', dataConsegnaPrevista: '2026-08-23', numeroDDT: 'DDT-778', dataConsegnaEffettiva: '2026-08-22', descrizioneArrivo: 'Materiale consegnato in cantiere', quantitaConfermata: true, fatturaId: 903, fatturaVerificata: true, righeFerro: [], ddtMultipli: [{id:'d902',numero:'DDT-778',data:'2026-08-22',merceConsegnata:'Rete elettrosaldata e armature',corrisponde:true,fatturaId:903}] }
+  ];
+  DATA.finanziario.fatture = [
+    { id: 903, tipo: 'ricevuta', numero: 'FT-418/26', controparte: 'FERRAMATI INT', data: '2026-08-25', imponibile: 12600, iva: 2772, importo: 15372, scadenzaPagamento: '2026-09-30', pagata: false, bloccato: false },
+    { id: 904, tipo: 'ricevuta', numero: 'MOV-87/26', controparte: 'MOVISUD SRL', data: '2026-08-18', imponibile: 6587, iva: 1449.14, importo: 8036.14, scadenzaPagamento: '', pagata: false, bloccato: false }
+  ];
+  STATO_ESTESO_MEMORIA.ddt_standalone = [
+    { id: 'd905', fornitore: 'MOVISUD SRL', numero: 'DDT-551', data: '2026-08-17', merceConsegnata: 'Noleggio mezzi', corrisponde: true, fatturaId: 904 }
+  ];
+  STATO_ESTESO_MEMORIA.fatture_extra = {
+    '903': { ordini: [902], descrizione: 'Fornitura armature', scadenze: [{data:'2026-09-30',modalita:'BB',riferimento:'',importo:15372}] },
+    '904': { ordini: [], descrizione: 'Noleggio mezzi e FIR', scadenze: [] }
+  };
+  RUOLO_UTENTE = 'pm';
+  CURRENT_AREA = 'acquisti';
+  CURRENT_SUBTAB = null;
+  ACQUISTI_SUBTAB = 'ordine';
+  applicaPermessiInterfaccia();
+  renderSubTabsNav();
+  renderMain();
+} else {
+  // Alla prima apertura, controlla se c'e' gia' una sessione valida (login precedente).
+  supa.auth.getSession().then(({ data }) => {
+    if (data.session) avviaApp();
+    else mostraLogin();
+  });
+}
 </script>
 
 
