@@ -1314,7 +1314,7 @@ function salvaBackupLocale() {
 
 async function saveData() {
   SYNC_RICHIESTA_PENDING = true;
-  if (SYNC_IN_CORSO) return;
+  if (SYNC_IN_CORSO) return false;
   SYNC_IN_CORSO = true;
   aggiornaStatoSync('Salvataggio…');
   salvaBackupLocale();
@@ -1328,7 +1328,7 @@ async function saveData() {
       SYNC_RICHIESTA_PENDING = false;
       aggiornaStatoSync('Errore di salvataggio');
       alert('Salvataggio non riuscito (controllo versione): ' + err.message + '. Controlla la connessione e premi di nuovo Salva.');
-      return;
+      return false;
     }
     if (!esito.ok) {
       SYNC_IN_CORSO = false;
@@ -1336,12 +1336,12 @@ async function saveData() {
       if (esito.occupato) {
         aggiornaStatoSync('Altra postazione sta salvando');
         alert("L'altra postazione sta salvando proprio in questo momento. Attendi qualche secondo e premi di nuovo Salva.");
-        return;
+        return false;
       }
       aggiornaStatoSync('Dati aggiornati da altra postazione');
       alert("Qualcun altro ha salvato da un'altra postazione dopo che questa pagina aveva caricato i dati. Ricarico ora i dati aggiornati: controlla e ripeti la tua ULTIMA modifica, che non e' stata salvata.");
       try { await ricaricaDatiERender(); } catch (err) { aggiornaStatoSync('Errore di caricamento'); }
-      return;
+      return false;
     }
   }
 
@@ -1362,9 +1362,10 @@ async function saveData() {
   if (errore) {
     aggiornaStatoSync('Errore di salvataggio');
     alert('Salvataggio su Supabase non riuscito: ' + errore.message + '. Controlla la connessione e riprova (i dati modificati restano visibili in questa pagina finche\' non la ricarichi, ma NON sono ancora salvati).');
-    return;
+    return false;
   }
   aggiornaStatoSync('Salvato ' + new Date().toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' }));
+  return true;
 }
 
 // ---- auto-aggiornamento dall'altra postazione --------------------------------
@@ -2310,9 +2311,56 @@ function attachAcquistiSubNav() {
 let ACQUISTI_SUBTAB = 'ordine';
 let ACQ_OPEN = null; // "catId:idx" dell'ordine aperto per la compilazione/modifica
 const ACQ_EXTRA_LS_KEY='aedifica_acquisti_extra_v1';
-function caricaAcquistiExtra(){try{const v=JSON.parse(localStorage.getItem(ACQ_EXTRA_LS_KEY)||'{}');return v&&typeof v==='object'?v:{}}catch(e){return {}}}
+function caricaAcquistiExtra(){
+  if(STATO_ESTESO_MEMORIA.acquisti_extra&&typeof STATO_ESTESO_MEMORIA.acquisti_extra==='object')return STATO_ESTESO_MEMORIA.acquisti_extra;
+  try{const v=JSON.parse(localStorage.getItem(ACQ_EXTRA_LS_KEY)||'{}');return v&&typeof v==='object'?v:{}}catch(e){return {}}
+}
 function integraAcquistoExtra(o){const x=caricaAcquistiExtra()[String(o.id)];if(x)Object.assign(o,x);if(!Array.isArray(o.scadenzePagamento))o.scadenzePagamento=[];if(!o.scadenzePagamento.length&&(o.dataPagamentoPrevista||o.importoPagamento||o.modalitaPagamento))o.scadenzePagamento=[{id:String(Date.now()),dataScadenza:o.dataPagamentoPrevista||'',modalita:o.modalitaPagamento||'BB',riferimento:'',importo:o.importoPagamento||o.importo||'',importoPagato:'',dataPagamento:''}];if(!Array.isArray(o.ddtMultipli))o.ddtMultipli=[];if(!o.ddtMultipli.length&&o.numeroDDT)o.ddtMultipli=[{id:String(Date.now()),numero:o.numeroDDT,merceConsegnata:o.descrizioneArrivo||'',corrisponde:!!o.quantitaConfermata}];return o}
-function salvaAcquistoExtra(o){const tutti=caricaAcquistiExtra();tutti[String(o.id)]={condizioniPagamento:o.condizioniPagamento||'',scadenzePagamento:Array.isArray(o.scadenzePagamento)?o.scadenzePagamento:[],ddtMultipli:Array.isArray(o.ddtMultipli)?o.ddtMultipli:[],fileOrdine:o.fileOrdine||null,computoRiferimento:o.computoRiferimento||'',computoStato:o.computoStato||'',computoMotivo:o.computoMotivo||''};localStorage.setItem(ACQ_EXTRA_LS_KEY,JSON.stringify(tutti));salvaStatoEstesoCloud('acquisti_extra',tutti)}
+async function salvaAcquistoExtra(o,richiediConfermaCloud=false){
+  const tutti={...caricaAcquistiExtra()};
+  tutti[String(o.id)]={condizioniPagamento:o.condizioniPagamento||'',scadenzePagamento:Array.isArray(o.scadenzePagamento)?o.scadenzePagamento:[],ddtMultipli:Array.isArray(o.ddtMultipli)?o.ddtMultipli:[],fileOrdine:o.fileOrdine||null,computoRiferimento:o.computoRiferimento||'',computoStato:o.computoStato||'',computoMotivo:o.computoMotivo||''};
+  copiaLocaleSicura('acquisti_extra',ACQ_EXTRA_LS_KEY,tutti);
+  try{
+    if(!STATO_ESTESO_CLOUD_DISPONIBILE)throw new Error('Archivio documenti non disponibile. Controlla la connessione e riprova.');
+    const r=await salvaStatoEstesoCloud('acquisti_extra',tutti);
+    if(r&&r.error)throw new Error(r.error.message);
+    return true;
+  }catch(err){
+    if(richiediConfermaCloud)throw err;
+    alert('Dati aggiuntivi dell’ordine non sincronizzati: '+err.message);
+    return false;
+  }
+}
+async function caricaFileOrdineCloud(file,idOrdine){
+  if(file.size>10*1024*1024)throw new Error('Il file ordine supera 10 MB. Riduci il documento e riprova.');
+  const estensione=file.name.split('.').pop().toLowerCase();
+  const tipi={pdf:'application/pdf',jpg:'image/jpeg',jpeg:'image/jpeg',png:'image/png',doc:'application/msword',docx:'application/vnd.openxmlformats-officedocument.wordprocessingml.document'};
+  if(!tipi[estensione])throw new Error('Allega un file PDF, JPG, PNG, DOC o DOCX.');
+  const {data,error}=await supa.auth.getUser();
+  if(error||!data?.user)throw new Error('Sessione scaduta. Accedi di nuovo prima di allegare il file.');
+  const path='ordini/'+data.user.id+'/'+idOrdine+'-'+crypto.randomUUID()+'-'+nomeFileCloud(file.name);
+  const r=await supa.storage.from(FATTURE_FILE_BUCKET).upload(path,file,{contentType:tipi[estensione],upsert:false});
+  if(r.error)throw new Error('Allegato ordine non caricato: '+r.error.message);
+  return {nome:file.name,tipo:tipi[estensione],path:r.data.path};
+}
+function fileOrdineLinkHtml(file){
+  if(!file)return '<span class="empty-note" style="display:block;margin-top:5px">Facoltativo: PDF, JPG, PNG, DOC o DOCX (massimo 10 MB)</span>';
+  if(file.path)return '<a class="drive-mini" href="#" data-order-file-path="'+escAtt(file.path)+'" target="_blank" rel="noopener" style="display:block;margin-top:6px">Apri file ordine</a>';
+  if(file.dati)return '<a class="drive-mini" href="'+escAtt(file.dati)+'" download="'+escAtt(file.nome||'ordine')+'" style="display:block;margin-top:6px">Apri file ordine</a>';
+  return '';
+}
+function collegaFileOrdini(){
+  document.querySelectorAll('[data-order-file-path]').forEach(link=>{
+    link.onclick=async e=>{
+      e.preventDefault();
+      try{
+        const r=await supa.storage.from(FATTURE_FILE_BUCKET).createSignedUrl(link.dataset.orderFilePath,3600);
+        if(r.error||!r.data?.signedUrl)throw new Error(r.error?.message||'Collegamento non disponibile');
+        window.open(r.data.signedUrl,'_blank','noopener');
+      }catch(err){alert('Impossibile aprire il file ordine: '+err.message)}
+    };
+  });
+}
 function nuovaScadenzaAcquisto(){return {id:String(Date.now())+Math.random().toString(16).slice(2),dataScadenza:'',modalita:'BB',riferimento:'',importo:'',importoPagato:'',dataPagamento:''}}
 function statoScadenzaAcquisto(r){const dovuto=Number(r.importo)||0,pagato=Number(r.importoPagato)||0;if(dovuto>0&&pagato>=dovuto)return {key:'pagata',label:'Pagata'};if(pagato>0)return {key:'in_scadenza',label:'Pagata parzialmente'};if(!r.dataScadenza)return {key:'mancante',label:'Data mancante'};const gg=Math.ceil((new Date(r.dataScadenza+'T12:00:00')-new Date())/86400000);if(gg<0)return {key:'scaduto',label:'Scaduta'};if(gg<=30)return {key:'in_scadenza',label:'In scadenza'};return {key:'da_pagare',label:'Da pagare'}}
 let ACQ_ORDINI_FILTRI={fornitore:'',dal:'',al:''};
@@ -2639,7 +2687,7 @@ function ordineEditor(catId, catNome, idx, o) {
         <div class="field"><label>Importo ordinato (&euro;)</label><input type="number" class="oe-importo" value="${o.importo || ''}" /></div>
         <div class="field"><label>Consegna prevista</label><input type="date" class="oe-consegnaPrevista" value="${o.dataConsegnaPrevista || ''}" /></div>
         <div class="field"><label>Condizioni di pagamento</label><input type="text" class="oe-condizioniPagamento" value="${o.condizioniPagamento || ''}" placeholder="es. 30 giorni data fattura" /></div>
-        <div class="field" style="grid-column:1/-1"><label>File ordine</label><input type="file" class="oe-fileOrdine" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" />${o.fileOrdine&&o.fileOrdine.dati?`<a class="drive-mini" style="display:inline-block;margin-top:6px" href="${o.fileOrdine.dati}" download="${escAtt(o.fileOrdine.nome||'ordine')}">Apri file già caricato ↗</a>`:'<span class="empty-note" style="display:block;margin-top:5px">Nessun file caricato</span>'}</div>
+        <div class="field" style="grid-column:1/-1"><label>File ordine</label><input type="file" class="oe-fileOrdine" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" />${fileOrdineLinkHtml(o.fileOrdine)}</div>
         <div class="field" style="grid-column:1/-1;"><label>Quantit&agrave;/specifiche ordinate</label><input type="text" class="oe-descrizioneOrdine" value="${o.descrizioneOrdine || ''}" placeholder="es. 3 quintali ferro &Oslash;10mm B450C" /></div>
       </div>
       <div class="classification-assistant" style="margin-top:14px;padding:16px;border:1px solid #bfdbfe;border-radius:14px;background:#eff6ff">
@@ -2682,7 +2730,7 @@ ordineEditor=function(catId,catNome,idx,o){
         <div class="field"><label>Acquisto effettuato da</label><select class="oe-ordinatoDa"><option value="aedifica" ${o.ordinatoDa!=='altri'?'selected':''}>Aedifica</option><option value="altri" ${o.ordinatoDa==='altri'?'selected':''}>Altro soggetto</option></select></div>
         <div class="field"><label>Nome altro soggetto</label><input type="text" class="oe-ordinatoDaChi" value="${escAtt(o.ordinatoDaChi||'')}" style="${chiHidden}" placeholder="Nome"></div>
         <div class="field"><label>Destinato a</label><select class="oe-sub">${destinazioneOptions(o.subappaltoId)}</select></div>
-        <div class="field"><label>File ordine</label><input type="file" class="oe-fileOrdine" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx">${o.fileOrdine&&o.fileOrdine.dati?`<a class="drive-mini" style="display:block;margin-top:6px" href="${o.fileOrdine.dati}" download="${escAtt(o.fileOrdine.nome||'ordine')}">Apri file caricato</a>`:'<span class="empty-note" style="display:block;margin-top:5px">Facoltativo</span>'}</div>
+        <div class="field"><label>File ordine</label><input type="file" class="oe-fileOrdine" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx">${fileOrdineLinkHtml(o.fileOrdine)}</div>
       </div>
       ${ferroHtml}
       <details style="margin-top:16px"><summary style="cursor:pointer;font-weight:800;color:var(--teal)">Collegamento al computo (facoltativo)</summary><div class="classification-assistant" style="margin-top:10px;padding:14px;background:var(--bg);border-radius:12px"><div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap"><strong>Proposta automatica</strong><span class="chip ${stato==='confermata'?'teal':stato==='suggerita'?'blue':'amber'} oe-computo-chip">${stato==='confermata'?'Confermato':stato==='suggerita'?'Da confermare':'Da verificare'}</span></div><div class="field" style="margin-top:10px"><label>Area o lavorazione</label><select class="oe-computo-riferimento">${opzioniComputoOrdine(riferimento)}</select></div><p class="sub oe-computo-motivo" style="margin:8px 0">${escAtt(o.computoMotivo||suggerimento.motivo)}</p><div style="display:flex;gap:8px;flex-wrap:wrap"><button type="button" class="btn btn-primary btn-sm oe-computo-conferma">Conferma</button><button type="button" class="btn btn-outline btn-sm oe-computo-verifica">Lascia al tecnico</button></div><input type="hidden" class="oe-computo-stato" value="${escAtt(stato)}"><input type="hidden" class="oe-computo-motivo-val" value="${escAtt(o.computoMotivo||suggerimento.motivo)}"></div></details>
@@ -2784,7 +2832,15 @@ function attachOrdineEditor() {
   const openInvoices=ed.querySelector('.oe-open-invoices');
   if(openInvoices)openInvoices.onclick=()=>{ACQ_FATTURA_MODE='collegata';ACQ_FATTURA_FORNITORE=o.fornitore||'';ACQUISTI_SUBTAB='fattura';renderAcquisti()};
   collegaFileFatture();
+  collegaFileOrdini();
   const salvaOrdineEditor = async () => {
+    if(ed.dataset.saving==='true')return;
+    if(SYNC_IN_CORSO){alert('Un salvataggio è già in corso. Attendi e riprova.');return}
+    const pulsanti=[...ed.querySelectorAll('.oe-save')],etichette=pulsanti.map(b=>b.textContent);
+    ed.dataset.saving='true';
+    pulsanti.forEach(b=>{b.disabled=true;b.textContent='Salvataggio…'});
+    try{
+    if(!STATO_ESTESO_CLOUD_DISPONIBILE)throw new Error('Archivio documenti non disponibile. Controlla la connessione e riprova senza chiudere la scheda.');
     const g = (c) => { const el = ed.querySelector(c); return el ? (el.type === 'checkbox' ? el.checked : el.value) : undefined; };
     const patch = {
       fornitore: g('.oe-fornitore'), subappaltoId: g('.oe-sub'), ordinatoDa: g('.oe-ordinatoDa'), ordinatoDaChi: g('.oe-ordinatoDaChi'),
@@ -2792,7 +2848,14 @@ function attachOrdineEditor() {
       condizioniPagamento: g('.oe-condizioniPagamento'), computoRiferimento:g('.oe-computo-riferimento'),computoStato:g('.oe-computo-stato'),computoMotivo:g('.oe-computo-motivo-val')
     };
     const fileInput=ed.querySelector('.oe-fileOrdine');
-    if(fileInput&&fileInput.files&&fileInput.files[0]){const file=fileInput.files[0];if(file.size>3*1024*1024){alert('Il file ordine supera 3 MB. Caricalo su Drive e usa un PDF più leggero.');return;}patch.fileOrdine={nome:file.name,dati:await leggiFileComeDataUrl(file)};}
+    if(fileInput&&fileInput.files&&fileInput.files[0]){
+      const file=fileInput.files[0];
+      if(fileInput._ordineFile!==file){
+        fileInput._ordineAllegato=await caricaFileOrdineCloud(file,o.id);
+        fileInput._ordineFile=file;
+      }
+      patch.fileOrdine=fileInput._ordineAllegato;
+    }
     if (ferro) {
       const ferroC = ed.querySelector('.prevent-ferro-row');
       patch.righeFerro = leggiRigheFerroDalDom(ferroC, o.righeFerro);
@@ -2800,9 +2863,17 @@ function attachOrdineEditor() {
       if (!patch.importoDDT) { const t = prezzoPrevisionale({ righeFerro: patch.righeFerro }); if (t > 0) patch.importoDDT = t.toFixed(2); }
     }
     Object.assign(o, patch);
-    salvaAcquistoExtra(o);
+    const salvato=await saveData();
+    if(!salvato)return;
+    await salvaAcquistoExtra(o,true);
     ACQ_OPEN = null;
-    saveData(); renderAcquistiOrdine();
+    renderAcquistiOrdine();
+    }catch(err){
+      alert('Salvataggio ordine non completato: '+err.message+' I campi restano aperti: non ricaricare la pagina e riprova.');
+    }finally{
+      ed.dataset.saving='';
+      pulsanti.forEach((b,i)=>{b.disabled=false;b.textContent=etichette[i]});
+    }
   };
   ed.querySelectorAll('.oe-save').forEach(btn=>btn.onclick=salvaOrdineEditor);
   ed.querySelectorAll('.oe-close').forEach(btn=>btn.onclick=()=>{ACQ_OPEN=null;renderAcquistiOrdine()});
